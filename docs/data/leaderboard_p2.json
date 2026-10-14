@@ -1,8 +1,8 @@
 [
   {
     "participant": "baseline_random",
-    "submission_path": "/home/rafa/repositorios/RL_course/submissions/practical2/baseline_random",
-    "timestamp": "2026-10-14 08:08:56 UTC",
+    "submission_path": "/home/runner/work/RL_tournament/RL_tournament/submissions/practical2/baseline_random",
+    "timestamp": "2026-10-14 08:16:08 UTC",
     "success": true,
     "error": null,
     "practical_id": 2,
@@ -17,7 +17,7 @@
     "median_reward": -794.0,
     "success_rate": 0.0,
     "avg_steps": 193.5,
-    "avg_step_ms": 0.0,
+    "avg_step_ms": 0.001,
     "status": "NEEDS IMPROVEMENT \u26a0\ufe0f",
     "status_code": "warning",
     "pass_threshold": 4.5,

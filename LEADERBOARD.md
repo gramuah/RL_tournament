@@ -4,7 +4,7 @@ Welcome to the automated competition leaderboard for the **Reinforcement Learnin
 
 All agents uploaded to GitHub are automatically benchmarked under identical conditions using fixed seeds and evaluated with **GitHub Actions**.
 
-> **Last Updated:** `2026-10-14 08:08:37 UTC`  
+> **Last Updated:** `2026-10-14 08:15:59 UTC`  
 > **Total Evaluated Agents:** `5`  
 > **Evaluation Engine:** Automated CI Runner (`ubuntu-latest` / Python 3.10)
 
@@ -47,7 +47,7 @@ In this challenge, agents learn attitude and thruster control to land a spacecra
 | 🥇 **1st** | *baseline_heuristic (Baseline)* | **264.34** | ±47.22 | 96.7% | [32.7, 304.3] | MASTERY 🏆 |
 | 🥈 **2nd** | [demo_student](submissions/practical1/demo_student) | **257.38** | ±23.07 | 100.0% | [215.8, 297.1] | MASTERY 🏆 |
 | 🥉 **3rd** | [rafael_flor](submissions/practical1/rafael_flor) | **257.38** | ±23.07 | 100.0% | [215.8, 297.1] | MASTERY 🏆 |
-| 4th | *baseline_random (Baseline)* | **-203.30** | ±97.39 | 0.0% | [-394.1, -56.5] | NEEDS IMPROVEMENT ⚠️ |
+| 4th | *baseline_random (Baseline)* | **-206.82** | ±120.20 | 0.0% | [-477.2, -54.8] | NEEDS IMPROVEMENT ⚠️ |
 
 ---
 
