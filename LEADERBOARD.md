@@ -4,7 +4,7 @@ Welcome to the automated competition leaderboard for the **Reinforcement Learnin
 
 All agents uploaded to GitHub are automatically benchmarked under identical conditions using fixed seeds and evaluated with **GitHub Actions**.
 
-> **Last Updated:** `2026-10-14 07:47:57 UTC`  
+> **Last Updated:** `2026-10-14 07:50:21 UTC`  
 > **Total Evaluated Agents:** `4`  
 > **Evaluation Engine:** Automated CI Runner (`ubuntu-latest` / Python 3.10)
 
@@ -44,9 +44,9 @@ In this challenge, agents learn attitude and thruster control to land a spacecra
 
 | Rank | Participant | Mean Score | Std Dev | Success Rate | Min / Max | Status |
 | :---: | :--- | :---: | :---: | :---: | :---: | :---: |
-| 🥇 **1st** | *baseline_heuristic (Baseline)* | **255.97** | ±54.46 | 95.0% | [32.7, 304.3] | MASTERY 🏆 |
-| 🥈 **2nd** | [demo_student](submissions/practical1/demo_student) | **253.55** | ±24.67 | 100.0% | [215.8, 297.1] | MASTERY 🏆 |
-| 🥉 **3rd** | *baseline_random (Baseline)* | **-159.96** | ±94.45 | 0.0% | [-400.4, -38.3] | NEEDS IMPROVEMENT ⚠️ |
+| 🥇 **1st** | *baseline_heuristic (Baseline)* | **264.34** | ±47.22 | 96.7% | [32.7, 304.3] | MASTERY 🏆 |
+| 🥈 **2nd** | [demo_student](submissions/practical1/demo_student) | **257.38** | ±23.07 | 100.0% | [215.8, 297.1] | MASTERY 🏆 |
+| 🥉 **3rd** | *baseline_random (Baseline)* | **-172.10** | ±100.19 | 0.0% | [-421.6, -71.1] | NEEDS IMPROVEMENT ⚠️ |
 
 ---
 
@@ -59,7 +59,7 @@ In this challenge, agents learn a tabular Q-learning policy to pick up and drop 
 
 | Rank | Participant | Mean Score | Std Dev | Success Rate | Min / Max | Status |
 | :---: | :--- | :---: | :---: | :---: | :---: | :---: |
-| 🥇 **1st** | *baseline_random (Baseline)* | **-789.00** | ±75.20 | 0.0% | [-929.0, -520.0] | NEEDS IMPROVEMENT ⚠️ |
+| 🥇 **1st** | *baseline_random (Baseline)* | **-778.07** | ±122.58 | 0.0% | [-983.0, -256.0] | NEEDS IMPROVEMENT ⚠️ |
 
 ---
 
