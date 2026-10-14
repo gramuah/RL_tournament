@@ -4,7 +4,7 @@ Welcome to the automated competition leaderboard for the **Reinforcement Learnin
 
 All agents uploaded to GitHub are automatically benchmarked under identical conditions using fixed seeds and evaluated with **GitHub Actions**.
 
-> **Last Updated:** `2026-10-14 15:03:35 UTC`  
+> **Last Updated:** `2026-10-14 15:05:45 UTC`  
 > **Total Evaluated Agents:** `4`  
 > **Evaluation Engine:** Automated CI Runner (`ubuntu-latest` / Python 3.10)
 
@@ -114,7 +114,7 @@ The automated evaluation engine ranks models based on a multi-dimensional assess
   - Tune learning rate with linear or cosine decay starting at 3e-4.
   - Calibrate entropy coefficient (`ent_coef = 0.005`) to prevent premature policy collapse while guaranteeing convergence.
   - Set clip range ε = 0.2 and batch size to 64 or 128.
-- **Parallel Vectorized Envs:** Train with `make_vec_env("LunarLander-v2", n_envs=8)` to decorrelate gradient updates.
+- **Parallel Vectorized Envs:** Train with `make_vec_env("LunarLander-v3", n_envs=8)` to decorrelate gradient updates.
 - **Observation Normalization:** Apply `VecNormalize` to scale altitude, linear velocity, angular tilt, and ground contact sensors.
 - **Fuel Economy:** Minimize redundant main and side thruster firings during final descent to gain an extra +20 to +30 points toward the > 280 threshold.
 - **Deterministic Evaluation:** Always evaluate with `deterministic=True` when exporting your agent.

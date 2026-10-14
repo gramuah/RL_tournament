@@ -212,7 +212,7 @@ When you open a Pull Request, the automated CI runner evaluates your agent under
         \item Tune the entropy coefficient (\texttt{ent\_coef} $\in [0.001, 0.01]$) to encourage initial exploration while guaranteeing stable convergence.
         \item Set PPO clipping parameter to $\epsilon = 0.2$.
     \end{itemize}
-    \item \textbf{Vectorized Parallel Training}: Use \texttt{make\_vec\_env("LunarLander-v2", n\_envs=8)} to decorrelate batch transitions and stabilize gradient updates.
+    \item \textbf{Vectorized Parallel Training}: Use \texttt{make\_vec\_env("LunarLander-v3", n\_envs=8)} to decorrelate batch transitions and stabilize gradient updates.
     \item \textbf{Observation Normalization}: Apply \texttt{VecNormalize(norm\_obs=True, norm\_reward=False)} so that altitude, velocities, and orientation angles are scaled evenly.
     \item \textbf{Fuel Economy}: Once your agent learns to land safely, refine the policy so it minimizes unnecessary lateral thruster burns, squeezing an additional $+20$ to $+30$ points toward the top tier ($> 280$ pts).
     \item \textbf{Deterministic Evaluation}: Always set \texttt{deterministic=True} during evaluation and when exporting your submission.

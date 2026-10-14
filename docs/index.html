@@ -443,7 +443,7 @@
               <strong>Capacidad de la Red:</strong> Aumenta las capas ocultas del MLP de <code>[64, 64]</code> a <code>[128, 128]</code> o <code>[256, 256]</code> con <code>ortho_init=True</code> y activación <code>Tanh</code>.
             </li>
             <li style="margin-bottom: 0.5rem;">
-              <strong>Entornos Vectorizados Paralelos:</strong> Entrena con <code>make_vec_env("LunarLander-v2", n_envs=8)</code> para descorrelacionar datos y estabilizar el gradiente de PPO.
+              <strong>Entornos Vectorizados Paralelos:</strong> Entrena con <code>make_vec_env("LunarLander-v3", n_envs=8)</code> para descorrelacionar datos y estabilizar el gradiente de PPO.
             </li>
             <li style="margin-bottom: 0.5rem;">
               <strong>Ajuste Fino de Hiperparámetros:</strong> Factor de descuento $\gamma = 0.999$, GAE $\lambda = 0.98$, clip range $\epsilon = 0.2$, y learning rate con decaimiento lineal desde  	imes 10^{-4}$.
