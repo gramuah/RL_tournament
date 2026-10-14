@@ -1,0 +1,233 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish,english]{babel}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{geometry}
+\usepackage{fancyhdr}
+\usepackage{tcolorbox}
+\usepackage{titlesec}
+\usepackage{tabularx}
+\usepackage{booktabs}
+
+\geometry{margin=2.5cm}
+\hypersetup{colorlinks=true, linkcolor=blue, urlcolor=blue, citecolor=blue}
+\tcbuselibrary{skins}
+
+\titleformat{\section}{\large\bfseries\color{blue!55!black}}{\thesection}{1em}{}
+\titleformat{\subsection}{\normalsize\bfseries\color{blue!40!black}}{\thesubsection}{1em}{}
+
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0.4pt}
+\rhead{\small Reinforcement Learning Course}
+\lhead{\small Practical Sessions Guide}
+\rfoot{\small Page \thepage}
+
+\newtcolorbox{infobox}[1][]{colback=blue!5!white, colframe=blue!55!black, title=#1, fonttitle=\bfseries, boxrule=0.6pt, arc=2pt}
+\newtcolorbox{warnbox}[1][]{colback=red!5!white, colframe=red!60!black, title=#1, fonttitle=\bfseries, boxrule=0.6pt, arc=2pt}
+
+\title{\bfseries Guide to the Practical Sessions \\ \large Reinforcement Learning Course}
+\author{Universidad de Alcal\'a}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\thispagestyle{empty}
+
+\tableofcontents
+\newpage
+
+\section{Introduction}
+This document explains how the practical sessions of the Reinforcement Learning (RL) course are organized, and how to work with the provided materials. These materials are distributed as \textbf{Jupyter Notebooks} (\texttt{.ipynb} files). The purpose of this guide is to help every student get started, even without any prior experience using notebooks or Google Colab.
+
+\section{Course Structure}
+
+The course combines theory sessions (9h) and practical sessions (6h). The practical part consists of \textbf{three mandatory deliverables}, each based on a Jupyter Notebook:
+
+\begin{table}[h!]
+\centering
+\begin{tabularx}{\textwidth}{l X c}
+\toprule
+\textbf{Session} & \textbf{Topic} & \textbf{Notebook} \\
+\midrule
+Practical 1 & Introduction to RL environments & \texttt{Practical1/unit1\_uah\_master.ipynb} \\
+Practical 2 & Intermediate RL algorithms & \texttt{Practical2/unit2\_uah\_master.ipynb} \\
+Final Practical & Final project & \texttt{Practical\_final/unit3\_uah\_master.ipynb} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+In every practical session, students will: interact with RL environments, train models following a guided (Colab-based) tutorial, implement the requested parts of the code, and submit their final solution. \textbf{Practical 1} and \textbf{Practical 2} are evaluated and contribute to the \textbf{Practical Mark (PM)} of the course. The \textbf{Final Practical} is not part of the PM: it will instead be assessed as part of the \textbf{oral exam}, through its defense and oral questions.
+
+\section{What is a Jupyter Notebook (\texttt{.ipynb})?}
+
+A Jupyter Notebook is a document that mixes executable code (in this course, Python) with explanatory text, images, and the results of execution, all in the same file. It is organized into \textit{cells}, of two main types:
+
+\begin{itemize}
+    \item \textbf{Code cells}: contain Python code that can be executed by clicking the Play button or pressing \texttt{Shift + Enter}.
+    \item \textbf{Text cells (Markdown)}: contain explanations, instructions, equations and images, but no executable code.
+\end{itemize}
+
+You do \textbf{not} need to install Python or any library on your own computer to work with these notebooks: the recommended option is \textbf{Google Colab}, a free cloud platform provided by Google that runs notebooks directly in your web browser. However, if you prefer to work \textbf{locally} on your own computer using an IDE (e.g.\ VS Code, PyCharm or Jupyter itself), this is also possible and explained in this guide.
+
+\section{Accessing the Notebooks (Blackboard \& GitHub)}
+
+The \texttt{.ipynb} files for the practical sessions \textbf{are available both on Blackboard} (the Universidad de Alcal\'a's e-learning platform) and directly in the official \textbf{course GitHub repository} (\url{https://github.com/rflor01/RL_tournament}).
+
+\begin{infobox}[Step by step]
+\begin{enumerate}
+    \item Navigate to the course page on Blackboard and locate the section for the corresponding practical session (Practical 1, Practical 2, or Final Practical).
+    \item Click on the \texttt{.ipynb} file to download it (e.g.\ \texttt{unit1\_uah\_master.ipynb}). Depending on your browser, it may download directly or open a preview with a download button.
+    \item Save the file somewhere easy to find on your computer, such as the \textit{Downloads} folder or Desktop.
+\end{enumerate}
+\end{infobox}
+
+\begin{warnbox}[Important]
+Do \textbf{not} try to open the \texttt{.ipynb} file by double-clicking it directly on your computer: it will not display correctly, since it requires a Jupyter/Colab environment to be rendered and executed. Follow the steps in the next section instead.
+\end{warnbox}
+
+\section{Opening a Notebook: Two Options}
+
+Once you have the \texttt{.ipynb} file downloaded from Blackboard, you can choose one of the following two options to work with it. \textbf{Option A (Google Colab)} is recommended for most students, since it requires no installation and runs in the cloud. \textbf{Option B (Local IDE)} is for students who prefer to work on their own computer, already have Python installed, or want full control over their environment.
+
+\subsection{Option A: Google Colab (recommended)}
+
+\begin{infobox}[Step by step]
+\begin{enumerate}
+    \item Go to \url{https://colab.research.google.com}.
+    \item Sign in with a Google account (any personal Gmail account works).
+    \item In the welcome window, click on the tab \textbf{Upload}. If it does not appear, go to \textbf{File $\rightarrow$ Upload notebook}.
+    \item Click \textbf{Browse} (or drag and drop the file) and select the \texttt{.ipynb} file you downloaded from Blackboard.
+    \item The notebook will open directly in Colab, ready to be executed.
+\end{enumerate}
+\end{infobox}
+
+Advantages of this option: no installation required, free access to GPUs, and your work can be saved directly in your Google Drive (see Section~\ref{sec:saving}).
+
+\subsection{Option B: Working Locally with an IDE}
+
+If you prefer to run the notebook on your own machine, you will need to install Python and a few additional tools. This option is suitable if you already have a Python environment set up, or if you want to avoid depending on an internet connection.
+
+\begin{infobox}[Step by step]
+\begin{enumerate}
+    \item \textbf{Install Python} (version 3.9 or higher is recommended) from \url{https://www.python.org/downloads/}, if not already installed.
+    \item \textbf{Install an IDE with notebook support}, for example:
+    \begin{itemize}
+        \item \textbf{VS Code}: \url{https://code.visualstudio.com/}, plus the official \textit{Python} and \textit{Jupyter} extensions (installable from the Extensions tab inside VS Code).
+        \item \textbf{PyCharm Professional}: \url{https://www.jetbrains.com/pycharm/}, which has built-in Jupyter notebook support.
+        \item Alternatively, install \textbf{Jupyter Notebook/JupyterLab} directly: open a terminal and run \texttt{pip install notebook}, then launch it with \texttt{jupyter notebook}.
+    \end{itemize}
+    \item \textbf{Open the \texttt{.ipynb} file} you downloaded from Blackboard using your chosen IDE (e.g.\ \textbf{File $\rightarrow$ Open} in VS Code/PyCharm, or navigating to it from the Jupyter file browser).
+    \item \textbf{Select a Python interpreter/kernel} for the notebook (VS Code and PyCharm will prompt you to choose one the first time you open a notebook).
+    \item \textbf{Install the required libraries}. Most notebooks include a first code cell with \texttt{!pip install ...} commands; run that cell first. If needed, you can also install packages manually from a terminal with \texttt{pip install \textit{package-name}}.
+\end{enumerate}
+\end{infobox}
+
+\begin{warnbox}[Important]
+When working locally, your computer's hardware (CPU/GPU) will be used for training, which may be significantly slower than Colab's free GPUs if your machine does not have a dedicated graphics card. It is also your responsibility to manage library versions and dependencies correctly. If you encounter installation issues, Option A (Google Colab) remains available as a fallback.
+\end{warnbox}
+
+\section{Working on the Notebook}
+
+Once the notebook is open, either in Colab or in your local IDE, keep the following in mind:
+
+\begin{itemize}
+    \item \textbf{Run cells in order}, from top to bottom, using the Play button to the left of each cell (or \texttt{Shift + Enter}). Skipping cells or running them out of order can cause errors.
+    \item \textbf{Read the text cells carefully}: they contain the explanations and instructions needed to understand and complete the exercises.
+    \item \textbf{Complete the sections marked for you}, usually indicated with comments such as \texttt{\# TODO} or similar placeholders, following the given instructions.
+    \item \textbf{(Colab only) Enable a GPU} when training models, since it speeds up computation considerably: go to \textbf{Runtime $\rightarrow$ Change runtime type $\rightarrow$ Hardware accelerator $\rightarrow$ GPU}, then save. If working locally, make sure your own GPU drivers (e.g.\ CUDA) are correctly configured, or expect slower training on CPU.
+    \item If a cell throws an error, re-read the previous cells: you may be missing a required installation step (e.g.\ \texttt{!pip install ...}) or a variable defined earlier that was not executed.
+\end{itemize}
+
+\section{Saving Your Work}
+\label{sec:saving}
+
+If you are using \textbf{Google Colab}, it does \textbf{not} save your changes back to the original file automatically. To avoid losing your progress:
+
+\begin{enumerate}
+    \item As soon as you open the notebook, go to \textbf{File $\rightarrow$ Save a copy in Drive}. This creates your own editable copy in \textit{My Drive $\rightarrow$ Colab Notebooks}.
+    \item Continue working exclusively on that copy. From this point on, Colab will save your changes automatically in your Google Drive.
+    \item You can reopen your copy anytime from \url{https://colab.research.google.com} under the \textbf{Recent} tab, or directly from Google Drive.
+\end{enumerate}
+
+If you are working \textbf{locally} with an IDE, simply save the file regularly using the standard shortcut (\texttt{Ctrl+S}), as you would with any other document, and keep a backup copy of your work (e.g.\ in a personal folder or cloud storage) in case of hardware issues.
+
+\section{Class Competition: Automated GitHub Leaderboard}
+\label{sec:leaderboard}
+
+In \textbf{Practical 1} and \textbf{Practical 2}, the final section of the notebook will guide you through the packaging of your agent: an \texttt{agent.py} file (which defines an \texttt{agent(observation)} function) together with your trained model weights (\texttt{ppo-LunarLander-v3.zip} or \texttt{q-learning.pkl}).
+
+To foster friendly competition, peer learning, and benchmark reproducibility, all agents participate in an \textbf{automated class tournament hosted directly on GitHub}:
+
+\begin{enumerate}
+    \item \textbf{Submission via GitHub Pull Request}: You can submit directly from the notebook! The final section of each practical includes a 1-click cell that automatically forks the repository, uploads your files, and creates the Pull Request for you using your GitHub token. Alternatively, you can do it manually by placing your files in:
+    \begin{itemize}
+        \item Practical 1: \texttt{submissions/practical1/<your\_github\_username>/}
+        \item Practical 2: \texttt{submissions/practical2/<your\_github\_username>/}
+    \end{itemize}
+    and opening a \textbf{Pull Request (PR)} against the main repository.
+    \item \textbf{Instant CI Evaluation}: A \textbf{GitHub Actions} robot runner immediately triggers, runs your agent across fixed, fair benchmark seeds, and posts a detailed evaluation card (mean reward, standard deviation, success rate, and inference latency) directly as a comment on your PR within 2 minutes!
+    \item \textbf{Official Leaderboard}: Once your PR is approved and merged, your agent is automatically ranked on the official \textbf{\texttt{LEADERBOARD.md}} at the root of the repository, competing for podium rankings (1st, 2nd, 3rd place).
+\end{enumerate}
+
+\begin{infobox}[Leaderboard Tip]
+You can submit multiple times! If you improve your hyperparameters, refine reward engineering, or discover a better architecture, open an updated PR to improve your standing on the leaderboard.
+\end{infobox}
+
+\section{Submitting Your Practical}
+\label{sec:submitting}
+
+At the end of each practical session (or by the deadline indicated by the instructor), you must submit your work for evaluation. To do so:
+
+\begin{enumerate}
+    \item Make sure \textbf{all cells have been executed} and their outputs are visible. Do not clear the outputs before submitting: the instructor needs to see the results of your training/experiments.
+    \item Download/export your notebook as an \texttt{.ipynb} file:
+    \begin{itemize}
+        \item \textbf{Google Colab}: \textbf{File $\rightarrow$ Download $\rightarrow$ Download .ipynb}.
+        \item \textbf{Local IDE}: the file on your disk \textit{is} already the \texttt{.ipynb} file; just make sure it has been saved with the latest changes (\texttt{Ctrl+S}).
+    \end{itemize}
+    \item Rename the file following the convention: \\ \texttt{Surname\_Name\_PracticalX.ipynb} \\ (e.g.\ \texttt{Garcia\_Juan\_Practical1.ipynb}).
+    \item \textbf{For Practical 1 and Practical 2}, also download the \texttt{submission.zip} file generated at the end of the notebook (see Section~\ref{sec:leaderboard}).
+    \item Submit both the notebook and, when applicable, the \texttt{submission.zip} file through the \textbf{Blackboard} assignment/submission box corresponding to that practical session, before the deadline indicated by the instructor.
+\end{enumerate}
+
+\begin{warnbox}[Important]
+All three deliverables (\textbf{Practical 1}, \textbf{Practical 2} and the \textbf{Final Practical}) are mandatory and must be submitted. Practical 1 and Practical 2 are evaluated individually and contribute to the Practical Mark (PM) of the final grade. The Final Practical will be assessed during the oral exam, through its defense and oral questions. Late or missing submissions may negatively affect your final mark.
+\end{warnbox}
+
+\section{Evaluation Overview}
+
+As a reminder, the final mark of the course is composed as follows:
+
+\begin{itemize}
+    \item \textbf{Practical Mark (PM)}: based on \textbf{Practical 1} and \textbf{Practical 2}, described in this guide.
+    \item \textbf{Oral Exam}: accounts for \textbf{70\%} of the final grade, and includes the defense of the \textbf{Final Practical}.
+\end{itemize}
+
+\begin{infobox}[Originality and Research Bonus]
+In all practical assignments, originality, critical thinking, and independent research are actively valued and rewarded. Students who go beyond the baseline solutions—by thoroughly experimenting with hyperparameters, exploring alternative algorithmic strategies or neural network architectures, and clearly documenting their investigations—will be rewarded with higher marks.
+\end{infobox}
+
+\section{Getting Help}
+
+If you encounter errors or have doubts while working on a notebook:
+
+\begin{itemize}
+    \item Re-read the instructions in the notebook: most exercises include hints or links to relevant documentation.
+    \item Check the original Hugging Face Deep RL Course material on which these practicals are based:
+    \begin{itemize}
+        \item Unit 1: \url{https://huggingface.co/learn/deep-rl-course/en/unit1/hands-on}
+        \item Unit 2: \url{https://huggingface.co/learn/deep-rl-course/en/unit2/hands-on}
+        \item Unit 3: \url{https://huggingface.co/learn/deep-rl-course/en/unit3/hands-on}
+    \end{itemize}
+    \item Ask the instructor during the practical sessions, or by email, if the problem persists.
+\end{itemize}
+
+\end{document}
+

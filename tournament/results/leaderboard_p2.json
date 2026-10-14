@@ -1,0 +1,26 @@
+[
+  {
+    "participant": "baseline_random",
+    "submission_path": "/home/runner/work/RL_course/RL_course/submissions/practical2/baseline_random",
+    "timestamp": "2026-10-14 00:14:22 UTC",
+    "success": true,
+    "error": null,
+    "practical_id": 2,
+    "practical_name": "Practical 2 - Taxi-v3 / Taxi-v4",
+    "env_id": "Taxi-v4",
+    "num_episodes": 30,
+    "base_seed": 42,
+    "mean_reward": -748.4,
+    "std_reward": 101.76,
+    "min_reward": -875.0,
+    "max_reward": -412.0,
+    "median_reward": -776.0,
+    "success_rate": 0.0,
+    "avg_steps": 194.6,
+    "avg_step_ms": 0.002,
+    "status": "NEEDS IMPROVEMENT \u26a0\ufe0f",
+    "status_code": "warning",
+    "pass_threshold": 4.5,
+    "mastery_threshold": 7.0
+  }
+]

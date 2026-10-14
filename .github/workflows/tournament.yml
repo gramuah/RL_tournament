@@ -1,0 +1,59 @@
+name: 🏆 Update Tournament Leaderboard
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'submissions/**'
+      - 'tournament/**'
+  schedule:
+    - cron: '0 0 * * *' # Every night at 00:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tournament-leaderboard
+  cancel-in-progress: false
+
+jobs:
+  tournament:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set up Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: 📦 Install system packages
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq swig cmake ffmpeg xvfb
+
+      - name: 📦 Install Python dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r tournament/requirements.txt
+
+      - name: 🏅 Run Tournament & Update Leaderboard
+        run: |
+          python tournament/update_leaderboard.py --episodes 30
+
+      - name: 💾 Commit and push updated leaderboard
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add LEADERBOARD.md tournament/results/
+          if git diff --staged --quiet; then
+            echo "Leaderboard is already up to date, nothing to commit."
+          else
+            git commit -m "chore(tournament): update official leaderboard [skip ci]"
+            git pull --rebase origin main
+            git push origin main
+          fi
