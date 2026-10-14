@@ -1,8 +1,8 @@
 [
   {
     "participant": "rafael_flor",
-    "submission_path": "/home/runner/work/RL_tournament/RL_tournament/submissions/practical2/rafael_flor",
-    "timestamp": "2026-10-14 10:33:56 UTC",
+    "submission_path": "/home/runner/work/RL_course/RL_course/submissions/practical2/rafael_flor",
+    "timestamp": "2026-10-14 10:35:28 UTC",
     "success": true,
     "error": null,
     "practical_id": 2,
@@ -25,8 +25,8 @@
   },
   {
     "participant": "baseline_random",
-    "submission_path": "/home/runner/work/RL_tournament/RL_tournament/submissions/practical2/baseline_random",
-    "timestamp": "2026-10-14 10:33:56 UTC",
+    "submission_path": "/home/runner/work/RL_course/RL_course/submissions/practical2/baseline_random",
+    "timestamp": "2026-10-14 10:35:27 UTC",
     "success": true,
     "error": null,
     "practical_id": 2,

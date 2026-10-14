@@ -172,41 +172,47 @@ function setupKeyListeners() {
       e.preventDefault();
     }
 
-    if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W' || e.key === ' ') {
-      STATE.keys.thrust = true;
-    }
-    if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
-      STATE.keys.left = true;
-    }
-    if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
-      STATE.keys.right = true;
-    }
-    if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
-      STATE.keys.down = true;
-    }
-    if (e.key === 'p' || e.key === 'P') {
-      handleTaxiAction('pickup');
-    }
-    if (e.key === 'o' || e.key === 'O' || e.key === 'Enter') {
-      handleTaxiAction('dropoff');
-    }
     if (e.key === 'r' || e.key === 'R') {
       if (STATE.currentTab === 'sandbox') resetSandbox();
       if (STATE.currentTab === 'arena') resetDuel();
+      return;
     }
 
-    // Directional actions for Taxi
-    if (STATE.currentTab === 'sandbox' && STATE.sandboxEnv === 2) {
-      if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') handleTaxiAction('up');
-      if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') handleTaxiAction('down');
-      if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') handleTaxiAction('left');
-      if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') handleTaxiAction('right');
+    // --- Tab: SANDBOX ---
+    if (STATE.currentTab === 'sandbox') {
+      if (STATE.sandboxEnv === 1) {
+        if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W' || e.key === ' ') STATE.keys.thrust = true;
+        if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') STATE.keys.left = true;
+        if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') STATE.keys.right = true;
+        if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') STATE.keys.down = true;
+      } else if (STATE.sandboxEnv === 2) {
+        if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') handleTaxiAction('up');
+        if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') handleTaxiAction('down');
+        if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') handleTaxiAction('left');
+        if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') handleTaxiAction('right');
+        if (e.key === 'p' || e.key === 'P' || e.key === ' ') handleTaxiAction('pickup');
+        if (e.key === 'o' || e.key === 'O' || e.key === 'Enter') handleTaxiAction('dropoff');
+      }
     }
-    if (STATE.currentTab === 'arena' && STATE.currentPractical === 2 && (STATE.agentA === HUMAN_AGENT || STATE.agentB === HUMAN_AGENT)) {
-      if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') handleDuelTaxiAction('up');
-      if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') handleDuelTaxiAction('down');
-      if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') handleDuelTaxiAction('left');
-      if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') handleDuelTaxiAction('right');
+
+    // --- Tab: ARENA DE DUELOS ---
+    if (STATE.currentTab === 'arena') {
+      const hasHuman = (STATE.agentA === HUMAN_AGENT || STATE.agentB === HUMAN_AGENT);
+      if (hasHuman) {
+        if (STATE.currentPractical === 1) {
+          if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W' || e.key === ' ') STATE.keys.thrust = true;
+          if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') STATE.keys.left = true;
+          if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') STATE.keys.right = true;
+          if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') STATE.keys.down = true;
+        } else if (STATE.currentPractical === 2) {
+          if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') handleDuelTaxiAction('up');
+          if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') handleDuelTaxiAction('down');
+          if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') handleDuelTaxiAction('left');
+          if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') handleDuelTaxiAction('right');
+          if (e.key === 'p' || e.key === 'P' || e.key === ' ') handleDuelTaxiAction('pickup');
+          if (e.key === 'o' || e.key === 'O' || e.key === 'Enter') handleDuelTaxiAction('dropoff');
+        }
+      }
     }
   });
 
@@ -264,13 +270,19 @@ function setupPointerControls() {
   bindPointerButton(document.getElementById('btn-arena-touch-left'), () => { STATE.keys.left = true; }, () => { STATE.keys.left = false; });
   bindPointerButton(document.getElementById('btn-arena-touch-right'), () => { STATE.keys.right = true; }, () => { STATE.keys.right = false; });
 
-  // Arena Human Taxi buttons
-  document.getElementById('btn-arena-taxi-up')?.addEventListener('click', () => handleDuelTaxiAction('up'));
-  document.getElementById('btn-arena-taxi-down')?.addEventListener('click', () => handleDuelTaxiAction('down'));
-  document.getElementById('btn-arena-taxi-left')?.addEventListener('click', () => handleDuelTaxiAction('left'));
-  document.getElementById('btn-arena-taxi-right')?.addEventListener('click', () => handleDuelTaxiAction('right'));
-  document.getElementById('btn-arena-taxi-pickup')?.addEventListener('click', () => handleDuelTaxiAction('pickup'));
-  document.getElementById('btn-arena-taxi-dropoff')?.addEventListener('click', () => handleDuelTaxiAction('dropoff'));
+  // Arena Human Taxi buttons (both pointerdown and click for immediate responsiveness)
+  const bindTaxiBtn = (id, act) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('pointerdown', (e) => { e.preventDefault(); handleDuelTaxiAction(act); });
+    el.addEventListener('click', (e) => { e.preventDefault(); handleDuelTaxiAction(act); });
+  };
+  bindTaxiBtn('btn-arena-taxi-up', 'up');
+  bindTaxiBtn('btn-arena-taxi-down', 'down');
+  bindTaxiBtn('btn-arena-taxi-left', 'left');
+  bindTaxiBtn('btn-arena-taxi-right', 'right');
+  bindTaxiBtn('btn-arena-taxi-pickup', 'pickup');
+  bindTaxiBtn('btn-arena-taxi-dropoff', 'dropoff');
 }
 
 // ---------------------------------------------------------------------------
@@ -788,7 +800,14 @@ function startLiveDuel() {
 }
 
 function handleDuelTaxiAction(act) {
-  if (!STATE.duelRunning || STATE.currentPractical !== 2) return;
+  if (STATE.currentPractical !== 2) return;
+  if (!STATE.duelRunning) {
+    STATE.duelRunning = true;
+    const badge = document.getElementById('duel-winner-badge');
+    if (badge) badge.textContent = "⚔️ ¡Duelo en curso! Ambos agentes compitiendo bajo el mismo reto...";
+    const overlay = document.getElementById('duel-overlay');
+    if (overlay) overlay.style.display = 'none';
+  }
   if (STATE.agentA === HUMAN_AGENT) executeTaxiStep(duelTaxiA, act);
   else if (STATE.agentB === HUMAN_AGENT) executeTaxiStep(duelTaxiB, act);
   checkDuelEnd();
@@ -1206,12 +1225,19 @@ function renderSingleTaxiGrid(ctx, t, startX, startY, size, agentName) {
     { row: 4, col: 3, name: 'B', color: '#3a5bd8' }
   ];
 
+  const stNames = ['R', 'G', 'Y', 'B'];
+  const pName = stNames[t.passengerIdx] || '?';
+  const dName = stNames[t.destinationIdx] || '?';
+  const statusStr = t.delivered
+    ? '¡ÉXITO!'
+    : (t.passengerInTaxi ? `➔ Dest: ${dName}` : `➔ Recoger: ${pName}`);
+
   ctx.font = '600 12px var(--font-sans)';
   ctx.fillStyle = '#cbd5e1';
-  ctx.fillText(agentName.substring(0, 24), startX, startY - 14);
+  ctx.fillText(agentName.substring(0, 16), startX, startY - 14);
   ctx.font = '11px JetBrains Mono';
-  ctx.fillStyle = '#94a3b8';
-  ctx.fillText(`Puntos: ${t.score} | Pasos: ${t.steps}`, startX + 160, startY - 14);
+  ctx.fillStyle = t.passengerInTaxi ? '#38bdf8' : '#94a3b8';
+  ctx.fillText(`Pts: ${t.score} | ${t.steps} st | ${statusStr}`, startX + 115, startY - 14);
 
   // 1. Gymnasium Road Background Tiles
   for (let r = 0; r < 5; r++) {
@@ -1327,10 +1353,25 @@ function renderSingleTaxiGrid(ctx, t, startX, startY, size, agentName) {
 
   // Indicator if passenger is in taxi
   if (t.passengerInTaxi) {
-    ctx.fillStyle = '#22c55e';
+    if (TAXI_ASSETS.loaded && TAXI_ASSETS.passenger.complete) {
+      ctx.drawImage(TAXI_ASSETS.passenger, tx + cellSize * 0.48, ty + cellSize * 0.04, cellSize * 0.45, cellSize * 0.52);
+    }
+    ctx.fillStyle = '#10b981';
     ctx.beginPath();
-    ctx.arc(tx + cellSize * 0.8, ty + cellSize * 0.25, 4, 0, Math.PI * 2);
+    ctx.arc(tx + cellSize * 0.82, ty + cellSize * 0.22, 6, 0, Math.PI * 2);
     ctx.fill();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  }
+
+  // Quick action feedback toast (¡RECOGIDO! / ¡AQUÍ NO! / ¡ENTREGADO!)
+  if (t.flashMsg && Date.now() < t.flashTimer) {
+    ctx.save();
+    ctx.font = 'bold 12px var(--font-sans)';
+    ctx.fillStyle = t.flashMsg.includes('NO') ? '#ef4444' : '#10b981';
+    ctx.fillText(t.flashMsg, tx + 6, ty - 6);
+    ctx.restore();
   }
 
   // Success Banner
@@ -1728,8 +1769,12 @@ function executeTaxiStep(taxi, act) {
     if (!taxi.passengerInTaxi && taxi.row === pSt.row && taxi.col === pSt.col) {
       taxi.passengerInTaxi = true;
       taxi.score -= 1;
+      taxi.flashMsg = "¡RECOGIDO!";
+      taxi.flashTimer = Date.now() + 1500;
     } else {
       taxi.score -= 10;
+      taxi.flashMsg = "¡AQUÍ NO!";
+      taxi.flashTimer = Date.now() + 1000;
     }
   } else if (act === 'dropoff') {
     const dSt = stations[taxi.destinationIdx];
@@ -1737,11 +1782,17 @@ function executeTaxiStep(taxi, act) {
       taxi.passengerInTaxi = false;
       taxi.delivered = true;
       taxi.score += 20;
-      setTimeout(() => {
-        resetSandbox();
-      }, 2200);
+      taxi.flashMsg = "¡ENTREGADO!";
+      taxi.flashTimer = Date.now() + 2500;
+      if (taxi === sbTaxi) {
+        setTimeout(() => {
+          resetSandbox();
+        }, 2200);
+      }
     } else {
       taxi.score -= 10;
+      taxi.flashMsg = "¡AQUÍ NO!";
+      taxi.flashTimer = Date.now() + 1000;
     }
   }
 }
