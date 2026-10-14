@@ -521,95 +521,51 @@ window.challengeAgent = function(participant) {
 
 
 // ===========================================================================
-// GYMNASIUM LUNARLANDER-v3 AUTHENTIC RENDERING HELPERS
+// GYMNASIUM LUNARLANDER-v3 AUTHENTIC RENDERING ENGINE
+// Exactly matches Gymnasium Box2D Pygame source & rendering
 // ===========================================================================
-// Official LunarLander polygon coordinates (Gymnasium Box2D)
 // LANDER_POLY = [(-14, +17), (-17, 0), (-17, -10), (+17, -10), (+17, 0), (+14, +17)]
 function drawGymnasiumLander(ctx, x, y, angle, thrust, leftThrust, rightThrust, landed, crashed, colorTheme) {
   ctx.save();
   ctx.translate(x, y);
   ctx.rotate(angle);
 
-  const bodyColor = colorTheme === 'orange' ? '#ff7b00' : (colorTheme === 'blue' ? '#00d2ff' : '#8266e6');
-  const bodyBorder = '#4d4d80';
+  // Gymnasium official colors
+  let bodyColor = 'rgb(128, 102, 230)'; // Authentic Gymnasium periwinkle/purple
+  let borderColor = 'rgb(77, 77, 128)';
 
-  // 1. Landing Legs with spring shock struts and circular foot pads
-  ctx.strokeStyle = '#64748b';
-  ctx.lineWidth = 2.5;
-
-  // Left Leg
-  ctx.beginPath();
-  ctx.moveTo(-10, 8);
-  ctx.lineTo(-19, 21);
-  ctx.stroke();
-
-  // Left Foot Pad
-  ctx.fillStyle = '#334155';
-  ctx.beginPath();
-  ctx.arc(-19, 21, 3.5, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Right Leg
-  ctx.beginPath();
-  ctx.moveTo(10, 8);
-  ctx.lineTo(19, 21);
-  ctx.stroke();
-
-  // Right Foot Pad
-  ctx.fillStyle = '#334155';
-  ctx.beginPath();
-  ctx.arc(19, 21, 3.5, 0, Math.PI * 2);
-  ctx.fill();
-
-  // 2. Thruster Nozzle
-  ctx.fillStyle = '#475569';
-  ctx.fillRect(-5, 10, 10, 4);
-
-  // 3. Main Engine Exhaust Flame (when thrust active)
-  if (thrust) {
-    // Outer flame (Orange-Red)
-    ctx.fillStyle = '#ff4500';
-    ctx.beginPath();
-    ctx.moveTo(-6, 14);
-    ctx.lineTo(6, 14);
-    ctx.lineTo(0, 30 + Math.random() * 10);
-    ctx.closePath();
-    ctx.fill();
-
-    // Inner flame (Bright Yellow)
-    ctx.fillStyle = '#ffd700';
-    ctx.beginPath();
-    ctx.moveTo(-3, 14);
-    ctx.lineTo(3, 14);
-    ctx.lineTo(0, 22 + Math.random() * 6);
-    ctx.closePath();
-    ctx.fill();
+  if (colorTheme === 'orange') {
+    bodyColor = 'rgb(249, 115, 22)';
+    borderColor = 'rgb(194, 65, 12)';
+  } else if (colorTheme === 'blue') {
+    bodyColor = 'rgb(14, 165, 233)';
+    borderColor = 'rgb(3, 105, 161)';
   }
 
-  // 4. Side Engine Thrusters
-  if (leftThrust) {
-    ctx.fillStyle = '#ff6b00';
-    ctx.beginPath();
-    ctx.moveTo(-17, 0);
-    ctx.lineTo(-26 - Math.random() * 5, -2);
-    ctx.lineTo(-17, -4);
-    ctx.closePath();
-    ctx.fill();
-  }
-  if (rightThrust) {
-    ctx.fillStyle = '#ff6b00';
-    ctx.beginPath();
-    ctx.moveTo(17, 0);
-    ctx.lineTo(26 + Math.random() * 5, -2);
-    ctx.lineTo(17, -4);
-    ctx.closePath();
-    ctx.fill();
-  }
-
-  // 5. Authentic Lander Polygonal Body
-  // Invert Y because canvas Y points down
+  // 1. Articulated Legs (Gymnasium Box2D rectangular struts)
   ctx.fillStyle = bodyColor;
-  ctx.strokeStyle = bodyBorder;
+  ctx.strokeStyle = borderColor;
+  ctx.lineWidth = 1.5;
+
+  // Left Leg: angled down and left
+  ctx.save();
+  ctx.translate(-14, 2);
+  ctx.rotate(-0.4);
+  ctx.fillRect(-2, 0, 4, 18);
+  ctx.strokeRect(-2, 0, 4, 18);
+  ctx.restore();
+
+  // Right Leg: angled down and right
+  ctx.save();
+  ctx.translate(14, 2);
+  ctx.rotate(0.4);
+  ctx.fillRect(-2, 0, 4, 18);
+  ctx.strokeRect(-2, 0, 4, 18);
+  ctx.restore();
+
+  // 2. Main Lander Polygonal Body (Gymnasium LANDER_POLY)
+  ctx.fillStyle = bodyColor;
+  ctx.strokeStyle = borderColor;
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.moveTo(-14, -17);
@@ -622,91 +578,58 @@ function drawGymnasiumLander(ctx, x, y, angle, thrust, leftThrust, rightThrust, 
   ctx.fill();
   ctx.stroke();
 
-  // 6. Cockpit Viewport & Details
-  ctx.fillStyle = '#ffd700';
-  ctx.beginPath();
-  ctx.arc(0, -6, 5, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.strokeStyle = '#b45309';
-  ctx.lineWidth = 1;
-  ctx.stroke();
-
-  // Top radio antenna
-  ctx.strokeStyle = '#cbd5e1';
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.moveTo(0, -17);
-  ctx.lineTo(0, -25);
-  ctx.stroke();
-  ctx.fillStyle = '#ef4444';
-  ctx.beginPath();
-  ctx.arc(0, -25, 2, 0, Math.PI * 2);
-  ctx.fill();
-
   ctx.restore();
 }
 
-// Draw authentic Gymnasium Lunar terrain with central helipad and two flags
-function drawGymnasiumTerrain(ctx, x1, x2, padX, padY, padWidth = 90) {
+// Draw Authentic Gymnasium Moon Terrain: Solid Jet Black Sky & Solid Pure White Ground
+function drawGymnasiumTerrain(ctx, x1, x2, padX, padY, padWidth = 110) {
   const padHalf = padWidth / 2;
   const leftX = padX - padHalf;
   const rightX = padX + padHalf;
 
-  // Authentic Moon Surface Polygon
-  ctx.fillStyle = '#202436';
+  // 1. Pure White Ground Polygon (Exact Gymnasium visual style)
+  ctx.fillStyle = '#ffffff';
   ctx.beginPath();
-  ctx.moveTo(x1, 380);
-  ctx.lineTo(x1, padY + 25);
-  ctx.lineTo(leftX - 40, padY + 18);
+  ctx.moveTo(x1, 450);
+  ctx.lineTo(x1, padY + 28);
+  ctx.lineTo(x1 + (leftX - x1) * 0.45, padY + 36);
+  ctx.lineTo(leftX - 35, padY + 16);
   ctx.lineTo(leftX, padY);
-  ctx.lineTo(rightX, padY); // Flat Landing Pad
-  ctx.lineTo(rightX + 40, padY + 18);
-  ctx.lineTo(x2, padY + 25);
-  ctx.lineTo(x2, 420);
-  ctx.lineTo(x1, 420);
+  ctx.lineTo(rightX, padY); // Perfectly Flat Helipad
+  ctx.lineTo(rightX + 35, padY + 18);
+  ctx.lineTo(rightX + (x2 - rightX) * 0.55, padY + 38);
+  ctx.lineTo(x2, padY + 24);
+  ctx.lineTo(x2, 450);
+  ctx.lineTo(x1, 450);
   ctx.closePath();
   ctx.fill();
 
-  // Terrain surface outline
-  ctx.strokeStyle = '#475569';
-  ctx.lineWidth = 2.5;
-  ctx.beginPath();
-  ctx.moveTo(x1, padY + 25);
-  ctx.lineTo(leftX - 40, padY + 18);
-  ctx.lineTo(leftX, padY);
-  ctx.lineTo(rightX, padY);
-  ctx.lineTo(rightX + 40, padY + 18);
-  ctx.lineTo(x2, padY + 25);
-  ctx.stroke();
-
-  // Landing Helipad Runway (Yellow glowing line)
-  ctx.strokeStyle = '#ffd700';
-  ctx.lineWidth = 3.5;
-  ctx.beginPath();
-  ctx.moveTo(leftX, padY);
-  ctx.lineTo(rightX, padY);
-  ctx.stroke();
-
-  // Two Official Helipad Flags
-  drawFlag(ctx, leftX, padY);
-  drawFlag(ctx, rightX, padY);
+  // 2. Official Helipad Yellow Pennant Flags on White Flagpoles
+  drawGymnasiumFlag(ctx, leftX, padY);
+  drawGymnasiumFlag(ctx, rightX, padY);
 }
 
-function drawFlag(ctx, x, y) {
-  // Flagpole
-  ctx.strokeStyle = '#cbd5e1';
-  ctx.lineWidth = 2;
+// Exactly matches Gymnasium flag rendering:
+// flagy1 = helipad_y, flagy2 = flagy1 + 50
+// [(x, flagy2), (x, flagy2 - 10), (x + 25, flagy2 - 5)]
+function drawGymnasiumFlag(ctx, x, y) {
+  const poleHeight = 42;
+  const flagTop = y - poleHeight;
+
+  // White Flagpole
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 1.8;
   ctx.beginPath();
   ctx.moveTo(x, y);
-  ctx.lineTo(x, y - 24);
+  ctx.lineTo(x, flagTop);
   ctx.stroke();
 
-  // Triangular Red/Yellow Flag
-  ctx.fillStyle = '#ef4444';
+  // Official Gymnasium Yellow Triangle Flag (pointing right)
+  ctx.fillStyle = '#cccc00';
   ctx.beginPath();
-  ctx.moveTo(x, y - 24);
-  ctx.lineTo(x + 12, y - 18);
-  ctx.lineTo(x, y - 12);
+  ctx.moveTo(x, flagTop);
+  ctx.lineTo(x, flagTop + 10);
+  ctx.lineTo(x + 22, flagTop + 5);
   ctx.closePath();
   ctx.fill();
 }
@@ -1085,30 +1008,25 @@ function declareDuelWinner(scoreA, scoreB, stepsA, stepsB) {
 function renderDuelLander() {
   const w = duelCanvas.width;
   const h = duelCanvas.height;
-  duelCtx.fillStyle = '#05070e';
+  // Official Gymnasium Jet Black Sky (No stars)
+  duelCtx.fillStyle = '#000000';
   duelCtx.fillRect(0, 0, w, h);
 
   // Center vertical dividing line
-  duelCtx.strokeStyle = 'rgba(0, 240, 255, 0.4)';
+  duelCtx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
   duelCtx.setLineDash([6, 6]);
-  duelCtx.lineWidth = 2;
+  duelCtx.lineWidth = 1.5;
   duelCtx.beginPath();
   duelCtx.moveTo(w / 2, 0);
   duelCtx.lineTo(w / 2, h);
   duelCtx.stroke();
   duelCtx.setLineDash([]);
 
-  // Stars background
-  duelCtx.fillStyle = 'rgba(255, 255, 255, 0.4)';
-  for (let i = 0; i < 40; i++) {
-    duelCtx.fillRect((i * 67) % w, (i * 43) % 270, 1.5, 1.5);
-  }
+  // Draw Gymnasium Terrains Left & Right (Pure White Ground)
+  drawGymnasiumTerrain(duelCtx, 0, 400, duelLanderA.padX, duelLanderA.padY, 90);
+  drawGymnasiumTerrain(duelCtx, 400, 800, duelLanderB.padX, duelLanderB.padY, 90);
 
-  // Draw Gymnasium Terrains Left & Right
-  drawGymnasiumTerrain(duelCtx, 0, 400, duelLanderA.padX, duelLanderA.padY, 80);
-  drawGymnasiumTerrain(duelCtx, 400, 800, duelLanderB.padX, duelLanderB.padY, 80);
-
-  // Particles
+  // Particles (Gymnasium red/pink circular spark dots)
   duelParticles.forEach(p => {
     duelCtx.save();
     duelCtx.globalAlpha = p.alpha;
@@ -1191,62 +1109,66 @@ function renderSingleTaxiGrid(ctx, t, startX, startY, size, agentName) {
   ctx.fillStyle = '#94a3b8';
   ctx.fillText(`Puntos: ${t.score} | Pasos: ${t.steps}`, startX + 160, startY - 14);
 
-  ctx.fillStyle = '#121626';
+  // Official Gymnasium Asphalt Road Background
+  ctx.fillStyle = '#6b7280';
   ctx.fillRect(startX, startY, size, size);
 
+  // Subtle lane markings
   for (let r = 0; r < 5; r++) {
     for (let c = 0; c < 5; c++) {
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.06)';
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
       ctx.lineWidth = 1;
       ctx.strokeRect(startX + c * cellSize, startY + r * cellSize, cellSize, cellSize);
     }
   }
 
+  // 4 Official Colored Stations (R, G, Y, B)
   stations.forEach((st, idx) => {
     const sx = startX + st.col * cellSize;
     const sy = startY + st.row * cellSize;
-    ctx.fillStyle = `${st.color}22`;
-    ctx.fillRect(sx, sy, cellSize, cellSize);
-    ctx.strokeStyle = st.color;
-    ctx.lineWidth = 2;
-    ctx.strokeRect(sx + 2, sy + 2, cellSize - 4, cellSize - 4);
-
     ctx.fillStyle = st.color;
-    ctx.font = 'bold 16px Outfit';
-    ctx.fillText(st.name, sx + cellSize / 2 - 6, sy + cellSize / 2 + 6);
+    ctx.fillRect(sx + 3, sy + 3, cellSize - 6, cellSize - 6);
 
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 18px Outfit';
+    ctx.fillText(st.name, sx + cellSize / 2 - 6, sy + cellSize / 2 + 7);
+
+    // Destination target flag
     if (idx === t.destinationIdx) {
-      ctx.font = '14px Outfit';
-      ctx.fillText('🏁', sx + 5, sy + 18);
+      ctx.font = '16px Outfit';
+      ctx.fillText('🏁', sx + 4, sy + 20);
     }
 
+    // Passenger waiting at station
     if (idx === t.passengerIdx && !t.passengerInTaxi) {
-      ctx.font = '20px Outfit';
-      ctx.fillText('🙋‍♂️', sx + cellSize / 2 - 10, sy + cellSize / 2 + 10);
+      ctx.font = '22px Outfit';
+      ctx.fillText('🙋‍♂️', sx + cellSize / 2 - 11, sy + cellSize / 2 + 10);
     }
   });
 
-  // Walls
-  ctx.strokeStyle = '#00f0ff';
-  ctx.lineWidth = 4;
+  // Official Gymnasium Taxi Hedge Walls (Green median barriers)
+  ctx.strokeStyle = '#4d8c28';
+  ctx.lineWidth = 6;
+  ctx.lineCap = 'round';
   drawGridWall(ctx, startX, startY, cellSize, 0, 2, 2, 2);
   drawGridWall(ctx, startX, startY, cellSize, 3, 1, 5, 1);
   drawGridWall(ctx, startX, startY, cellSize, 3, 3, 5, 3);
+  ctx.lineCap = 'butt';
 
-  // Taxi Sprite
+  // Taxi Sprite (Gymnasium Yellow Taxi)
   const tx = startX + t.col * cellSize + cellSize / 2;
   const ty = startY + t.row * cellSize + cellSize / 2;
-  ctx.fillStyle = '#fbbf24';
+  ctx.fillStyle = '#facc15';
   ctx.fillRect(tx - 16, ty - 12, 32, 24);
-  ctx.fillStyle = '#1e293b';
+  ctx.fillStyle = '#1e293b'; // Windshield
   ctx.fillRect(tx - 10, ty - 8, 20, 16);
-  ctx.fillStyle = '#fbbf24';
-  ctx.font = '10px Outfit';
+  ctx.fillStyle = '#facc15';
+  ctx.font = '11px Outfit';
   ctx.fillText(t.passengerInTaxi ? '👨‍✈️' : '🚖', tx - 8, ty + 4);
 
   if (t.delivered) {
     ctx.fillStyle = '#10b981';
-    ctx.font = 'bold 16px Outfit';
+    ctx.font = 'bold 18px Outfit';
     ctx.fillText('¡MISIÓN CUMPLIDA! 🏁', startX + 50, startY + size / 2);
   }
 }
@@ -1478,17 +1400,12 @@ function updateSandboxLander() {
 function renderSandboxLander() {
   const w = sbCanvas.width;
   const h = sbCanvas.height;
-  sbCtx.fillStyle = '#05070e';
+  // Official Gymnasium Jet Black Sky (No stars)
+  sbCtx.fillStyle = '#000000';
   sbCtx.fillRect(0, 0, w, h);
 
-  // Background stars
-  sbCtx.fillStyle = 'rgba(255, 255, 255, 0.45)';
-  for (let i = 0; i < 50; i++) {
-    sbCtx.fillRect((i * 97) % w, (i * 61) % 310, 1.5, 1.5);
-  }
-
-  // Gymnasium moon terrain
-  drawGymnasiumTerrain(sbCtx, 0, w, sbLander.padX, sbLander.padY, 110);
+  // Gymnasium moon terrain (Solid Pure White Ground)
+  drawGymnasiumTerrain(sbCtx, 0, w, sbLander.padX, sbLander.padY, 120);
 
   // Particles
   sbParticles.forEach(p => {
