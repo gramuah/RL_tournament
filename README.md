@@ -42,6 +42,33 @@ The official PDF student guide is available here:
 
 ---
 
+## 🥊 Head-to-Head Agent Duel (Side-by-Side Comparator)
+
+Want to see **who lands faster** in LunarLander or test two agents on the exact same challenge?
+
+Run the synchronized head-to-head duel tool locally or directly inside Google Colab:
+
+```bash
+# Compare two agents side-by-side with synchronized broadcast video
+python tournament/compare.py --practical 1 --agent-a submissions/practical1/demo_student --agent-b baseline_heuristic --episodes 5 --video duel.mp4
+```
+
+Or directly inside your Colab notebook:
+```python
+import urllib.request
+exec(urllib.request.urlopen("https://raw.githubusercontent.com/rflor01/RL_tournament/main/tournament/compare.py").read().decode("utf-8"))
+
+# Duel against a baseline or against any classmate on the leaderboard!
+duel_agents(practical_id=1, agent_a="agent.py", agent_b="baseline_heuristic", output_video="duel.mp4")
+display_duel("duel.mp4")
+```
+
+- **Same seed**: Identical initial state, terrain slopes, flags, and wind turbulence.
+- **Speed & Score metrics**: Identifies the faster touchdown and fuel/action efficiency.
+- **Side-by-side replay**: Broadcast HUD with real-time stats and celebration victory screens.
+
+---
+
 ## 📂 Submissions Directory Structure
 
 Each student/team submits their model into their own folder:

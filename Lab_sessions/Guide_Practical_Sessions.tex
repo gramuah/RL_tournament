@@ -180,6 +180,18 @@ To foster friendly competition, peer learning, and benchmark reproducibility, al
 You can submit multiple times! If you improve your hyperparameters, refine reward engineering, or discover a better architecture, open an updated PR to improve your standing on the leaderboard.
 \end{infobox}
 
+\section{Head-to-Head Agent Duel: Comparing Against Classmates}
+\label{sec:duel}
+
+Beyond overall leaderboard ranks, students can directly challenge and compare their agents against baselines or other classmates in a \textbf{Head-to-Head Duel}:
+
+\begin{itemize}
+    \item \textbf{Identical Benchmark Seeds}: Both agents face the exact same initial state, landing terrain, wind turbulence (in LunarLander), or passenger pickup/drop-off locations (in Taxi).
+    \item \textbf{Speed vs. Score Analysis}: Discover who lands or delivers faster (fewer time steps), who consumes less fuel/actions, and who achieves higher reward stability.
+    \item \textbf{Side-by-Side Synchronized Video}: Generates a broadcast-style split-screen video with a real-time HUD (speed, step counter, accumulated reward, touchdown status) and celebration victory screens, playable directly inside Google Colab or your local Jupyter notebook.
+    \item \textbf{Challenge Any Classmate}: By simply entering the GitHub username of any student on the leaderboard, the comparator tool automatically pulls their model from the public repository and runs the duel against your local model.
+\end{itemize}
+
 \section{Submitting Your Practical}
 \label{sec:submitting}
 
