@@ -137,14 +137,52 @@
         <div class="display-header">
           <div class="display-title">
             <span class="live-indicator"></span>
-            <span id="duel-live-status">RETRANSMISIÓN SINCRONIZADA SPLIT-SCREEN</span>
+            <span id="duel-live-status">ENFRENTAMIENTO EN DIRECTO: SPLIT-SCREEN</span>
           </div>
-          <div style="font-size: 0.85rem; color: var(--text-dim); font-family: var(--font-mono);">
-            SEED #42 · 60 FPS
+          <div class="duel-mode-toggle" id="duel-mode-toggle-group">
+            <button class="duel-mode-btn active" id="btn-mode-live">⚡ Simulación en Directo</button>
+            <button class="duel-mode-btn" id="btn-mode-video">🎬 Vídeo Renderizado</button>
           </div>
         </div>
 
-        <div class="video-wrapper">
+        <!-- Live Interactive Dual Canvas -->
+        <div id="duel-live-wrapper" class="duel-canvas-container">
+          <div class="duel-side-labels">
+            <div class="duel-label-box label-a"><span id="lbl-agent-a-badge">🔵 JUGADOR A</span></div>
+            <div class="duel-label-box label-b"><span id="lbl-agent-b-badge">🟠 AGENTE B</span></div>
+          </div>
+          <canvas id="duel-canvas" width="800" height="380"></canvas>
+
+          <!-- Floating Arena Countdown / Result Banner -->
+          <div id="duel-overlay" class="duel-overlay" style="display: none;">
+            <div id="duel-overlay-text">¡PREPARADOS!</div>
+          </div>
+        </div>
+
+        <!-- Human Arena Controls (visible when Player A or B is Human) -->
+        <div id="arena-human-controls" class="human-controls-panel" style="display: none;">
+          <div class="controls-guide-bar">
+            <span>🎮 <strong>CONTROL MANUAL (TÚ)</strong></span>
+            <span class="keyboard-hints" id="arena-keyboard-hints">Teclado: [A / ⬅️] Girar Izq | [D / ➡️] Girar Der | [Espacio / W / ⬆️] Propulsor</span>
+          </div>
+          <div class="touch-controls-row" id="arena-touch-buttons">
+            <!-- Dynamically populated or switchable -->
+            <button class="game-btn touch-btn" id="btn-arena-touch-left">⬅️ Girar Izq [A]</button>
+            <button class="game-btn touch-btn btn-main-thrust" id="btn-arena-touch-thrust">🚀 PROPULSOR [Espacio]</button>
+            <button class="game-btn touch-btn" id="btn-arena-touch-right">Girar Der ➡️ [D]</button>
+          </div>
+          <div class="touch-controls-row" id="arena-touch-taxi-buttons" style="display: none;">
+            <button class="dpad-btn" id="btn-arena-taxi-up">⬆️</button>
+            <button class="dpad-btn" id="btn-arena-taxi-left">⬅️</button>
+            <button class="dpad-btn" id="btn-arena-taxi-down">⬇️</button>
+            <button class="dpad-btn" id="btn-arena-taxi-right">➡️</button>
+            <button class="game-btn action-pickup" id="btn-arena-taxi-pickup">🙋‍♂️ Recoger [P]</button>
+            <button class="game-btn action-dropoff" id="btn-arena-taxi-dropoff">🏁 Dejar [O]</button>
+          </div>
+        </div>
+
+        <!-- Pre-rendered Video Wrapper -->
+        <div id="duel-video-wrapper" class="video-wrapper" style="display: none;">
           <video id="duel-video" class="duel-video-elem" autoplay loop muted playsinline>
             <source src="assets/duel_lunarlander_preview.mp4" type="video/mp4">
             Tu navegador no soporta reproducción de vídeo HTML5.
@@ -156,7 +194,7 @@
           
           <div class="telem-card">
             <div class="telem-title">
-              <span>⚡ Velocidad de Llegada (Menor es más rápido)</span>
+              <span>⚡ Velocidad / Pasos</span>
             </div>
             <div class="bar-comparison">
               <div class="bar-row">
@@ -174,7 +212,7 @@
 
           <div class="telem-card">
             <div class="telem-title">
-              <span>⭐ Recompensa Promedio</span>
+              <span>⭐ Recompensa Obtenida</span>
             </div>
             <div class="bar-comparison">
               <div class="bar-row">
@@ -192,10 +230,10 @@
 
           <div class="telem-card" style="display: flex; flex-direction: column; justify-content: center;">
             <div class="telem-title">
-              <span>🏆 Ganador del Enfrentamiento</span>
+              <span>🏆 Resultado del Enfrentamiento</span>
             </div>
             <div id="duel-winner-badge" style="font-size: 0.92rem; color: #fff; line-height: 1.4;">
-              Calculando telemetría...
+              ¡Pulsa '⚔️ Iniciar Duelo' para comenzar la competición!
             </div>
           </div>
 
@@ -241,15 +279,113 @@
       </div>
     </section>
 
-    <!-- VIEW 3: 2D PHYSICS SANDBOX -->
+    <!-- VIEW 3: 2D ARCADE & SANDBOX LAB -->
     <section id="sandbox-view" class="view-section" style="display: none;">
       <div class="arena-header">
-        <h2>🎮 Simulador LunarLander 2D</h2>
-        <p>Visualización continua del motor físico y piloto automático en 60 FPS.</p>
+        <h2>🎮 Simulador 2D Arcade & Laboratorio Interactivo</h2>
+        <p>Toma el control manual y pon a prueba tus reflejos en <strong>LunarLander</strong> (Práctica 1) y <strong>Taxi</strong> (Práctica 2), o activa el piloto automático RL para ver la política óptima.</p>
       </div>
 
+      <!-- Sandbox Selector and Mode Bar -->
+      <div class="sandbox-toolbar">
+        <div class="sandbox-env-selector">
+          <button class="sandbox-env-btn active" data-sandbox-env="1" id="sandbox-btn-p1">
+            🚀 Práctica 1: LunarLander
+          </button>
+          <button class="sandbox-env-btn" data-sandbox-env="2" id="sandbox-btn-p2">
+            🚕 Práctica 2: Taxi
+          </button>
+        </div>
+
+        <div class="sandbox-mode-selector">
+          <button class="sandbox-mode-btn active" id="btn-sandbox-manual">
+            🎮 Control Manual (Tú Juegas)
+          </button>
+          <button class="sandbox-mode-btn" id="btn-sandbox-autopilot">
+            🤖 Piloto Automático RL
+          </button>
+          <button class="sandbox-reset-btn" id="btn-sandbox-reset" title="Reiniciar Entorno">
+            🔄 Reiniciar (R)
+          </button>
+        </div>
+      </div>
+
+      <!-- Sandbox HUD metrics bar -->
+      <div class="sandbox-hud-bar">
+        <div class="hud-item">
+          <span class="hud-label">PUNTUACIÓN / RECOMPENSA</span>
+          <span class="hud-value" id="sb-hud-score">+0.0 pts</span>
+        </div>
+        <div class="hud-item">
+          <span class="hud-label">PASOS REALIZADOS</span>
+          <span class="hud-value" id="sb-hud-steps">0 st</span>
+        </div>
+        <div class="hud-item">
+          <span class="hud-label" id="sb-hud-label-3">VELOCIDAD VERTICAL</span>
+          <span class="hud-value" id="sb-hud-val-3">0.00 m/s</span>
+        </div>
+        <div class="hud-item">
+          <span class="hud-label" id="sb-hud-label-4">ALTITUD</span>
+          <span class="hud-value" id="sb-hud-val-4">350 m</span>
+        </div>
+        <div class="hud-item">
+          <span class="hud-label">ESTADO DE MISIÓN</span>
+          <span class="hud-value" id="sb-hud-status" style="color: var(--accent-cyan);">EN CURSO 🚀</span>
+        </div>
+      </div>
+
+      <!-- Canvas Frame -->
       <div class="canvas-wrapper">
-        <canvas id="lander-canvas" width="800" height="420"></canvas>
+        <canvas id="sandbox-canvas" width="800" height="420"></canvas>
+      </div>
+
+      <!-- Sandbox Touch / Keyboard Control Pad -->
+      <div class="sandbox-controls-card">
+        
+        <!-- LunarLander Controls -->
+        <div id="sb-controls-lander" class="controls-container">
+          <div class="control-hints">
+            <span>⌨️ Teclado: <strong>[Espacio / W / ↑]</strong> Propulsor Principal | <strong>[A / ⬅️]</strong> Girar Izquierda | <strong>[D / ➡️]</strong> Girar Derecha | <strong>[R]</strong> Reiniciar</span>
+          </div>
+          <div class="touch-btn-cluster">
+            <button class="game-btn touch-btn" id="btn-touch-left">
+              <span>⬅️ Girar Izq [A]</span>
+            </button>
+            <button class="game-btn touch-btn btn-main-thrust" id="btn-touch-thrust">
+              <span>🚀 PROPULSOR PRINCIPAL [Espacio]</span>
+            </button>
+            <button class="game-btn touch-btn" id="btn-touch-right">
+              <span>Girar Der ➡️ [D]</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Taxi Controls -->
+        <div id="sb-controls-taxi" class="controls-container" style="display: none;">
+          <div class="control-hints">
+            <span>⌨️ Teclado: <strong>Flechas / WASD</strong> para conducir | <strong>[P / Espacio]</strong> Recoger Pasajero | <strong>[O / Enter]</strong> Dejar Pasajero | <strong>[R]</strong> Reiniciar</span>
+          </div>
+          <div class="taxi-touch-grid">
+            <div class="dpad-box">
+              <button class="dpad-btn" id="btn-taxi-up">⬆️</button>
+              <div class="dpad-mid">
+                <button class="dpad-btn" id="btn-taxi-left">⬅️</button>
+                <div class="dpad-center">🚖</div>
+                <button class="dpad-btn" id="btn-taxi-right">➡️</button>
+              </div>
+              <button class="dpad-btn" id="btn-taxi-down">⬇️</button>
+            </div>
+            <div class="taxi-action-box">
+              <button class="game-btn action-pickup" id="btn-taxi-pickup">
+                <span>🙋‍♂️ Recoger Pasajero [P]</span>
+              </button>
+              <button class="game-btn action-dropoff" id="btn-taxi-dropoff">
+                <span>🏁 Dejar en Destino [O]</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
       </div>
     </section>
 
