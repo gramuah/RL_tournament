@@ -4,8 +4,8 @@ Welcome to the automated competition leaderboard for the **Reinforcement Learnin
 
 All agents uploaded to GitHub are automatically benchmarked under identical conditions using fixed seeds and evaluated with **GitHub Actions**.
 
-> **Last Updated:** `2026-10-14 08:16:18 UTC`  
-> **Total Evaluated Agents:** `2` (Mastery Model + Baseline)  
+> **Last Updated:** `2026-10-14 10:33:53 UTC`  
+> **Total Evaluated Agents:** `4`  
 > **Evaluation Engine:** Automated CI Runner (`ubuntu-latest` / Python 3.10)
 
 ### 🌐 Arena Interactiva y Visualizador Web en GitHub
@@ -45,7 +45,7 @@ In this challenge, agents learn attitude and thruster control to land a spacecra
 | Rank | Participant | Mean Score | Std Dev | Success Rate | Min / Max | Status |
 | :---: | :--- | :---: | :---: | :---: | :---: | :---: |
 | 🥇 **1st** | [rafael_flor](submissions/practical1/rafael_flor) | **257.38** | ±23.07 | 100.0% | [215.8, 297.1] | MASTERY 🏆 |
-| 2nd | *baseline_random (Baseline)* | **-179.31** | ±94.57 | 0.0% | [-385.2, -77.3] | NEEDS IMPROVEMENT ⚠️ |
+| 🥈 **2nd** | *baseline_random (Baseline)* | **-190.32** | ±109.14 | 0.0% | [-469.3, -5.5] | NEEDS IMPROVEMENT ⚠️ |
 
 ---
 
@@ -54,12 +54,12 @@ In this challenge, agents learn attitude and thruster control to land a spacecra
 In this challenge, agents learn a tabular Q-learning policy to pick up and drop off passengers in a discrete gridworld.
 - **Pass Threshold:** $\text{Mean Reward} \ge 4.5$
 - **Mastery Threshold:** $\text{Mean Reward} \ge 7.0$
-- **Episodes Evaluated:** 30 episodes (Fixed Seeds)
+- **Episodes Evaluated:** 50 episodes (Fixed Seeds)
 
-| Rank | Participant | Mean Score | Std Dev | Success Rate | Avg Steps | Status |
+| Rank | Participant | Mean Score | Std Dev | Success Rate | Min / Max | Status |
 | :---: | :--- | :---: | :---: | :---: | :---: | :---: |
-| 🥇 **1st** | [rafael_flor](submissions/practical2/rafael_flor) | **7.07** | ±2.50 | 100.0% | 13.9 | MASTERY 🏆 |
-| 2nd | *baseline_random (Baseline)* | **-768.50** | ±72.23 | 0.0% | 198.9 | NEEDS IMPROVEMENT ⚠️ |
+| 🥇 **1st** | [rafael_flor](submissions/practical2/rafael_flor) | **7.07** | ±2.50 | 100.0% | [3.0, 12.0] | MASTERY 🏆 |
+| 🥈 **2nd** | *baseline_random (Baseline)* | **-778.07** | ±122.58 | 0.0% | [-983.0, -256.0] | NEEDS IMPROVEMENT ⚠️ |
 
 ---
 
