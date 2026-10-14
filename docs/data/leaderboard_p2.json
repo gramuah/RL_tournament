@@ -1,8 +1,8 @@
 [
   {
     "participant": "baseline_random",
-    "submission_path": "/home/runner/work/RL_tournament/RL_tournament/submissions/practical2/baseline_random",
-    "timestamp": "2026-10-14 08:16:08 UTC",
+    "submission_path": "/home/runner/work/RL_course/RL_course/submissions/practical2/baseline_random",
+    "timestamp": "2026-10-14 08:16:30 UTC",
     "success": true,
     "error": null,
     "practical_id": 2,
