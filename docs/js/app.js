@@ -1,4 +1,5 @@
 // RL Course Interactive Arena, Leaderboard & Playable 2D Simulator
+// Gymnasium LunarLander-v3 & Taxi-v4 Authentic Engine
 // Author: Course Teaching Staff & Rafael Flor (rflor01)
 
 const HUMAN_AGENT = "🎮 Tú (Humano / Control Manual)";
@@ -11,49 +12,57 @@ const STATE = {
     2: []
   },
   agentA: HUMAN_AGENT,
-  agentB: 'demo_student',
+  agentB: 'rafael_flor',
   duelMode: 'live', // 'live' or 'video'
   duelRunning: false,
-  duelInterval: null,
+  duelOverTimer: null,
   sandboxEnv: 1, // 1 for LunarLander, 2 for Taxi
   sandboxMode: 'manual', // 'manual' or 'autopilot'
+  sandboxAutoResetTimer: null,
   
-  // Active human inputs
+  // Real-time input states
   keys: {
     thrust: false,
     left: false,
     right: false,
-    down: false,
-    pickup: false,
-    dropoff: false
+    down: false
   }
 };
 
-// Default fallback data if running offline or without webserver
+// Default fallback data
 const FALLBACK_DATA_P1 = [
   {
-    participant: "demo_student",
-    mean_reward: 253.55,
-    std_reward: 24.67,
-    avg_steps: 364.6,
+    participant: "rafael_flor",
+    mean_reward: 257.38,
+    std_reward: 23.07,
+    avg_steps: 364.1,
     success_rate: 100.0,
     status: "MASTERY 🏆",
     status_code: "passed"
   },
   {
     participant: "baseline_heuristic",
-    mean_reward: 255.97,
-    std_reward: 54.46,
-    avg_steps: 231.9,
-    success_rate: 95.0,
+    mean_reward: 264.34,
+    std_reward: 47.22,
+    avg_steps: 239.0,
+    success_rate: 96.7,
+    status: "MASTERY 🏆",
+    status_code: "passed"
+  },
+  {
+    participant: "demo_student",
+    mean_reward: 257.38,
+    std_reward: 23.07,
+    avg_steps: 364.1,
+    success_rate: 100.0,
     status: "MASTERY 🏆",
     status_code: "passed"
   },
   {
     participant: "baseline_random",
-    mean_reward: -159.96,
-    std_reward: 94.45,
-    avg_steps: 92.3,
+    mean_reward: -172.10,
+    std_reward: 100.19,
+    avg_steps: 89.8,
     success_rate: 0.0,
     status: "NEEDS IMPROVEMENT ⚠️",
     status_code: "warning"
@@ -77,7 +86,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupNavigation();
   setupPracticalSelector();
   setupKeyListeners();
-  setupTouchControls();
+  setupPointerControls();
   await loadData();
   populateDropdowns();
   updateArenaView();
@@ -88,7 +97,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 // ---------------------------------------------------------------------------
-// Navigation & Tabs
+// Navigation & Practical Selectors
 // ---------------------------------------------------------------------------
 function setupNavigation() {
   const tabs = document.querySelectorAll('.tab-btn');
@@ -126,9 +135,7 @@ function setupPracticalSelector() {
       pill.classList.add('active');
       STATE.currentPractical = parseInt(pill.dataset.practical, 10);
       
-      // Also sync sandbox env button
       syncSandboxEnvButton(STATE.currentPractical);
-
       populateDropdowns();
       updateArenaView();
       renderLeaderboard();
@@ -153,7 +160,7 @@ function syncSandboxEnvButton(pNum) {
 }
 
 // ---------------------------------------------------------------------------
-// Global Keyboard & Touch Listeners
+// Continuous Keyboard and Pointer Event Handling
 // ---------------------------------------------------------------------------
 function setupKeyListeners() {
   window.addEventListener('keydown', (e) => {
@@ -187,7 +194,7 @@ function setupKeyListeners() {
       if (STATE.currentTab === 'arena') resetDuel();
     }
 
-    // Directional triggers for Taxi in sandbox or arena
+    // Directional actions for Taxi
     if (STATE.currentTab === 'sandbox' && STATE.sandboxEnv === 2) {
       if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') handleTaxiAction('up');
       if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') handleTaxiAction('down');
@@ -218,30 +225,30 @@ function setupKeyListeners() {
   });
 }
 
-function bindPressEvents(btn, onDown, onUp) {
+function bindPointerButton(btn, onDown, onUp) {
   if (!btn) return;
-  const start = (e) => {
+  const press = (e) => {
     e.preventDefault();
     btn.classList.add('pressed');
     if (onDown) onDown();
   };
-  const end = (e) => {
+  const release = (e) => {
     e.preventDefault();
     btn.classList.remove('pressed');
     if (onUp) onUp();
   };
-  btn.addEventListener('mousedown', start);
-  btn.addEventListener('mouseup', end);
-  btn.addEventListener('mouseleave', end);
-  btn.addEventListener('touchstart', start, { passive: false });
-  btn.addEventListener('touchend', end, { passive: false });
+
+  btn.addEventListener('pointerdown', press);
+  btn.addEventListener('pointerup', release);
+  btn.addEventListener('pointercancel', release);
+  btn.addEventListener('pointerleave', release);
 }
 
-function setupTouchControls() {
-  // Sandbox Lander buttons
-  bindPressEvents(document.getElementById('btn-touch-thrust'), () => { STATE.keys.thrust = true; }, () => { STATE.keys.thrust = false; });
-  bindPressEvents(document.getElementById('btn-touch-left'), () => { STATE.keys.left = true; }, () => { STATE.keys.left = false; });
-  bindPressEvents(document.getElementById('btn-touch-right'), () => { STATE.keys.right = true; }, () => { STATE.keys.right = false; });
+function setupPointerControls() {
+  // Sandbox Lander on-screen buttons
+  bindPointerButton(document.getElementById('btn-touch-thrust'), () => { STATE.keys.thrust = true; }, () => { STATE.keys.thrust = false; });
+  bindPointerButton(document.getElementById('btn-touch-left'), () => { STATE.keys.left = true; }, () => { STATE.keys.left = false; });
+  bindPointerButton(document.getElementById('btn-touch-right'), () => { STATE.keys.right = true; }, () => { STATE.keys.right = false; });
 
   // Sandbox Taxi buttons
   document.getElementById('btn-taxi-up')?.addEventListener('click', () => handleTaxiAction('up'));
@@ -252,9 +259,9 @@ function setupTouchControls() {
   document.getElementById('btn-taxi-dropoff')?.addEventListener('click', () => handleTaxiAction('dropoff'));
 
   // Arena Human Lander buttons
-  bindPressEvents(document.getElementById('btn-arena-touch-thrust'), () => { STATE.keys.thrust = true; }, () => { STATE.keys.thrust = false; });
-  bindPressEvents(document.getElementById('btn-arena-touch-left'), () => { STATE.keys.left = true; }, () => { STATE.keys.left = false; });
-  bindPressEvents(document.getElementById('btn-arena-touch-right'), () => { STATE.keys.right = true; }, () => { STATE.keys.right = false; });
+  bindPointerButton(document.getElementById('btn-arena-touch-thrust'), () => { STATE.keys.thrust = true; }, () => { STATE.keys.thrust = false; });
+  bindPointerButton(document.getElementById('btn-arena-touch-left'), () => { STATE.keys.left = true; }, () => { STATE.keys.left = false; });
+  bindPointerButton(document.getElementById('btn-arena-touch-right'), () => { STATE.keys.right = true; }, () => { STATE.keys.right = false; });
 
   // Arena Human Taxi buttons
   document.getElementById('btn-arena-taxi-up')?.addEventListener('click', () => handleDuelTaxiAction('up'));
@@ -266,7 +273,7 @@ function setupTouchControls() {
 }
 
 // ---------------------------------------------------------------------------
-// Leaderboards & Dropdowns
+// Data Loading & Dropdowns
 // ---------------------------------------------------------------------------
 async function loadData() {
   try {
@@ -315,9 +322,11 @@ function populateDropdowns() {
     selectB.appendChild(optB);
   });
 
-  // Default selection: Player A = Human, Player B = Top Bot
+  // Default selection: Corner A = Human, Corner B = rafael_flor (or first agent)
   STATE.agentA = HUMAN_AGENT;
-  STATE.agentB = list.length > 0 ? list[0].participant : HUMAN_AGENT;
+  const bestAgent = list.find(it => it.participant === 'rafael_flor') || (list.length > 0 ? list[0] : null);
+  STATE.agentB = bestAgent ? bestAgent.participant : (list.length > 0 ? list[0].participant : HUMAN_AGENT);
+
   selectA.value = STATE.agentA;
   selectB.value = STATE.agentB;
 
@@ -366,7 +375,6 @@ function updateArenaView() {
   updateCornerStats('a', STATE.agentA);
   updateCornerStats('b', STATE.agentB);
 
-  // Update corner badges and names
   const lblA = document.getElementById('lbl-agent-a-badge');
   const lblB = document.getElementById('lbl-agent-b-badge');
   if (lblA) lblA.textContent = STATE.agentA === HUMAN_AGENT ? "🔵 TÚ (HUMANO)" : `🔵 ${STATE.agentA}`;
@@ -381,14 +389,13 @@ function updateArenaView() {
   if (humanCtrlPanel) {
     humanCtrlPanel.style.display = hasHuman ? 'flex' : 'none';
     
-    // Toggle lander vs taxi buttons in arena
     const landerRow = document.getElementById('arena-touch-buttons');
     const taxiRow = document.getElementById('arena-touch-taxi-buttons');
     const hints = document.getElementById('arena-keyboard-hints');
     if (STATE.currentPractical === 1) {
       if (landerRow) landerRow.style.display = 'flex';
       if (taxiRow) taxiRow.style.display = 'none';
-      if (hints) hints.textContent = "Teclas: [A / ⬅️] Girar Izq | [D / ➡️] Girar Der | [Espacio / W / ⬆️] Propulsor";
+      if (hints) hints.textContent = "Teclas: [Espacio / W / ⬆️] Propulsor | [A / ⬅️] Girar Izq | [D / ➡️] Girar Der";
     } else {
       if (landerRow) landerRow.style.display = 'none';
       if (taxiRow) taxiRow.style.display = 'flex';
@@ -396,7 +403,6 @@ function updateArenaView() {
     }
   }
 
-  // If a human is playing, force live simulation mode
   if (hasHuman) {
     STATE.duelMode = 'live';
     if (liveWrapper) liveWrapper.style.display = 'flex';
@@ -413,7 +419,7 @@ function updateComparisonBars() {
   const list = STATE.leaderboards[STATE.currentPractical] || [];
   const getStats = (pName) => {
     if (pName === HUMAN_AGENT) {
-      return { avg_steps: 220, mean_reward: 200 };
+      return { avg_steps: 240, mean_reward: 250 };
     }
     return list.find(item => item.participant === pName) || { avg_steps: 200, mean_reward: 0 };
   };
@@ -472,6 +478,7 @@ function renderLeaderboard(filter = '') {
       <td>${rankBadge}</td>
       <td class="participant-cell">
         <span>${item.participant}</span>
+        ${item.participant === 'rafael_flor' ? '<span style="font-size: 0.72rem; background: rgba(0,240,255,0.2); color: var(--accent-cyan); padding: 2px 7px; border-radius: 4px; border: 1px solid var(--accent-cyan); font-weight: 800;">TU AGENTE</span>' : ''}
         ${item.participant.includes('baseline') ? '<span style="font-size: 0.7rem; background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px;">BASELINE</span>' : ''}
       </td>
       <td style="font-family: var(--font-mono); font-weight: 700;" class="${rewardClass}">
@@ -514,7 +521,199 @@ window.challengeAgent = function(participant) {
 
 
 // ===========================================================================
-// HEAD-TO-HEAD DUEL ARENA ENGINE (Synchronized Split Screen: Human vs AI)
+// GYMNASIUM LUNARLANDER-v3 AUTHENTIC RENDERING HELPERS
+// ===========================================================================
+// Official LunarLander polygon coordinates (Gymnasium Box2D)
+// LANDER_POLY = [(-14, +17), (-17, 0), (-17, -10), (+17, -10), (+17, 0), (+14, +17)]
+function drawGymnasiumLander(ctx, x, y, angle, thrust, leftThrust, rightThrust, landed, crashed, colorTheme) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(angle);
+
+  const bodyColor = colorTheme === 'orange' ? '#ff7b00' : (colorTheme === 'blue' ? '#00d2ff' : '#8266e6');
+  const bodyBorder = '#4d4d80';
+
+  // 1. Landing Legs with spring shock struts and circular foot pads
+  ctx.strokeStyle = '#64748b';
+  ctx.lineWidth = 2.5;
+
+  // Left Leg
+  ctx.beginPath();
+  ctx.moveTo(-10, 8);
+  ctx.lineTo(-19, 21);
+  ctx.stroke();
+
+  // Left Foot Pad
+  ctx.fillStyle = '#334155';
+  ctx.beginPath();
+  ctx.arc(-19, 21, 3.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Right Leg
+  ctx.beginPath();
+  ctx.moveTo(10, 8);
+  ctx.lineTo(19, 21);
+  ctx.stroke();
+
+  // Right Foot Pad
+  ctx.fillStyle = '#334155';
+  ctx.beginPath();
+  ctx.arc(19, 21, 3.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 2. Thruster Nozzle
+  ctx.fillStyle = '#475569';
+  ctx.fillRect(-5, 10, 10, 4);
+
+  // 3. Main Engine Exhaust Flame (when thrust active)
+  if (thrust) {
+    // Outer flame (Orange-Red)
+    ctx.fillStyle = '#ff4500';
+    ctx.beginPath();
+    ctx.moveTo(-6, 14);
+    ctx.lineTo(6, 14);
+    ctx.lineTo(0, 30 + Math.random() * 10);
+    ctx.closePath();
+    ctx.fill();
+
+    // Inner flame (Bright Yellow)
+    ctx.fillStyle = '#ffd700';
+    ctx.beginPath();
+    ctx.moveTo(-3, 14);
+    ctx.lineTo(3, 14);
+    ctx.lineTo(0, 22 + Math.random() * 6);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // 4. Side Engine Thrusters
+  if (leftThrust) {
+    ctx.fillStyle = '#ff6b00';
+    ctx.beginPath();
+    ctx.moveTo(-17, 0);
+    ctx.lineTo(-26 - Math.random() * 5, -2);
+    ctx.lineTo(-17, -4);
+    ctx.closePath();
+    ctx.fill();
+  }
+  if (rightThrust) {
+    ctx.fillStyle = '#ff6b00';
+    ctx.beginPath();
+    ctx.moveTo(17, 0);
+    ctx.lineTo(26 + Math.random() * 5, -2);
+    ctx.lineTo(17, -4);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // 5. Authentic Lander Polygonal Body
+  // Invert Y because canvas Y points down
+  ctx.fillStyle = bodyColor;
+  ctx.strokeStyle = bodyBorder;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(-14, -17);
+  ctx.lineTo(-17, 0);
+  ctx.lineTo(-17, 10);
+  ctx.lineTo(17, 10);
+  ctx.lineTo(17, 0);
+  ctx.lineTo(14, -17);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // 6. Cockpit Viewport & Details
+  ctx.fillStyle = '#ffd700';
+  ctx.beginPath();
+  ctx.arc(0, -6, 5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#b45309';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // Top radio antenna
+  ctx.strokeStyle = '#cbd5e1';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(0, -17);
+  ctx.lineTo(0, -25);
+  ctx.stroke();
+  ctx.fillStyle = '#ef4444';
+  ctx.beginPath();
+  ctx.arc(0, -25, 2, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+// Draw authentic Gymnasium Lunar terrain with central helipad and two flags
+function drawGymnasiumTerrain(ctx, x1, x2, padX, padY, padWidth = 90) {
+  const padHalf = padWidth / 2;
+  const leftX = padX - padHalf;
+  const rightX = padX + padHalf;
+
+  // Authentic Moon Surface Polygon
+  ctx.fillStyle = '#202436';
+  ctx.beginPath();
+  ctx.moveTo(x1, 380);
+  ctx.lineTo(x1, padY + 25);
+  ctx.lineTo(leftX - 40, padY + 18);
+  ctx.lineTo(leftX, padY);
+  ctx.lineTo(rightX, padY); // Flat Landing Pad
+  ctx.lineTo(rightX + 40, padY + 18);
+  ctx.lineTo(x2, padY + 25);
+  ctx.lineTo(x2, 420);
+  ctx.lineTo(x1, 420);
+  ctx.closePath();
+  ctx.fill();
+
+  // Terrain surface outline
+  ctx.strokeStyle = '#475569';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(x1, padY + 25);
+  ctx.lineTo(leftX - 40, padY + 18);
+  ctx.lineTo(leftX, padY);
+  ctx.lineTo(rightX, padY);
+  ctx.lineTo(rightX + 40, padY + 18);
+  ctx.lineTo(x2, padY + 25);
+  ctx.stroke();
+
+  // Landing Helipad Runway (Yellow glowing line)
+  ctx.strokeStyle = '#ffd700';
+  ctx.lineWidth = 3.5;
+  ctx.beginPath();
+  ctx.moveTo(leftX, padY);
+  ctx.lineTo(rightX, padY);
+  ctx.stroke();
+
+  // Two Official Helipad Flags
+  drawFlag(ctx, leftX, padY);
+  drawFlag(ctx, rightX, padY);
+}
+
+function drawFlag(ctx, x, y) {
+  // Flagpole
+  ctx.strokeStyle = '#cbd5e1';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(x, y - 24);
+  ctx.stroke();
+
+  // Triangular Red/Yellow Flag
+  ctx.fillStyle = '#ef4444';
+  ctx.beginPath();
+  ctx.moveTo(x, y - 24);
+  ctx.lineTo(x + 12, y - 18);
+  ctx.lineTo(x, y - 12);
+  ctx.closePath();
+  ctx.fill();
+}
+
+
+// ===========================================================================
+// HEAD-TO-HEAD DUEL ARENA ENGINE (Synchronized Split Screen)
 // ===========================================================================
 let duelCanvas, duelCtx;
 let duelLanderA, duelLanderB;
@@ -526,7 +725,6 @@ function initDuelArena() {
   if (!duelCanvas) return;
   duelCtx = duelCanvas.getContext('2d');
 
-  // Duel mode toggle buttons (Live vs Video)
   const btnLive = document.getElementById('btn-mode-live');
   const btnVideo = document.getElementById('btn-mode-video');
   const liveWrapper = document.getElementById('duel-live-wrapper');
@@ -563,19 +761,20 @@ function initDuelArena() {
 
 function resetDuel() {
   STATE.duelRunning = false;
+  if (STATE.duelOverTimer) clearTimeout(STATE.duelOverTimer);
   duelParticles = [];
 
   const overlay = document.getElementById('duel-overlay');
   if (overlay) overlay.style.display = 'none';
 
-  // Seeded initialization for fair identical conditions
-  const startX_offset = (Math.random() - 0.5) * 80;
-  const startAngle = (Math.random() - 0.5) * 0.25;
+  // Symmetrical initial conditions
+  const startX_offset = (Math.random() - 0.5) * 60;
+  const startAngle = (Math.random() - 0.5) * 0.2;
 
   duelLanderA = {
     x: 200 + startX_offset,
-    y: 60,
-    vx: (Math.random() - 0.5) * 0.8,
+    y: 55,
+    vx: (Math.random() - 0.5) * 0.6,
     vy: 0.1,
     angle: startAngle,
     thrust: false,
@@ -586,12 +785,12 @@ function resetDuel() {
     steps: 0,
     score: 0,
     padX: 200,
-    padY: 340
+    padY: 335
   };
 
   duelLanderB = {
     x: 600 + startX_offset,
-    y: 60,
+    y: 55,
     vx: duelLanderA.vx,
     vy: duelLanderA.vy,
     angle: startAngle,
@@ -603,25 +802,17 @@ function resetDuel() {
     steps: 0,
     score: 0,
     padX: 600,
-    padY: 340
+    padY: 335
   };
 
-  // Taxi duel initialization
-  const stations = [
-    { row: 0, col: 0, name: 'R', color: '#f43f5e' },
-    { row: 0, col: 4, name: 'G', color: '#10b981' },
-    { row: 4, col: 0, name: 'Y', color: '#f59e0b' },
-    { row: 4, col: 3, name: 'B', color: '#3b82f6' }
-  ];
+  // Taxi duel
   const pIdx = Math.floor(Math.random() * 4);
   let dIdx = Math.floor(Math.random() * 4);
   while (dIdx === pIdx) dIdx = Math.floor(Math.random() * 4);
 
-  const startTaxi = { row: 2, col: 2 };
-
   duelTaxiA = {
-    row: startTaxi.row,
-    col: startTaxi.col,
+    row: 2,
+    col: 2,
     passengerIdx: pIdx,
     passengerInTaxi: false,
     destinationIdx: dIdx,
@@ -631,8 +822,8 @@ function resetDuel() {
   };
 
   duelTaxiB = {
-    row: startTaxi.row,
-    col: startTaxi.col,
+    row: 2,
+    col: 2,
     passengerIdx: pIdx,
     passengerInTaxi: false,
     destinationIdx: dIdx,
@@ -648,7 +839,7 @@ function startLiveDuel() {
   const overlay = document.getElementById('duel-overlay');
   const overlayText = document.getElementById('duel-overlay-text');
   const badge = document.getElementById('duel-winner-badge');
-  if (badge) badge.textContent = "¡Duelo en curso! Ambos compiten bajo el mismo desafío...";
+  if (badge) badge.textContent = "⚔️ ¡Duelo en curso! Ambos agentes compitiendo bajo el mismo reto...";
 
   if (overlay && overlayText) {
     overlay.style.display = 'flex';
@@ -659,13 +850,13 @@ function startLiveDuel() {
       setTimeout(() => {
         overlayText.textContent = "2...";
         setTimeout(() => {
-          overlayText.textContent = "1... ¡DESPEGUE!";
+          overlayText.textContent = "1... ¡YA!";
           setTimeout(() => {
             overlay.style.display = 'none';
             STATE.duelRunning = true;
-          }, 600);
-        }, 600);
-      }, 600);
+          }, 500);
+        }, 500);
+      }, 500);
     }, 400);
   } else {
     STATE.duelRunning = true;
@@ -674,11 +865,8 @@ function startLiveDuel() {
 
 function handleDuelTaxiAction(act) {
   if (!STATE.duelRunning || STATE.currentPractical !== 2) return;
-  // Human moves their taxi
-  const isHumanA = STATE.agentA === HUMAN_AGENT;
-  const isHumanB = STATE.agentB === HUMAN_AGENT;
-  if (isHumanA) executeTaxiStep(duelTaxiA, act);
-  else if (isHumanB) executeTaxiStep(duelTaxiB, act);
+  if (STATE.agentA === HUMAN_AGENT) executeTaxiStep(duelTaxiA, act);
+  else if (STATE.agentB === HUMAN_AGENT) executeTaxiStep(duelTaxiB, act);
   checkDuelEnd();
 }
 
@@ -701,7 +889,7 @@ function updateDuelLanderPhysics() {
   const isHumanA = STATE.agentA === HUMAN_AGENT;
   const isHumanB = STATE.agentB === HUMAN_AGENT;
 
-  // Update Side A
+  // Step Side A
   if (!duelLanderA.landed && !duelLanderA.crashed) {
     duelLanderA.steps++;
     if (isHumanA) {
@@ -711,10 +899,10 @@ function updateDuelLanderPhysics() {
     } else {
       runLanderHeuristic(duelLanderA, duelLanderA.padX);
     }
-    stepLanderPhysics(duelLanderA);
+    stepLanderPhysics(duelLanderA, 0, 400);
   }
 
-  // Update Side B
+  // Step Side B
   if (!duelLanderB.landed && !duelLanderB.crashed) {
     duelLanderB.steps++;
     if (isHumanB) {
@@ -724,7 +912,7 @@ function updateDuelLanderPhysics() {
     } else {
       runLanderHeuristic(duelLanderB, duelLanderB.padX);
     }
-    stepLanderPhysics(duelLanderB);
+    stepLanderPhysics(duelLanderB, 400, 800);
   }
 
   // Update particles
@@ -738,38 +926,40 @@ function updateDuelLanderPhysics() {
   checkDuelEnd();
 }
 
-function stepLanderPhysics(lander) {
-  const gravity = 0.045;
-  const mainThrust = 0.12;
-  const rotSpeed = 0.005;
+function stepLanderPhysics(lander, minX, maxX) {
+  const gravity = 0.048;
+  const mainThrust = 0.145;
+  const rotSpeed = 0.0055;
 
   if (lander.leftThrust) {
     lander.angle -= rotSpeed;
     lander.score -= 0.02;
-    addDuelParticle(lander.x - 12, lander.y, 1, 0, '#00d2ff');
   }
   if (lander.rightThrust) {
     lander.angle += rotSpeed;
     lander.score -= 0.02;
-    addDuelParticle(lander.x + 12, lander.y, -1, 0, '#00d2ff');
   }
   if (lander.thrust) {
     lander.vx += Math.sin(lander.angle) * mainThrust;
     lander.vy -= Math.cos(lander.angle) * mainThrust;
-    lander.score -= 0.05;
-    addDuelParticle(lander.x, lander.y + 10, (Math.random() - 0.5) * 1.5, 2.5 + Math.random() * 2, '#ff5500');
+    lander.score -= 0.04;
+    addDuelParticle(lander.x, lander.y + 12, (Math.random() - 0.5) * 1.5, 2.5 + Math.random() * 2, '#ff4500');
   }
 
   lander.vy += gravity;
-  lander.vx *= 0.995;
+  lander.vx *= 0.996;
   lander.x += lander.vx;
   lander.y += lander.vy;
 
+  // Restrict to side bounds
+  if (lander.x < minX + 20) { lander.x = minX + 20; lander.vx = Math.abs(lander.vx) * 0.4; }
+  if (lander.x > maxX - 20) { lander.x = maxX - 20; lander.vx = -Math.abs(lander.vx) * 0.4; }
+
   // Reward shaping towards pad
   const dist = Math.abs(lander.x - lander.padX);
-  lander.score += (200 - dist) * 0.005;
+  lander.score += (200 - dist) * 0.004;
 
-  // Touchdown / Ground check
+  // Touchdown check
   if (lander.y >= lander.padY) {
     lander.y = lander.padY;
     const padMargin = 45;
@@ -802,19 +992,18 @@ function runLanderHeuristic(lander, padCenterX) {
   lander.leftThrust = angleErr < -0.04;
   lander.rightThrust = angleErr > 0.04;
 
-  const targetVy = 0.5 * Math.min(1.0, (lander.padY - lander.y) / 120);
-  lander.thrust = lander.vy > targetVy || lander.y > (lander.padY - 40);
+  const targetVy = 0.55 * Math.min(1.0, (lander.padY - lander.y) / 120);
+  lander.thrust = lander.vy > targetVy || lander.y > (lander.padY - 45);
 }
 
 function addDuelParticle(x, y, vx, vy, color) {
-  duelParticles.push({ x, y, vx, vy, color, alpha: 1.0, size: 2 + Math.random() * 2 });
+  duelParticles.push({ x, y, vx, vy, color, alpha: 1.0, size: 2.5 + Math.random() * 2 });
 }
 
 function updateDuelTaxiLogic() {
   if (!STATE.duelRunning) return;
 
   const now = Date.now();
-  // If bot is on side B (or A), step every 260ms
   if (STATE.agentB !== HUMAN_AGENT && !duelTaxiB.delivered) {
     if (now - duelTaxiB.lastAiStepTime > 260) {
       duelTaxiB.lastAiStepTime = now;
@@ -839,14 +1028,13 @@ function checkDuelEnd() {
 
   let endedA = false, endedB = false;
   if (STATE.currentPractical === 1) {
-    endedA = duelLanderA.landed || duelLanderA.crashed || duelLanderA.steps > 800;
-    endedB = duelLanderB.landed || duelLanderB.crashed || duelLanderB.steps > 800;
+    endedA = duelLanderA.landed || duelLanderA.crashed || duelLanderA.steps > 700;
+    endedB = duelLanderB.landed || duelLanderB.crashed || duelLanderB.steps > 700;
   } else {
-    endedA = duelTaxiA.delivered || duelTaxiA.steps >= 150;
-    endedB = duelTaxiB.delivered || duelTaxiB.steps >= 150;
+    endedA = duelTaxiA.delivered || duelTaxiA.steps >= 120;
+    endedB = duelTaxiB.delivered || duelTaxiB.steps >= 120;
   }
 
-  // Update live telemetry in Duel cards
   const scoreA = STATE.currentPractical === 1 ? duelLanderA.score : duelTaxiA.score;
   const scoreB = STATE.currentPractical === 1 ? duelLanderB.score : duelTaxiB.score;
   const stepsA = STATE.currentPractical === 1 ? duelLanderA.steps : duelTaxiA.steps;
@@ -880,14 +1068,14 @@ function declareDuelWinner(scoreA, scoreB, stepsA, stepsB) {
     const delta = (scoreB - scoreA).toFixed(1);
     message = `🏆 ¡${winnerName} GANA EL DUELO! (+${delta} pts de ventaja en ${stepsB} pasos)`;
   } else {
-    message = `⚖️ ¡EMPATE TÉCNICO! Ambos obtuvieron exactamente la misma puntuación.`;
+    message = `⚖️ ¡EMPATE TÉCNICO! Ambos obtuvieron puntuación similar.`;
   }
 
   if (badge) badge.innerHTML = `<strong>${message}</strong>`;
   if (overlay && overlayText) {
     overlay.style.display = 'flex';
     overlayText.innerHTML = message;
-    setTimeout(() => {
+    STATE.duelOverTimer = setTimeout(() => {
       overlay.style.display = 'none';
     }, 4500);
   }
@@ -897,11 +1085,11 @@ function declareDuelWinner(scoreA, scoreB, stepsA, stepsB) {
 function renderDuelLander() {
   const w = duelCanvas.width;
   const h = duelCanvas.height;
-  duelCtx.fillStyle = '#070913';
+  duelCtx.fillStyle = '#05070e';
   duelCtx.fillRect(0, 0, w, h);
 
-  // Divider line
-  duelCtx.strokeStyle = 'rgba(0, 240, 255, 0.3)';
+  // Center vertical dividing line
+  duelCtx.strokeStyle = 'rgba(0, 240, 255, 0.4)';
   duelCtx.setLineDash([6, 6]);
   duelCtx.lineWidth = 2;
   duelCtx.beginPath();
@@ -910,15 +1098,15 @@ function renderDuelLander() {
   duelCtx.stroke();
   duelCtx.setLineDash([]);
 
-  // Stars
+  // Stars background
   duelCtx.fillStyle = 'rgba(255, 255, 255, 0.4)';
   for (let i = 0; i < 40; i++) {
-    duelCtx.fillRect((i * 67) % w, (i * 43) % 280, 1.5, 1.5);
+    duelCtx.fillRect((i * 67) % w, (i * 43) % 270, 1.5, 1.5);
   }
 
-  // Draw Ground Left & Right
-  drawTerrainSide(duelCtx, 0, 400, duelLanderA.padX, duelLanderA.padY);
-  drawTerrainSide(duelCtx, 400, 800, duelLanderB.padX, duelLanderB.padY);
+  // Draw Gymnasium Terrains Left & Right
+  drawGymnasiumTerrain(duelCtx, 0, 400, duelLanderA.padX, duelLanderA.padY, 80);
+  drawGymnasiumTerrain(duelCtx, 400, 800, duelLanderB.padX, duelLanderB.padY, 80);
 
   // Particles
   duelParticles.forEach(p => {
@@ -931,109 +1119,39 @@ function renderDuelLander() {
     duelCtx.restore();
   });
 
-  // Draw Ships
-  drawLanderShip(duelCtx, duelLanderA, '#00d2ff');
-  drawLanderShip(duelCtx, duelLanderB, '#ff7b00');
+  // Authentic Gymnasium Lander Ships
+  drawGymnasiumLander(
+    duelCtx, duelLanderA.x, duelLanderA.y, duelLanderA.angle,
+    duelLanderA.thrust, duelLanderA.leftThrust, duelLanderA.rightThrust,
+    duelLanderA.landed, duelLanderA.crashed, 'blue'
+  );
+  drawGymnasiumLander(
+    duelCtx, duelLanderB.x, duelLanderB.y, duelLanderB.angle,
+    duelLanderB.thrust, duelLanderB.leftThrust, duelLanderB.rightThrust,
+    duelLanderB.landed, duelLanderB.crashed, 'orange'
+  );
 
   // HUD overlays
   drawLanderHudSide(duelCtx, duelLanderA, 15, 30, STATE.agentA);
   drawLanderHudSide(duelCtx, duelLanderB, 415, 30, STATE.agentB);
 }
 
-function drawTerrainSide(ctx, x1, x2, padX, padY) {
-  ctx.fillStyle = '#161928';
-  ctx.beginPath();
-  ctx.moveTo(x1, padY + 15);
-  ctx.lineTo(padX - 45, padY + 15);
-  ctx.lineTo(padX - 40, padY);
-  ctx.lineTo(padX + 40, padY);
-  ctx.lineTo(padX + 45, padY + 15);
-  ctx.lineTo(x2, padY + 15);
-  ctx.lineTo(x2, 380);
-  ctx.lineTo(x1, 380);
-  ctx.fill();
-
-  // Landing Pad glow line
-  ctx.strokeStyle = '#ffd700';
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.moveTo(padX - 40, padY);
-  ctx.lineTo(padX + 40, padY);
-  ctx.stroke();
-
-  // Flags
-  ctx.fillStyle = '#10b981';
-  ctx.fillRect(padX - 40, padY - 14, 7, 14);
-  ctx.fillRect(padX + 33, padY - 14, 7, 14);
-}
-
-function drawLanderShip(ctx, l, themeColor) {
-  ctx.save();
-  ctx.translate(l.x, l.y);
-  ctx.rotate(l.angle);
-
-  // Body
-  ctx.fillStyle = '#e2e8f0';
-  ctx.fillRect(-11, -12, 22, 18);
-
-  // Cockpit window
-  ctx.fillStyle = themeColor;
-  ctx.fillRect(-6, -9, 12, 5);
-
-  // Legs
-  ctx.strokeStyle = '#94a3b8';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(-9, 6);
-  ctx.lineTo(-16, 16);
-  ctx.moveTo(9, 6);
-  ctx.lineTo(16, 16);
-  ctx.stroke();
-
-  // Thruster flames
-  if (l.thrust) {
-    ctx.fillStyle = '#ff4500';
-    ctx.beginPath();
-    ctx.moveTo(-5, 6);
-    ctx.lineTo(5, 6);
-    ctx.lineTo(0, 18 + Math.random() * 6);
-    ctx.fill();
-  }
-  if (l.leftThrust) {
-    ctx.fillStyle = '#00f0ff';
-    ctx.beginPath();
-    ctx.moveTo(-11, -3);
-    ctx.lineTo(-18, -3);
-    ctx.lineTo(-11, 0);
-    ctx.fill();
-  }
-  if (l.rightThrust) {
-    ctx.fillStyle = '#00f0ff';
-    ctx.beginPath();
-    ctx.moveTo(11, -3);
-    ctx.lineTo(18, -3);
-    ctx.lineTo(11, 0);
-    ctx.fill();
-  }
-
-  ctx.restore();
-}
-
 function drawLanderHudSide(ctx, l, x, y, name) {
   ctx.font = '11px JetBrains Mono';
-  ctx.fillStyle = '#94a3b8';
+  ctx.fillStyle = '#cbd5e1';
   ctx.fillText(`${name.substring(0, 22)}`, x, y);
+  ctx.fillStyle = '#94a3b8';
   ctx.fillText(`Puntos: ${l.score > 0 ? '+' : ''}${l.score.toFixed(1)} | Pasos: ${l.steps}`, x, y + 16);
-  ctx.fillText(`Vel: ${l.vy.toFixed(2)} m/s | Alt: ${(l.padY - l.y).toFixed(0)}m`, x, y + 32);
+  ctx.fillText(`Vel: ${l.vy.toFixed(2)} m/s | Alt: ${Math.max(0, (l.padY - l.y)).toFixed(0)}m`, x, y + 32);
 
   if (l.landed) {
     ctx.fillStyle = '#10b981';
     ctx.font = 'bold 15px Outfit';
-    ctx.fillText('¡ATERRIZAJE CON ÉXITO! 🚀', x + 20, y + 80);
+    ctx.fillText('¡ATERRIZAJE CON ÉXITO! 🚀', x + 20, y + 75);
   } else if (l.crashed) {
     ctx.fillStyle = '#f43f5e';
     ctx.font = 'bold 15px Outfit';
-    ctx.fillText('¡IMPACTO CRÍTICO / CRASH! 💥', x + 20, y + 80);
+    ctx.fillText('¡IMPACTO CRÍTICO / CRASH! 💥', x + 20, y + 75);
   }
 }
 
@@ -1044,8 +1162,7 @@ function renderDuelTaxi() {
   duelCtx.fillStyle = '#0a0d18';
   duelCtx.fillRect(0, 0, w, h);
 
-  // Center divider
-  duelCtx.strokeStyle = 'rgba(0, 240, 255, 0.3)';
+  duelCtx.strokeStyle = 'rgba(0, 240, 255, 0.4)';
   duelCtx.lineWidth = 2;
   duelCtx.setLineDash([6, 6]);
   duelCtx.beginPath();
@@ -1054,10 +1171,7 @@ function renderDuelTaxi() {
   duelCtx.stroke();
   duelCtx.setLineDash([]);
 
-  // Render Left Side Taxi Grid (Player/Agent A)
   renderSingleTaxiGrid(duelCtx, duelTaxiA, 40, 40, 310, STATE.agentA);
-
-  // Render Right Side Taxi Grid (Agent B)
   renderSingleTaxiGrid(duelCtx, duelTaxiB, 440, 40, 310, STATE.agentB);
 }
 
@@ -1070,7 +1184,6 @@ function renderSingleTaxiGrid(ctx, t, startX, startY, size, agentName) {
     { row: 4, col: 3, name: 'B', color: '#3b82f6' }
   ];
 
-  // Title / HUD
   ctx.font = '12px Outfit';
   ctx.fillStyle = '#cbd5e1';
   ctx.fillText(agentName.substring(0, 24), startX, startY - 14);
@@ -1078,20 +1191,17 @@ function renderSingleTaxiGrid(ctx, t, startX, startY, size, agentName) {
   ctx.fillStyle = '#94a3b8';
   ctx.fillText(`Puntos: ${t.score} | Pasos: ${t.steps}`, startX + 160, startY - 14);
 
-  // Grid background
   ctx.fillStyle = '#121626';
   ctx.fillRect(startX, startY, size, size);
 
-  // Cells
   for (let r = 0; r < 5; r++) {
     for (let c = 0; c < 5; c++) {
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.06)';
       ctx.lineWidth = 1;
       ctx.strokeRect(startX + c * cellSize, startY + r * cellSize, cellSize, cellSize);
     }
   }
 
-  // Stations
   stations.forEach((st, idx) => {
     const sx = startX + st.col * cellSize;
     const sy = startY + st.row * cellSize;
@@ -1105,31 +1215,25 @@ function renderSingleTaxiGrid(ctx, t, startX, startY, size, agentName) {
     ctx.font = 'bold 16px Outfit';
     ctx.fillText(st.name, sx + cellSize / 2 - 6, sy + cellSize / 2 + 6);
 
-    // If destination
     if (idx === t.destinationIdx) {
-      ctx.fillStyle = '#ffd700';
-      ctx.font = '12px Outfit';
-      ctx.fillText('🏁', sx + 6, sy + 18);
+      ctx.font = '14px Outfit';
+      ctx.fillText('🏁', sx + 5, sy + 18);
     }
 
-    // If passenger waiting here
     if (idx === t.passengerIdx && !t.passengerInTaxi) {
       ctx.font = '20px Outfit';
       ctx.fillText('🙋‍♂️', sx + cellSize / 2 - 10, sy + cellSize / 2 + 10);
     }
   });
 
-  // Taxi Walls (Gymnasium Taxi layout)
+  // Walls
   ctx.strokeStyle = '#00f0ff';
   ctx.lineWidth = 4;
-  // Wall between (0,1)-(0,2) and (1,1)-(1,2)
   drawGridWall(ctx, startX, startY, cellSize, 0, 2, 2, 2);
-  // Wall between (3,0)-(3,1) and (4,0)-(4,1)
   drawGridWall(ctx, startX, startY, cellSize, 3, 1, 5, 1);
-  // Wall between (3,2)-(3,3) and (4,2)-(4,3)
   drawGridWall(ctx, startX, startY, cellSize, 3, 3, 5, 3);
 
-  // Taxi Car Sprite
+  // Taxi Sprite
   const tx = startX + t.col * cellSize + cellSize / 2;
   const ty = startY + t.row * cellSize + cellSize / 2;
   ctx.fillStyle = '#fbbf24';
@@ -1156,7 +1260,7 @@ function drawGridWall(ctx, startX, startY, cellSize, r1, c1, r2, c2) {
 
 
 // ===========================================================================
-// PLAYABLE 2D SANDBOX & ARCADE LAB
+// PLAYABLE 2D SANDBOX & ARCADE LAB (Continuous Responsive Physics)
 // ===========================================================================
 let sbCanvas, sbCtx;
 let sbLander = null;
@@ -1168,7 +1272,6 @@ function initSandboxArcade() {
   if (!sbCanvas) return;
   sbCtx = sbCanvas.getContext('2d');
 
-  // Environment Switcher Buttons
   document.getElementById('sandbox-btn-p1')?.addEventListener('click', () => {
     syncSandboxEnvButton(1);
     resetSandbox();
@@ -1178,7 +1281,6 @@ function initSandboxArcade() {
     resetSandbox();
   });
 
-  // Mode Switcher Buttons (Manual vs Autopilot)
   const btnManual = document.getElementById('btn-sandbox-manual');
   const btnAuto = document.getElementById('btn-sandbox-autopilot');
 
@@ -1203,15 +1305,16 @@ function initSandboxArcade() {
 }
 
 function resetSandbox() {
+  if (STATE.sandboxAutoResetTimer) clearTimeout(STATE.sandboxAutoResetTimer);
   sbParticles = [];
 
   if (STATE.sandboxEnv === 1) {
     sbLander = {
-      x: 350 + (Math.random() - 0.5) * 160,
+      x: 400 + (Math.random() - 0.5) * 160,
       y: 60,
-      vx: (Math.random() - 0.5) * 1.2,
+      vx: (Math.random() - 0.5) * 1.0,
       vy: 0.1,
-      angle: (Math.random() - 0.5) * 0.3,
+      angle: (Math.random() - 0.5) * 0.25,
       thrust: false,
       leftThrust: false,
       rightThrust: false,
@@ -1220,13 +1323,12 @@ function resetSandbox() {
       steps: 0,
       score: 0,
       padX: 400,
-      padY: 375
+      padY: 370
     };
 
     document.getElementById('sb-hud-label-3').textContent = "VELOCIDAD VERTICAL";
     document.getElementById('sb-hud-label-4').textContent = "ALTITUD";
   } else {
-    // Taxi Reset
     const pIdx = Math.floor(Math.random() * 4);
     let dIdx = Math.floor(Math.random() * 4);
     while (dIdx === pIdx) dIdx = Math.floor(Math.random() * 4);
@@ -1278,48 +1380,45 @@ function updateSandboxLander() {
     }
 
     const gravity = 0.05;
-    const mainThrust = 0.13;
-    const rotSpeed = 0.005;
+    const mainThrust = 0.145;
+    const rotSpeed = 0.0055;
 
     if (sbLander.leftThrust) {
       sbLander.angle -= rotSpeed;
       sbLander.score -= 0.02;
-      sbParticles.push({ x: sbLander.x - 12, y: sbLander.y, vx: 1, vy: 0, color: '#00d2ff', alpha: 1, size: 3 });
     }
     if (sbLander.rightThrust) {
       sbLander.angle += rotSpeed;
       sbLander.score -= 0.02;
-      sbParticles.push({ x: sbLander.x + 12, y: sbLander.y, vx: -1, vy: 0, color: '#00d2ff', alpha: 1, size: 3 });
     }
     if (sbLander.thrust) {
       sbLander.vx += Math.sin(sbLander.angle) * mainThrust;
       sbLander.vy -= Math.cos(sbLander.angle) * mainThrust;
-      sbLander.score -= 0.05;
+      sbLander.score -= 0.04;
       sbParticles.push({
         x: sbLander.x,
         y: sbLander.y + 12,
-        vx: (Math.random() - 0.5) * 2,
+        vx: (Math.random() - 0.5) * 1.5,
         vy: 3 + Math.random() * 2,
-        color: '#ff5500',
+        color: '#ff4500',
         alpha: 1,
-        size: 3 + Math.random() * 3
+        size: 3 + Math.random() * 2
       });
     }
 
     sbLander.vy += gravity;
-    sbLander.vx *= 0.995;
+    sbLander.vx *= 0.996;
     sbLander.x += sbLander.vx;
     sbLander.y += sbLander.vy;
 
-    // Boundary bounce
-    if (sbLander.x < 20) { sbLander.x = 20; sbLander.vx = Math.abs(sbLander.vx) * 0.5; }
-    if (sbLander.x > 780) { sbLander.x = 780; sbLander.vx = -Math.abs(sbLander.vx) * 0.5; }
+    // Boundaries
+    if (sbLander.x < 25) { sbLander.x = 25; sbLander.vx = Math.abs(sbLander.vx) * 0.4; }
+    if (sbLander.x > 775) { sbLander.x = 775; sbLander.vx = -Math.abs(sbLander.vx) * 0.4; }
 
-    // Distance shaping reward
     const dist = Math.abs(sbLander.x - sbLander.padX);
-    sbLander.score += (400 - dist) * 0.002;
+    sbLander.score += (400 - dist) * 0.003;
 
-    // Ground touchdown check
+    // Ground Touchdown Check
     if (sbLander.y >= sbLander.padY) {
       sbLander.y = sbLander.padY;
       const padMargin = 55;
@@ -1331,7 +1430,7 @@ function updateSandboxLander() {
       if (onPad && safeVy && safeVx && safeAngle) {
         sbLander.landed = true;
         sbLander.score += 100;
-        for (let i = 0; i < 30; i++) {
+        for (let i = 0; i < 25; i++) {
           sbParticles.push({
             x: sbLander.x,
             y: sbLander.y,
@@ -1345,26 +1444,31 @@ function updateSandboxLander() {
       } else {
         sbLander.crashed = true;
         sbLander.score -= 100;
-        for (let i = 0; i < 40; i++) {
+        for (let i = 0; i < 35; i++) {
           sbParticles.push({
             x: sbLander.x,
             y: sbLander.y,
-            vx: (Math.random() - 0.5) * 8,
-            vy: (Math.random() - 0.5) * 8,
+            vx: (Math.random() - 0.5) * 7,
+            vy: (Math.random() - 0.5) * 7,
             color: '#f43f5e',
             alpha: 1,
-            size: 4
+            size: 3.5
           });
         }
       }
+
+      // Smooth auto-restart after landing/crash so player never gets frozen
+      STATE.sandboxAutoResetTimer = setTimeout(() => {
+        resetSandbox();
+      }, 2200);
     }
   }
 
-  // Update particles
+  // Update smoke particles
   sbParticles = sbParticles.filter(p => {
     p.x += p.vx;
     p.y += p.vy;
-    p.alpha -= 0.025;
+    p.alpha -= 0.03;
     return p.alpha > 0;
   });
 
@@ -1374,40 +1478,17 @@ function updateSandboxLander() {
 function renderSandboxLander() {
   const w = sbCanvas.width;
   const h = sbCanvas.height;
-  sbCtx.fillStyle = '#070912';
+  sbCtx.fillStyle = '#05070e';
   sbCtx.fillRect(0, 0, w, h);
 
-  // Stars
+  // Background stars
   sbCtx.fillStyle = 'rgba(255, 255, 255, 0.45)';
   for (let i = 0; i < 50; i++) {
-    sbCtx.fillRect((i * 97) % w, (i * 61) % 320, 1.5, 1.5);
+    sbCtx.fillRect((i * 97) % w, (i * 61) % 310, 1.5, 1.5);
   }
 
-  // Moon Surface with craters
-  sbCtx.fillStyle = '#181c2e';
-  sbCtx.beginPath();
-  sbCtx.moveTo(0, 390);
-  sbCtx.lineTo(330, 390);
-  sbCtx.lineTo(345, sbLander.padY);
-  sbCtx.lineTo(455, sbLander.padY);
-  sbCtx.lineTo(470, 390);
-  sbCtx.lineTo(w, 390);
-  sbCtx.lineTo(w, h);
-  sbCtx.lineTo(0, h);
-  sbCtx.fill();
-
-  // Landing Pad & Runway lights
-  sbCtx.strokeStyle = '#ffd700';
-  sbCtx.lineWidth = 4;
-  sbCtx.beginPath();
-  sbCtx.moveTo(345, sbLander.padY);
-  sbCtx.lineTo(455, sbLander.padY);
-  sbCtx.stroke();
-
-  // Flags
-  sbCtx.fillStyle = '#10b981';
-  sbCtx.fillRect(345, sbLander.padY - 18, 10, 18);
-  sbCtx.fillRect(445, sbLander.padY - 18, 10, 18);
+  // Gymnasium moon terrain
+  drawGymnasiumTerrain(sbCtx, 0, w, sbLander.padX, sbLander.padY, 110);
 
   // Particles
   sbParticles.forEach(p => {
@@ -1420,25 +1501,34 @@ function renderSandboxLander() {
     sbCtx.restore();
   });
 
-  // Lander Ship
-  drawLanderShip(sbCtx, sbLander, '#00f0ff');
+  // Authentic Gymnasium Lander Ship
+  drawGymnasiumLander(
+    sbCtx, sbLander.x, sbLander.y, sbLander.angle,
+    sbLander.thrust, sbLander.leftThrust, sbLander.rightThrust,
+    sbLander.landed, sbLander.crashed, 'purple'
+  );
 
-  // Victory / Crash text overlay
+  // Big Banner upon landing or crash
   if (sbLander.landed) {
     sbCtx.fillStyle = '#10b981';
     sbCtx.font = 'bold 24px Outfit';
-    sbCtx.fillText('¡ATERRIZAJE PERFECTO! (+100 PTS) 🏆', 210, 200);
+    sbCtx.fillText('¡ATERRIZAJE PERFECTO! (+100 PTS) 🏆', 210, 180);
+    sbCtx.font = '14px Outfit';
+    sbCtx.fillStyle = '#94a3b8';
+    sbCtx.fillText('Reiniciando siguiente vuelo...', 320, 210);
   } else if (sbLander.crashed) {
     sbCtx.fillStyle = '#f43f5e';
     sbCtx.font = 'bold 24px Outfit';
-    sbCtx.fillText('¡CRASH / IMPACTO DEMASIADO FUERTE! (-100 PTS) 💥', 140, 200);
+    sbCtx.fillText('¡CRASH / IMPACTO DEMASIADO FUERTE! (-100 PTS) 💥', 140, 180);
+    sbCtx.font = '14px Outfit';
+    sbCtx.fillStyle = '#94a3b8';
+    sbCtx.fillText('Reiniciando siguiente vuelo...', 320, 210);
   }
 }
 
 function updateSandboxTaxi() {
   if (!sbTaxi) return;
 
-  // If in autopilot mode, advance every 280ms
   if (STATE.sandboxMode === 'autopilot' && !sbTaxi.delivered) {
     const now = Date.now();
     if (now - sbTaxi.lastAiStepTime > 280) {
@@ -1457,7 +1547,6 @@ function renderSandboxTaxi() {
   sbCtx.fillStyle = '#080a14';
   sbCtx.fillRect(0, 0, w, h);
 
-  // Render centered 5x5 Taxi grid
   const gridSize = 340;
   const startX = (w - gridSize) / 2;
   const startY = 35;
@@ -1509,7 +1598,6 @@ function updateSandboxHud() {
   }
 }
 
-// Taxi action handler for manual inputs
 function handleTaxiAction(act) {
   if (STATE.sandboxEnv !== 2 || !sbTaxi || sbTaxi.delivered) return;
   executeTaxiStep(sbTaxi, act);
@@ -1527,18 +1615,14 @@ function executeTaxiStep(taxi, act) {
     { row: 4, col: 3 }
   ];
 
-  // Walls dictionary
   const hasWall = (r1, c1, r2, c2) => {
     if (r2 < 0 || r2 > 4 || c2 < 0 || c2 > 4) return true;
-    // Between col 1 and 2 in rows 0-1
     if ((c1 === 1 && c2 === 2) || (c1 === 2 && c2 === 1)) {
       if (r1 === 0 || r1 === 1) return true;
     }
-    // Between col 0 and 1 in rows 3-4
     if ((c1 === 0 && c2 === 1) || (c1 === 1 && c2 === 0)) {
       if (r1 === 3 || r1 === 4) return true;
     }
-    // Between col 2 and 3 in rows 3-4
     if ((c1 === 2 && c2 === 3) || (c1 === 3 && c2 === 2)) {
       if (r1 === 3 || r1 === 4) return true;
     }
@@ -1563,21 +1647,23 @@ function executeTaxiStep(taxi, act) {
       taxi.passengerInTaxi = true;
       taxi.score -= 1;
     } else {
-      taxi.score -= 10; // Illegal pickup
+      taxi.score -= 10;
     }
   } else if (act === 'dropoff') {
     const dSt = stations[taxi.destinationIdx];
     if (taxi.passengerInTaxi && taxi.row === dSt.row && taxi.col === dSt.col) {
       taxi.passengerInTaxi = false;
       taxi.delivered = true;
-      taxi.score += 20; // Delivery success reward
+      taxi.score += 20;
+      setTimeout(() => {
+        resetSandbox();
+      }, 2200);
     } else {
-      taxi.score -= 10; // Illegal dropoff
+      taxi.score -= 10;
     }
   }
 }
 
-// BFS shortest path policy for AI Taxi
 function getOptimalTaxiAction(taxi) {
   const stations = [
     { row: 0, col: 0 },
@@ -1592,7 +1678,6 @@ function getOptimalTaxiAction(taxi) {
     return taxi.passengerInTaxi ? 'dropoff' : 'pickup';
   }
 
-  // BFS to target
   const queue = [{ r: taxi.row, c: taxi.col, firstAct: null }];
   const visited = new Set();
   visited.add(`${taxi.row},${taxi.col}`);
