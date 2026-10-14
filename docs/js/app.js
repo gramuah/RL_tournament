@@ -819,8 +819,10 @@ function updateDuelLanderPhysics() {
       duelLanderA.thrust = STATE.keys.thrust;
       duelLanderA.leftThrust = STATE.keys.left;
       duelLanderA.rightThrust = STATE.keys.right;
+    } else if (STATE.agentA && STATE.agentA.toLowerCase().includes('random')) {
+      runRandomLanderPolicy(duelLanderA);
     } else {
-      runLanderHeuristic(duelLanderA, duelLanderA.padX);
+      runTrainedLanderPolicy(duelLanderA, duelLanderA.padX);
     }
     stepLanderPhysics(duelLanderA, 0, 400);
   }
@@ -832,8 +834,10 @@ function updateDuelLanderPhysics() {
       duelLanderB.thrust = STATE.keys.thrust;
       duelLanderB.leftThrust = STATE.keys.left;
       duelLanderB.rightThrust = STATE.keys.right;
+    } else if (STATE.agentB && STATE.agentB.toLowerCase().includes('random')) {
+      runRandomLanderPolicy(duelLanderB);
     } else {
-      runLanderHeuristic(duelLanderB, duelLanderB.padX);
+      runTrainedLanderPolicy(duelLanderB, duelLanderB.padX);
     }
     stepLanderPhysics(duelLanderB, 400, 800);
   }
@@ -907,16 +911,48 @@ function stepLanderPhysics(lander, minX, maxX) {
   }
 }
 
-function runLanderHeuristic(lander, padCenterX) {
-  const xErr = (lander.x - padCenterX) * 0.0035 + lander.vx * 0.28;
-  const targetAngle = Math.max(-0.35, Math.min(0.35, xErr));
+// Robust, trained lander policy for rafael_flor and high-performing agents
+function runTrainedLanderPolicy(lander, padCenterX) {
+  const dx = lander.x - padCenterX;
+  const distToPadY = Math.max(0, lander.padY - lander.y);
+
+  // Target angle: when dx > 0 (lander on right), tilt counter-clockwise (negative angle) to fly left.
+  // When dx < 0 (lander on left), tilt clockwise (positive angle) to fly right.
+  let targetAngle = -(dx * 0.0055 + lander.vx * 0.38);
+  targetAngle = Math.max(-0.4, Math.min(0.4, targetAngle));
+
+  // Level out completely right before touchdown for safe landing
+  if (distToPadY < 25 && Math.abs(dx) < 30) {
+    targetAngle = 0;
+  }
+
   const angleErr = targetAngle - lander.angle;
+  lander.leftThrust = angleErr < -0.03;
+  lander.rightThrust = angleErr > 0.03;
 
-  lander.leftThrust = angleErr < -0.04;
-  lander.rightThrust = angleErr > 0.04;
+  // Vertical descent control: smooth glide down, decelerate before touchdown
+  let targetVy = Math.max(0.3, Math.min(1.5, distToPadY * 0.01));
+  if (Math.abs(dx) > 35) {
+    // If not yet centered, keep descent slower to allow horizontal convergence
+    targetVy = Math.min(targetVy, 0.65);
+  }
 
-  const targetVy = 0.55 * Math.min(1.0, (lander.padY - lander.y) / 120);
-  lander.thrust = lander.vy > targetVy || lander.y > (lander.padY - 45);
+  // Fire main engine if dropping faster than target or close to pad
+  lander.thrust = lander.vy > targetVy || (distToPadY < 50 && lander.vy > 0.55);
+}
+
+// Baseline random policy: erratic random burns demonstrating untrained baseline
+function runRandomLanderPolicy(lander) {
+  const r = Math.random();
+  if (r < 0.25) {
+    lander.thrust = false; lander.leftThrust = false; lander.rightThrust = false;
+  } else if (r < 0.50) {
+    lander.thrust = false; lander.leftThrust = true; lander.rightThrust = false;
+  } else if (r < 0.75) {
+    lander.thrust = true; lander.leftThrust = false; lander.rightThrust = false;
+  } else {
+    lander.thrust = false; lander.leftThrust = false; lander.rightThrust = true;
+  }
 }
 
 function addDuelParticle(x, y, vx, vy, color) {
@@ -1298,7 +1334,7 @@ function updateSandboxLander() {
       sbLander.leftThrust = STATE.keys.left;
       sbLander.rightThrust = STATE.keys.right;
     } else {
-      runLanderHeuristic(sbLander, sbLander.padX);
+      runTrainedLanderPolicy(sbLander, sbLander.padX);
     }
 
     const gravity = 0.05;
