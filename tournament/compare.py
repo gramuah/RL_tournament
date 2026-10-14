@@ -550,6 +550,12 @@ def run_single_duel_episode(
             winner = "TIE"
             win_reason = "Identical performance"
 
+    # Hold final duel outcome frame so viewers can clearly see the landing/crash positions
+    if capture_video and len(frames) > 0:
+        final_duel_frame = frames[-1]
+        for _ in range(35):
+            frames.append(final_duel_frame)
+
     # Add Victory screen
     if capture_video and len(frames) > 0:
         splash_h, splash_w = frames[-1].shape[:2]
