@@ -16,8 +16,8 @@ You can launch and execute the practical sessions directly in **Google Colab** w
 
 | Session | Topic | Colab Badge | Deliverable |
 | :--- | :--- | :---: | :---: |
-| **Practical 1** | Introduction to RL & Deep PPO (`LunarLander-v3`) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/gramuah/RL_tournament/blob/main/Lab_sessions/Practical1/unit1_uah_master.ipynb) | [Submissions Folder](submissions/practical1/) |
-| **Practical 2** | Tabular Q-Learning (`Taxi-v3 / Taxi-v4`) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/gramuah/RL_tournament/blob/main/Lab_sessions/Practical2/unit2_uah_master.ipynb) | [Submissions Folder](submissions/practical2/) |
+| **Practical 1** | Introduction to RL & Deep PPO (`LunarLander-v3`) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/gramuah/RL_tournament/blob/main/Lab_sessions/Practical1/unit1_uah_student.ipynb) | [Submissions Folder](submissions/practical1/) |
+| **Practical 2** | Tabular Q-Learning (`Taxi-v3 / Taxi-v4`) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/gramuah/RL_tournament/blob/main/Lab_sessions/Practical2/unit2_uah_student.ipynb) | [Submissions Folder](submissions/practical2/) |
 | **Final Practical** | Final Project | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/gramuah/RL_tournament/blob/main/Lab_sessions/Practical_final/unit3_uah_master.ipynb) | Oral Defense |
 
 The official PDF student guide is available here:  

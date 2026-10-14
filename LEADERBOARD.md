@@ -67,7 +67,7 @@ In this challenge, agents learn a tabular Q-learning policy to pick up and drop 
 
 Participating in the tournament is completely automated:
 
-1. **Train your model in the practical notebook** (`unit1_uah_master.ipynb` or `unit2_uah_master.ipynb`).
+1. **Train your model in the practical notebook** (`unit1_uah_student.ipynb` or `unit2_uah_student.ipynb`).
 2. Run the final packaging cell in the notebook. It generates your `agent.py` and model weights.
 3. **Fork or branch this repository** and create your submission directory:
    ```bash

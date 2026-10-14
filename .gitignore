@@ -16,3 +16,7 @@ ENV/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Prevent accidental committing of teacher/solution files
+*_solution.ipynb
+*_master.ipynb
