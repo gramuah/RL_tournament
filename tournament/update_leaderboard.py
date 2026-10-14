@@ -110,10 +110,10 @@ All agents uploaded to GitHub are automatically benchmarked under identical cond
 > **Evaluation Engine:** Automated CI Runner (`ubuntu-latest` / Python 3.10)
 
 ### 🌐 Arena Interactiva y Visualizador Web en GitHub
-👉 **[CLICK AQUÍ PARA ABRIR LA ARENA INTERACTIVA (GitHub Pages)](https://rflor01.github.io/RL_tournament/)** 👈  
+👉 **[CLICK AQUÍ PARA ABRIR LA ARENA INTERACTIVA (GitHub Pages)](https://gramuah.github.io/RL_tournament/)** 👈  
 *Permite seleccionar dos agentes cualesquiera y ver el enfrentamiento cara a cara en vídeo sincronizado con métricas de velocidad de aterrizaje y telemetría en tiempo real.*
 
-👉 **[Ejecutar Duelo Interactivo a la Carta en GitHub Actions](https://github.com/rflor01/RL_tournament/actions/workflows/duel.yml)**  
+👉 **[Ejecutar Duelo Interactivo a la Carta en GitHub Actions](https://github.com/gramuah/RL_tournament/actions/workflows/duel.yml)**  
 *(Pulsa "Run workflow" en GitHub para generar un duelo personalizado con animación y reporte instantáneo).*
 
 ---
@@ -128,7 +128,7 @@ Ambos agentes comienzan con la **misma semilla determinista** (terreno, altitud,
 ---
 
 ## 📌 Table of Contents
-- [🌐 Arena Interactiva en GitHub Pages](https://rflor01.github.io/RL_tournament/)
+- [🌐 Arena Interactiva en GitHub Pages](https://gramuah.github.io/RL_tournament/)
 - [🚀 Practical 1: LunarLander-v3](#-practical-1-lunarlander-v3)
 - [🚕 Practical 2: Taxi-v3 / Taxi-v4](#-practical-2-taxi-v3--taxi-v4)
 - [📝 How to Submit Your Model](#-how-to-submit-your-model)

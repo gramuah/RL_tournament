@@ -16,9 +16,9 @@ You can launch and execute the practical sessions directly in **Google Colab** w
 
 | Session | Topic | Colab Badge | Deliverable |
 | :--- | :--- | :---: | :---: |
-| **Practical 1** | Introduction to RL & Deep PPO (`LunarLander-v3`) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/rflor01/RL_tournament/blob/main/Lab_sessions/Practical1/unit1_uah_master.ipynb) | [Submissions Folder](submissions/practical1/) |
-| **Practical 2** | Tabular Q-Learning (`Taxi-v3 / Taxi-v4`) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/rflor01/RL_tournament/blob/main/Lab_sessions/Practical2/unit2_uah_master.ipynb) | [Submissions Folder](submissions/practical2/) |
-| **Final Practical** | Final Project | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/rflor01/RL_tournament/blob/main/Lab_sessions/Practical_final/unit3_uah_master.ipynb) | Oral Defense |
+| **Practical 1** | Introduction to RL & Deep PPO (`LunarLander-v3`) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/gramuah/RL_tournament/blob/main/Lab_sessions/Practical1/unit1_uah_master.ipynb) | [Submissions Folder](submissions/practical1/) |
+| **Practical 2** | Tabular Q-Learning (`Taxi-v3 / Taxi-v4`) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/gramuah/RL_tournament/blob/main/Lab_sessions/Practical2/unit2_uah_master.ipynb) | [Submissions Folder](submissions/practical2/) |
+| **Final Practical** | Final Project | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/gramuah/RL_tournament/blob/main/Lab_sessions/Practical_final/unit3_uah_master.ipynb) | Oral Defense |
 
 The official PDF student guide is available here:  
 📄 **[Download Guide_Practical_Sessions.pdf](Lab_sessions/Guide_Practical_Sessions.pdf)**
@@ -56,7 +56,7 @@ python tournament/compare.py --practical 1 --agent-a submissions/practical1/demo
 Or directly inside your Colab notebook:
 ```python
 import urllib.request
-exec(urllib.request.urlopen("https://raw.githubusercontent.com/rflor01/RL_tournament/main/tournament/compare.py").read().decode("utf-8"))
+exec(urllib.request.urlopen("https://raw.githubusercontent.com/gramuah/RL_tournament/main/tournament/compare.py").read().decode("utf-8"))
 
 # Duel against a baseline or against any classmate on the leaderboard!
 duel_agents(practical_id=1, agent_a="agent.py", agent_b="baseline_heuristic", output_video="duel.mp4")

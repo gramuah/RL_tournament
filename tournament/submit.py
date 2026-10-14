@@ -13,7 +13,7 @@ import time
 import urllib.error
 import urllib.request
 
-COURSE_OWNER = "rflor01"
+COURSE_OWNER = "gramuah"
 COURSE_REPO = "RL_tournament"
 BASE_BRANCH = "main"
 
@@ -53,7 +53,7 @@ def submit_practical(practical_id, files_to_submit, github_token, github_usernam
     2. Forking the repository (if not already forked).
     3. Creating or updating a submission branch.
     4. Uploading agent.py and model weight files.
-    5. Opening a Pull Request against rflor01/RL_tournament:main.
+    5. Opening a Pull Request against gramuah/RL_tournament:main.
 
     :param practical_id: 1 or 2
     :param files_to_submit: dict of {target_filename: local_path}
