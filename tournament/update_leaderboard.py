@@ -17,8 +17,9 @@ from pathlib import Path
 from evaluate import evaluate_single_submission, PRACTICAL_CONFIGS
 
 
-LEADERBOARD_PATH = Path("LEADERBOARD.md")
-RESULTS_DIR = Path("tournament/results")
+REPO_ROOT = Path(__file__).resolve().parent.parent
+LEADERBOARD_PATH = REPO_ROOT / "LEADERBOARD.md"
+RESULTS_DIR = REPO_ROOT / "tournament" / "results"
 
 
 def get_rank_medal(rank):
@@ -108,9 +109,26 @@ All agents uploaded to GitHub are automatically benchmarked under identical cond
 > **Total Evaluated Agents:** `{total_submissions}`  
 > **Evaluation Engine:** Automated CI Runner (`ubuntu-latest` / Python 3.10)
 
+### 🌐 Arena Interactiva y Visualizador Web en GitHub
+👉 **[CLICK AQUÍ PARA ABRIR LA ARENA INTERACTIVA (GitHub Pages)](https://rflor01.github.io/RL_tournament/)** 👈  
+*Permite seleccionar dos agentes cualesquiera y ver el enfrentamiento cara a cara en vídeo sincronizado con métricas de velocidad de aterrizaje y telemetría en tiempo real.*
+
+👉 **[Ejecutar Duelo Interactivo a la Carta en GitHub Actions](https://github.com/rflor01/RL_tournament/actions/workflows/duel.yml)**  
+*(Pulsa "Run workflow" en GitHub para generar un duelo personalizado con animación y reporte instantáneo).*
+
+---
+
+### 🎬 Repetición en Directo: Enfrentamiento Cara a Cara (*Split-Screen*)
+Ambos agentes comienzan con la **misma semilla determinista** (terreno, altitud, objetivo y viento idénticos):
+
+<p align="center">
+  <img src="assets/duels/duel_lunarlander_preview.gif" alt="LunarLander Synchronized Duel Replay" width="100%" style="border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.5);" />
+</p>
+
 ---
 
 ## 📌 Table of Contents
+- [🌐 Arena Interactiva en GitHub Pages](https://rflor01.github.io/RL_tournament/)
 - [🚀 Practical 1: LunarLander-v3](#-practical-1-lunarlander-v3)
 - [🚕 Practical 2: Taxi-v3 / Taxi-v4](#-practical-2-taxi-v3--taxi-v4)
 - [📝 How to Submit Your Model](#-how-to-submit-your-model)

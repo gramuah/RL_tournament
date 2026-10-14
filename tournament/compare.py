@@ -323,7 +323,7 @@ def _build_duel_frame(frame_a, frame_b, title_a, title_b, done_a, done_b, seed, 
 
     banner_h = 32
     banner = np.full((banner_h, total_w, 3), 15, dtype=np.uint8)
-    match_str = f"⚔️ HEAD-TO-HEAD DUEL  |  SEED #{seed}  |  STEP {step} ⚔️"
+    match_str = f"HEAD-TO-HEAD DUEL  |  SEED #{seed}  |  STEP {step}"
     text_size = cv2.getTextSize(match_str, cv2.FONT_HERSHEY_DUPLEX, 0.55, 1)[0]
     tx = (total_w - text_size[0]) // 2
     cv2.putText(banner, match_str, (tx, 22), cv2.FONT_HERSHEY_DUPLEX, 0.55, (255, 215, 0), 1, cv2.LINE_AA)
@@ -334,29 +334,33 @@ def _build_duel_frame(frame_a, frame_b, title_a, title_b, done_a, done_b, seed, 
 
 
 def _build_victory_screen(width, height, winner_title, subtitle, score_a, score_b, name_a, name_b):
-    """Creates a final victory splash frame."""
+    """Creates a final victory splash frame with pure ASCII text (no OpenCV glyph artifacts)."""
     if cv2 is None:
         return np.zeros((height, width, 3), dtype=np.uint8)
     splash = np.full((height, width, 3), (24, 24, 28), dtype=np.uint8)
     cv2.rectangle(splash, (15, 15), (width - 15, height - 15), (255, 215, 0), 3)
 
-    v_text = f"🏆 {winner_title.upper()}"
-    t_size = cv2.getTextSize(v_text, cv2.FONT_HERSHEY_DUPLEX, 1.1, 2)[0]
+    is_tie = "DRAW" in winner_title.upper() or "TIE" in winner_title.upper()
+    title_color = (0, 215, 255) if is_tie else (50, 230, 80)
+    v_text = f"RESULT: {winner_title.upper()}" if is_tie else f"VICTORY: {winner_title.upper()}"
+
+    t_size = cv2.getTextSize(v_text, cv2.FONT_HERSHEY_DUPLEX, 1.05, 2)[0]
     cv2.putText(
         splash,
         v_text,
         ((width - t_size[0]) // 2, height // 2 - 50),
         cv2.FONT_HERSHEY_DUPLEX,
-        1.1,
-        (50, 230, 80),
+        1.05,
+        title_color,
         2,
         cv2.LINE_AA,
     )
 
-    s_size = cv2.getTextSize(subtitle, cv2.FONT_HERSHEY_SIMPLEX, 0.72, 1)[0]
+    clean_subtitle = "".join(c for c in subtitle if ord(c) < 128)
+    s_size = cv2.getTextSize(clean_subtitle, cv2.FONT_HERSHEY_SIMPLEX, 0.72, 1)[0]
     cv2.putText(
         splash,
-        subtitle,
+        clean_subtitle,
         ((width - s_size[0]) // 2, height // 2 - 5),
         cv2.FONT_HERSHEY_SIMPLEX,
         0.72,
@@ -365,7 +369,9 @@ def _build_victory_screen(width, height, winner_title, subtitle, score_a, score_
         cv2.LINE_AA,
     )
 
-    score_str = f"{name_a}: {score_a:+.1f} pts  vs  {name_b}: {score_b:+.1f} pts"
+    clean_a = "".join(c for c in name_a if ord(c) < 128)
+    clean_b = "".join(c for c in name_b if ord(c) < 128)
+    score_str = f"{clean_a}: {score_a:+.1f} pts  vs  {clean_b}: {score_b:+.1f} pts"
     sc_size = cv2.getTextSize(score_str, cv2.FONT_HERSHEY_DUPLEX, 0.65, 1)[0]
     cv2.putText(
         splash,
@@ -463,40 +469,40 @@ def run_single_duel_episode(
                 if not done_a or last_frame_a is None:
                     raw_a = env_a.render()
                     raw_a_bgr = cv2.cvtColor(raw_a, cv2.COLOR_RGB2BGR) if cv2 is not None else raw_a
-                    st_text_a = "FLYING 🚀" if practical_id == 1 else "NAVIGATING 🚕"
+                    st_text_a = "FLYING" if practical_id == 1 else "NAVIGATING"
                     st_color_a = (220, 200, 50)
                     panel_a = _draw_hud_panel(raw_a_bgr, name_a, steps_a, reward_a, st_text_a, st_color_a, "A")
                     last_frame_a = panel_a
                 else:
                     panel_a = last_frame_a.copy()
                     if success_a:
-                        status_str = "TOUCHDOWN! 🏁" if practical_id == 1 else "DELIVERED! 🏁"
+                        status_str = "TOUCHDOWN! [OK]" if practical_id == 1 else "DELIVERED! [OK]"
                         color = (40, 220, 50)
                     elif crash_a:
-                        status_str = "CRASHED! 💥"
+                        status_str = "CRASHED! [FAIL]"
                         color = (30, 40, 230)
                     else:
-                        status_str = "TIME OUT ⏱️"
+                        status_str = "TIME OUT"
                         color = (40, 160, 230)
                     panel_a = _draw_finished_overlay(panel_a, status_str, color, reward_a, steps_a)
 
                 if not done_b or last_frame_b is None:
                     raw_b = env_b.render()
                     raw_b_bgr = cv2.cvtColor(raw_b, cv2.COLOR_RGB2BGR) if cv2 is not None else raw_b
-                    st_text_b = "FLYING 🚀" if practical_id == 1 else "NAVIGATING 🚕"
+                    st_text_b = "FLYING" if practical_id == 1 else "NAVIGATING"
                     st_color_b = (220, 200, 50)
                     panel_b = _draw_hud_panel(raw_b_bgr, name_b, steps_b, reward_b, st_text_b, st_color_b, "B")
                     last_frame_b = panel_b
                 else:
                     panel_b = last_frame_b.copy()
                     if success_b:
-                        status_str = "TOUCHDOWN! 🏁" if practical_id == 1 else "DELIVERED! 🏁"
+                        status_str = "TOUCHDOWN! [OK]" if practical_id == 1 else "DELIVERED! [OK]"
                         color = (40, 220, 50)
                     elif crash_b:
-                        status_str = "CRASHED! 💥"
+                        status_str = "CRASHED! [FAIL]"
                         color = (30, 40, 230)
                     else:
-                        status_str = "TIME OUT ⏱️"
+                        status_str = "TIME OUT"
                         color = (40, 160, 230)
                     panel_b = _draw_finished_overlay(panel_b, status_str, color, reward_b, steps_b)
 
@@ -524,8 +530,15 @@ def run_single_duel_episode(
             winner = name_b
             win_reason = f"{name_b} was FASTER! ({steps_b} steps vs {steps_a} steps)"
         else:
-            winner = name_a if reward_a >= reward_b else name_b
-            win_reason = f"Tie in speed ({steps_a} steps)! Decided by score"
+            if reward_a > reward_b:
+                winner = name_a
+                win_reason = f"Same speed ({steps_a} st), higher score ({reward_a:+.1f} vs {reward_b:+.1f})"
+            elif reward_b > reward_a:
+                winner = name_b
+                win_reason = f"Same speed ({steps_b} st), higher score ({reward_b:+.1f} vs {reward_a:+.1f})"
+            else:
+                winner = "TIE"
+                win_reason = f"Identical speed ({steps_a} st) and score ({reward_a:+.1f} pts)"
     else:
         if reward_a > reward_b:
             winner = name_a
