@@ -40,6 +40,9 @@
         <button class="tab-btn" data-tab="sandbox" id="tab-sandbox-btn">
           Simulador Interactivo
         </button>
+              <button class="tab-btn" data-tab="rules" id="tab-rules-btn">
+          🎯 Criterios y Puntuación
+        </button>
       </nav>
 
       <div class="repo-links">
@@ -388,6 +391,97 @@
               </button>
             </div>
           </div>
+        </div>
+
+      </div>
+    </section>
+
+      <!-- VIEW 4: TOURNAMENT CRITERIA & OPTIMIZATION GUIDE -->
+    <section id="rules-view" class="view-section" style="display: none;">
+      <div class="arena-header">
+        <h2>🎯 Criterios de Evaluación y Guía de Puntuación</h2>
+        <p>Conoce en detalle qué premia el motor de evaluación de GitHub Actions y las estrategias clave para optimizar tu modelo y alcanzar el podio.</p>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
+        
+        <!-- CARD 1: CRITERIOS -->
+        <div class="table-card" style="padding: 1.5rem;">
+          <h3 style="color: #58a6ff; font-size: 1.15rem; margin-bottom: 0.8rem; display: flex; align-items: center; gap: 0.5rem;">
+            <span>⚖️</span> ¿Qué premia el Torneo Oficial?
+          </h3>
+          <ul style="color: var(--text-main); font-size: 0.9rem; line-height: 1.6; padding-left: 1.2rem; margin: 0;">
+            <li style="margin-bottom: 0.6rem;">
+              <strong>Puntuación Media (μ, Métrica Principal):</strong> Promedio sobre 30 semillas fijas (2, 43, 44, \dots$).
+              <div style="font-size: 0.82rem; color: var(--text-dim); margin-top: 0.2rem;">
+                • <em>LunarLander:</em> Descenso suave y centrado (+100 a +140), contacto de patas (+10 c/u), touchdown apagando motores (+100 bonus), choque (-100), gasto de combustible (-0.3 principal, -0.03 lateral). Nivel top: &gt; 270 pts.<br>
+                • <em>Taxi:</em> Entrega correcta (+20), coste por paso (-1 pt, premia trayectorias cortas), intento ilegal (-10). Nivel top: &gt; +8.0 a +9.5 pts.
+              </div>
+            </li>
+            <li style="margin-bottom: 0.6rem;">
+              <strong>Tasa de Éxito (100% Target):</strong> Porcentaje de episodios completados sin estrellarse ni agotar el tiempo límite. Los agentes de podio no fallan ningún episodio.
+            </li>
+            <li style="margin-bottom: 0.6rem;">
+              <strong>Estabilidad y Consistencia (±σ):</strong> Menor desviación estándar ante vientos cruzados o puntos de recogida lejanos. Desempata posiciones.
+            </li>
+            <li style="margin-bottom: 0.6rem;">
+              <strong>Eficiencia en Pasos (Velocidad en Duelos):</strong> En los enfrentamientos cara a cara, quien complete la misión en menos pasos gana el duelo.
+            </li>
+            <li>
+              <strong>Latencia de Inferencia (&lt; 100 ms):</strong> La red neuronal o consulta a la tabla Q debe responder en tiempo real por paso.
+            </li>
+          </ul>
+        </div>
+
+        <!-- CARD 2: ESTRATEGIAS PRACTICA 1 -->
+        <div class="table-card" style="padding: 1.5rem;">
+          <h3 style="color: #7ee787; font-size: 1.15rem; margin-bottom: 0.8rem; display: flex; align-items: center; gap: 0.5rem;">
+            <span>🌕</span> Práctica 1: Cómo Maximizar Puntos en LunarLander
+          </h3>
+          <ul style="color: var(--text-main); font-size: 0.9rem; line-height: 1.6; padding-left: 1.2rem; margin: 0;">
+            <li style="margin-bottom: 0.5rem;">
+              <strong>Capacidad de la Red:</strong> Aumenta las capas ocultas del MLP de <code>[64, 64]</code> a <code>[128, 128]</code> o <code>[256, 256]</code> con <code>ortho_init=True</code> y activación <code>Tanh</code>.
+            </li>
+            <li style="margin-bottom: 0.5rem;">
+              <strong>Entornos Vectorizados Paralelos:</strong> Entrena con <code>make_vec_env("LunarLander-v2", n_envs=8)</code> para descorrelacionar datos y estabilizar el gradiente de PPO.
+            </li>
+            <li style="margin-bottom: 0.5rem;">
+              <strong>Ajuste Fino de Hiperparámetros:</strong> Factor de descuento $\gamma = 0.999$, GAE $\lambda = 0.98$, clip range $\epsilon = 0.2$, y learning rate con decaimiento lineal desde  	imes 10^{-4}$.
+            </li>
+            <li style="margin-bottom: 0.5rem;">
+              <strong>Regularización por Entropía:</strong> Calibra <code>ent_coef = 0.005</code> para explorar bien al inicio sin desestabilizar la política final.
+            </li>
+            <li style="margin-bottom: 0.5rem;">
+              <strong>Normalización:</strong> Envuelve el entorno con <code>VecNormalize</code> para equilibrar escalas de altitud, velocidades y ángulo.
+            </li>
+            <li>
+              <strong>Ahorro de Combustible:</strong> Una vez asegurado el aterrizaje, minimiza ráfagas laterales innecesarias para arañar +20 a +30 puntos hacia los &gt; 280 pts.
+            </li>
+          </ul>
+        </div>
+
+        <!-- CARD 3: ESTRATEGIAS PRACTICA 2 -->
+        <div class="table-card" style="padding: 1.5rem;">
+          <h3 style="color: #f0883e; font-size: 1.15rem; margin-bottom: 0.8rem; display: flex; align-items: center; gap: 0.5rem;">
+            <span>🚕</span> Práctica 2: Cómo Ganar Duelos en Taxi-v3/v4
+          </h3>
+          <ul style="color: var(--text-main); font-size: 0.9rem; line-height: 1.6; padding-left: 1.2rem; margin: 0;">
+            <li style="margin-bottom: 0.5rem;">
+              <strong>Decaimiento Exponencial de $\epsilon$:</strong> Usa $\epsilon_t = \epsilon_{\min} + (\epsilon_{\max} - \epsilon_{\min})e^{-	ext{decay} \cdot t}$ con decay $pprox 0.0005$ a lo largo de 25.000–30.000 episodios para garantizar que se exploran los 500 estados discretos.
+            </li>
+            <li style="margin-bottom: 0.5rem;">
+              <strong>Tasa de Aprendizaje Adaptativa:</strong> Comienza en $lpha = 0.7$ para actualizaciones rápidas y reduce gradualmente a $pprox 0.1$ para que la tabla Q converja sin oscilar.
+            </li>
+            <li style="margin-bottom: 0.5rem;">
+              <strong>Factor de Descuento Óptimo:</strong> Usa $\gamma \in [0.95, 0.99]$ para priorizar la distancia Manhattan mínima hacia el pasajero y el destino.
+            </li>
+            <li style="margin-bottom: 0.5rem;">
+              <strong>Tolerancia Cero a Acciones Ilegales:</strong> Una sola acción ilegal (-10 pts) arruina la media. El agente debe aprender a recoger y soltar únicamente en las coordenadas exactas.
+            </li>
+            <li>
+              <strong>Política Determinista en Competición:</strong> En la función <code>agent(obs)</code> fija siempre $\epsilon = 0$ (<code>np.argmax(Q[state])</code>) para eliminar cualquier paso aleatorio errático.
+            </li>
+          </ul>
         </div>
 
       </div>

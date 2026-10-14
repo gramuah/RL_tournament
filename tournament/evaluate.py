@@ -15,12 +15,11 @@ import time
 from pathlib import Path
 import numpy as np
 
-# Ensure gymnasium can be imported
+# Optional gymnasium import (required only during active agent simulation)
 try:
     import gymnasium as gym
 except ImportError:
-    print("Error: gymnasium is required. Install with: pip install 'gymnasium[box2d]'")
-    sys.exit(1)
+    gym = None
 
 
 PRACTICAL_CONFIGS = {

@@ -58,7 +58,7 @@ The course combines theory sessions (9h) and practical sessions (6h). The practi
 \midrule
 Practical 1 & Introduction to RL \& Deep PPO & \texttt{Practical1/unit1\_uah\_student.ipynb} \\
 Practical 2 & Tabular Q-Learning (Taxi-v3/v4) & \texttt{Practical2/unit2\_uah\_student.ipynb} \\
-Final Practical & Final project & \texttt{Practical\_final/unit3\_uah\_master.ipynb} \\
+Final Practical & Final project & \texttt{Practical\_final/unit3\_uah\_student.ipynb} \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -179,6 +179,53 @@ To foster friendly competition, peer learning, and benchmark reproducibility, al
 \begin{infobox}[Leaderboard Tip]
 You can submit multiple times! If you improve your hyperparameters, refine reward engineering, or discover a better architecture, open an updated PR to improve your standing on the leaderboard.
 \end{infobox}
+
+\section{Tournament Evaluation Criteria and Optimization Strategies}
+\label{sec:scoring_strategies}
+
+To excel in the tournament leaderboard and win head-to-head duels, it is essential to understand both \textbf{how the automated evaluation engine scores agents} and \textbf{which engineering techniques yield the highest performance}.
+
+\subsection{Evaluation Criteria: What is Rewarded?}
+
+When you open a Pull Request, the automated CI runner evaluates your agent under rigorous, identical benchmark conditions:
+\begin{enumerate}
+    \item \textbf{Mean Reward ($\mu$, Primary Ranking Metric)}: The average score achieved across 30 standardized deterministic seeds ($42, 43, 44, \dots$).
+    \begin{itemize}
+        \item \textbf{LunarLander-v2/v3}: Moving from top to landing pad scores $+100$ to $+140$ pts; each leg touching the surface scores $+10$ pts; touching down between flags and cutting engines earns $+100$ pts bonus; crashing penalizes $-100$ pts; firing the main thruster costs $-0.3$ pts/frame, and side thrusters cost $-0.03$ pts/frame.
+        \item \textbf{Taxi-v3/v4}: Successfully delivering the passenger at the destination awards $+20$ pts; each navigation step costs $-1$ pt (penalizing inefficient meandering); attempting an illegal pickup or drop-off action incurs a severe $-10$ pts penalty.
+    \end{itemize}
+    \item \textbf{Success Rate (\%)}: Percentage of episodes completed without crash or timeout. A competitive agent must achieve a $100\%$ success rate.
+    \item \textbf{Stability and Low Variance ($\pm \sigma$)}: Evaluates policy robustness against varying terrain, wind turbulence, and randomized passenger locations. Lower $\sigma$ ranks higher in tie-breaks.
+    \item \textbf{Speed and Step Efficiency (Steps)}: In head-to-head duels and in Taxi-v3, taking the minimal number of time steps (shortest Manhattan trajectory) directly breaks score ties and decides the winner.
+    \item \textbf{Inference Latency (ms)}: Average forward-pass execution time per step. Policies must answer in under $100$\,ms per step to guarantee real-time deployment.
+\end{enumerate}
+
+\subsection{Optimization Strategies: How to Achieve Higher Scores?}
+
+\paragraph{For Practical 1 (LunarLander Deep PPO):}
+\begin{itemize}
+    \item \textbf{Network Architecture}: Increase the default MLP capacity from $[64, 64]$ to $[128, 128]$ or $[256, 256]$ hidden units with orthogonal weight initialization (\texttt{ortho\_init=True}) and \texttt{Tanh} or \texttt{ReLU} activations.
+    \item \textbf{Hyperparameter Tuning}:
+    \begin{itemize}
+        \item Set the discount factor $\gamma = 0.999$ and GAE $\lambda = 0.98$ to account for long-horizon landings.
+        \item Use learning rate decay (starting at $3 \times 10^{-4}$ and decaying linearly or with a cosine schedule).
+        \item Tune the entropy coefficient (\texttt{ent\_coef} $\in [0.001, 0.01]$) to encourage initial exploration while guaranteeing stable convergence.
+        \item Set PPO clipping parameter to $\epsilon = 0.2$.
+    \end{itemize}
+    \item \textbf{Vectorized Parallel Training}: Use \texttt{make\_vec\_env("LunarLander-v2", n\_envs=8)} to decorrelate batch transitions and stabilize gradient updates.
+    \item \textbf{Observation Normalization}: Apply \texttt{VecNormalize(norm\_obs=True, norm\_reward=False)} so that altitude, velocities, and orientation angles are scaled evenly.
+    \item \textbf{Fuel Economy}: Once your agent learns to land safely, refine the policy so it minimizes unnecessary lateral thruster burns, squeezing an additional $+20$ to $+30$ points toward the top tier ($> 280$ pts).
+    \item \textbf{Deterministic Evaluation}: Always set \texttt{deterministic=True} during evaluation and when exporting your submission.
+\end{itemize}
+
+\paragraph{For Practical 2 (Taxi Tabular Q-Learning):}
+\begin{itemize}
+    \item \textbf{Exponential Epsilon Decay}: Use a smooth exponential schedule ($\epsilon_t = \epsilon_{\min} + (\epsilon_{\max} - \epsilon_{\min})\exp(-\mathrm{decay} \times t)$) with $\mathrm{decay} \approx 0.0005$ over $25{,}000$--$30{,}000$ episodes. This ensures all 500 discrete state-action pairs are visited adequately before freezing the policy.
+    \item \textbf{Learning Rate Decay}: Start with $\alpha = 0.7$ for rapid early updates, and gradually decay $\alpha$ toward $0.1$ so the Q-table converges smoothly without oscillations.
+    \item \textbf{Discount Factor $\gamma \in [0.95, 0.99]$}: Prioritizes immediate, shortest-path actions over long-horizon wandering.
+    \item \textbf{Strict Greedy Policy at Test Time}: In evaluation, set $\epsilon = 0$ (\texttt{action = np.argmax(Q[state])}) to completely eliminate random moves.
+    \item \textbf{Zero-Penalty Target}: An optimal Taxi policy requires zero illegal pickups/dropoffs ($-10$) and takes between 11 and 14 steps, achieving a mean score between $+7.5$ and $+9.5$ points per episode.
+\end{itemize}
 
 \section{Head-to-Head Agent Duel: Comparing Against Classmates}
 \label{sec:duel}
