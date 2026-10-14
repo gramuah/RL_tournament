@@ -1,0 +1,103 @@
+name: ⚔️ Run Agent Duel & Visualize
+
+on:
+  workflow_dispatch:
+    inputs:
+      practical:
+        description: 'Practical Session'
+        required: true
+        default: '1'
+        type: choice
+        options:
+          - '1'
+          - '2'
+      agent_a:
+        description: 'Corner A: Path, baseline (baseline_heuristic, baseline_random, demo_student), or GitHub username'
+        required: true
+        default: 'demo_student'
+        type: string
+      agent_b:
+        description: 'Corner B: Path, baseline, or GitHub username'
+        required: true
+        default: 'baseline_heuristic'
+        type: string
+      episodes:
+        description: 'Number of duel episodes'
+        required: false
+        default: '3'
+        type: string
+      seed:
+        description: 'Base random seed'
+        required: false
+        default: '42'
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  duel:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set up Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: 📦 Install system packages
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq swig cmake ffmpeg xvfb
+
+      - name: 📦 Install Python dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r tournament/requirements.txt
+
+      - name: 🥊 Execute Head-to-Head Duel
+        id: run_duel
+        run: |
+          mkdir -p duel_output
+          python tournament/compare.py \
+            --practical "${{ inputs.practical }}" \
+            --agent-a "${{ inputs.agent_a }}" \
+            --agent-b "${{ inputs.agent_b }}" \
+            --episodes "${{ inputs.episodes }}" \
+            --seed "${{ inputs.seed }}" \
+            --video "duel_output/duel_replay.gif" | tee duel_stdout.txt
+
+      - name: 📊 Publish Duel Report to GitHub Actions Summary
+        if: always()
+        run: |
+          echo "## 🥊 RL Tournament Duel Results" >> $GITHUB_STEP_SUMMARY
+          echo "**Practical**: ${{ inputs.practical }} | **Seed**: ${{ inputs.seed }} | **Episodes**: ${{ inputs.episodes }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- 🔵 **Corner A**: \`${{ inputs.agent_a }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- 🟠 **Corner B**: \`${{ inputs.agent_b }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📋 Match Log & Scoreboard" >> $GITHUB_STEP_SUMMARY
+          echo '```text' >> $GITHUB_STEP_SUMMARY
+          cat duel_stdout.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+          if [ -f "duel_output/duel_replay.gif" ]; then
+            GIF_SIZE_KB=$(du -k "duel_output/duel_replay.gif" | cut -f1)
+            # If GIF is reasonably sized (<2MB), embed directly via base64 for instant in-browser viewing
+            if [ "$GIF_SIZE_KB" -lt 2500 ]; then
+              B64_GIF=$(base64 -w 0 "duel_output/duel_replay.gif")
+              echo "### 🎬 Synchronized Split-Screen Replay" >> $GITHUB_STEP_SUMMARY
+              echo "<p align=\"center\"><img src=\"data:image/gif;base64,$B64_GIF\" alt=\"Duel Replay\" style=\"max-width: 100%; border-radius: 8px;\" /></p>" >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
+
+      - name: 💾 Upload Duel Video Replay Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: duel-replay-p${{ inputs.practical }}-${{ inputs.agent_a }}-vs-${{ inputs.agent_b }}
+          path: duel_output/
+          retention-days: 14

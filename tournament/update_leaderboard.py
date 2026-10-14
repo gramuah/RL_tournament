@@ -203,12 +203,20 @@ def main():
         with open(p2_json, "w", encoding="utf-8") as f:
             json.dump(p2_results, f, indent=2)
 
+        # Also sync to GitHub Pages docs/data directory if it exists
+        docs_data_dir = REPO_ROOT / "docs" / "data"
+        if docs_data_dir.exists():
+            with open(docs_data_dir / "leaderboard_p1.json", "w", encoding="utf-8") as f:
+                json.dump(p1_results, f, indent=2)
+            with open(docs_data_dir / "leaderboard_p2.json", "w", encoding="utf-8") as f:
+                json.dump(p2_results, f, indent=2)
+
     markdown_content = generate_leaderboard_content(p1_results, p2_results, timestamp)
 
     with open(LEADERBOARD_PATH, "w", encoding="utf-8") as f:
         f.write(markdown_content)
 
-    print(f"✅ Successfully generated {LEADERBOARD_PATH}!")
+    print(f"✅ Successfully generated {LEADERBOARD_PATH} and updated web dashboard data!")
 
 
 if __name__ == "__main__":

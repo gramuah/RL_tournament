@@ -49,7 +49,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add LEADERBOARD.md tournament/results/
+          git add LEADERBOARD.md tournament/results/ docs/data/
           if git diff --staged --quiet; then
             echo "Leaderboard is already up to date, nothing to commit."
           else

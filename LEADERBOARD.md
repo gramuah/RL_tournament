@@ -4,13 +4,30 @@ Welcome to the automated competition leaderboard for the **Reinforcement Learnin
 
 All agents uploaded to GitHub are automatically benchmarked under identical conditions using fixed seeds and evaluated with **GitHub Actions**.
 
-> **Last Updated:** `2026-10-14 07:25:54 UTC`  
+> **Last Updated:** `2026-10-14 07:26:26 UTC`  
 > **Total Evaluated Agents:** `4`  
 > **Evaluation Engine:** Automated CI Runner (`ubuntu-latest` / Python 3.10)
+
+### 🌐 Arena Interactiva y Visualizador Web en GitHub
+👉 **[CLICK AQUÍ PARA ABRIR LA ARENA INTERACTIVA (GitHub Pages)](https://rflor01.github.io/RL_tournament/)** 👈  
+*Permite seleccionar dos agentes cualesquiera y ver el enfrentamiento cara a cara en vídeo sincronizado con métricas de velocidad de aterrizaje y telemetría en tiempo real.*
+
+👉 **[Ejecutar Duelo Interactivo a la Carta en GitHub Actions](https://github.com/rflor01/RL_tournament/actions/workflows/duel.yml)**  
+*(Pulsa "Run workflow" en GitHub para generar un duelo personalizado con animación y reporte instantáneo).*
+
+---
+
+### 🎬 Repetición en Directo: Enfrentamiento Cara a Cara (*Split-Screen*)
+Ambos agentes comienzan con la **misma semilla determinista** (terreno, altitud, objetivo y viento idénticos):
+
+<p align="center">
+  <img src="assets/duels/duel_lunarlander_preview.gif" alt="LunarLander Synchronized Duel Replay" width="100%" style="border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.5);" />
+</p>
 
 ---
 
 ## 📌 Table of Contents
+- [🌐 Arena Interactiva en GitHub Pages](https://rflor01.github.io/RL_tournament/)
 - [🚀 Practical 1: LunarLander-v3](#-practical-1-lunarlander-v3)
 - [🚕 Practical 2: Taxi-v3 / Taxi-v4](#-practical-2-taxi-v3--taxi-v4)
 - [📝 How to Submit Your Model](#-how-to-submit-your-model)
@@ -27,7 +44,7 @@ In this challenge, agents learn attitude and thruster control to land a spacecra
 
 | Rank | Participant | Mean Score | Std Dev | Success Rate | Min / Max | Status |
 | :---: | :--- | :---: | :---: | :---: | :---: | :---: |
-| 🥇 **1st** | *baseline_random (Baseline)* | **-190.86** | ±118.07 | 0.0% | [-508.8, -51.2] | NEEDS IMPROVEMENT ⚠️ |
+| 🥇 **1st** | *baseline_random (Baseline)* | **-219.09** | ±114.72 | 0.0% | [-484.2, -79.8] | NEEDS IMPROVEMENT ⚠️ |
 | 🥈 **2nd** | *baseline_heuristic (Baseline)* | **-625.59** | ±178.43 | 0.0% | [-1112.7, -381.7] | NEEDS IMPROVEMENT ⚠️ |
 | 🥉 **3rd** | [demo_student](submissions/practical1/demo_student) | **-628.78** | ±174.92 | 0.0% | [-1112.7, -381.7] | NEEDS IMPROVEMENT ⚠️ |
 
@@ -42,7 +59,7 @@ In this challenge, agents learn a tabular Q-learning policy to pick up and drop 
 
 | Rank | Participant | Mean Score | Std Dev | Success Rate | Min / Max | Status |
 | :---: | :--- | :---: | :---: | :---: | :---: | :---: |
-| 🥇 **1st** | *baseline_random (Baseline)* | **-795.50** | ±71.17 | 0.0% | [-929.0, -632.0] | NEEDS IMPROVEMENT ⚠️ |
+| 🥇 **1st** | *baseline_random (Baseline)* | **-791.30** | ±68.98 | 0.0% | [-938.0, -668.0] | NEEDS IMPROVEMENT ⚠️ |
 
 ---
 
