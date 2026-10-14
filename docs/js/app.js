@@ -94,6 +94,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   initDuelArena();
   initSandboxArcade();
+  initTaxiSprites();
 });
 
 // ---------------------------------------------------------------------------
@@ -959,6 +960,11 @@ function addDuelParticle(x, y, vx, vy, color) {
   duelParticles.push({ x, y, vx, vy, color, alpha: 1.0, size: 2.5 + Math.random() * 2 });
 }
 
+function getRandomTaxiAction() {
+  const acts = ['down', 'up', 'right', 'left', 'pickup', 'dropoff'];
+  return acts[Math.floor(Math.random() * acts.length)];
+}
+
 function updateDuelTaxiLogic() {
   if (!STATE.duelRunning) return;
 
@@ -966,7 +972,8 @@ function updateDuelTaxiLogic() {
   if (STATE.agentB !== HUMAN_AGENT && !duelTaxiB.delivered) {
     if (now - duelTaxiB.lastAiStepTime > 260) {
       duelTaxiB.lastAiStepTime = now;
-      const aiAct = getOptimalTaxiAction(duelTaxiB);
+      const isRandomB = STATE.agentB && STATE.agentB.toLowerCase().includes('random');
+      const aiAct = isRandomB ? getRandomTaxiAction() : getOptimalTaxiAction(duelTaxiB);
       executeTaxiStep(duelTaxiB, aiAct);
       checkDuelEnd();
     }
@@ -975,7 +982,8 @@ function updateDuelTaxiLogic() {
   if (STATE.agentA !== HUMAN_AGENT && !duelTaxiA.delivered) {
     if (now - duelTaxiA.lastAiStepTime > 260) {
       duelTaxiA.lastAiStepTime = now;
-      const aiAct = getOptimalTaxiAction(duelTaxiA);
+      const isRandomA = STATE.agentA && STATE.agentA.toLowerCase().includes('random');
+      const aiAct = isRandomA ? getRandomTaxiAction() : getOptimalTaxiAction(duelTaxiA);
       executeTaxiStep(duelTaxiA, aiAct);
       checkDuelEnd();
     }
@@ -1129,91 +1137,208 @@ function renderDuelTaxi() {
   renderSingleTaxiGrid(duelCtx, duelTaxiB, 440, 40, 310, STATE.agentB);
 }
 
+// ===========================================================================
+// GYMNASIUM TAXI-v4 AUTHENTIC RENDERING ENGINE (Official Gymnasium Sprites)
+// ===========================================================================
+const TAXI_ASSETS = {
+  bg: new Image(),
+  cab_front: new Image(),
+  cab_rear: new Image(),
+  cab_left: new Image(),
+  cab_right: new Image(),
+  passenger: new Image(),
+  hotel: new Image(),
+  median_top: new Image(),
+  median_bottom: new Image(),
+  median_vert: new Image(),
+  median_horiz: new Image(),
+  loaded: false
+};
+
+function initTaxiSprites() {
+  let loadedCount = 0;
+  const total = 11;
+  const onAssetLoad = () => {
+    loadedCount++;
+    if (loadedCount >= total) TAXI_ASSETS.loaded = true;
+  };
+
+  TAXI_ASSETS.bg.onload = onAssetLoad;
+  TAXI_ASSETS.bg.src = 'assets/taxi/taxi_background.png';
+
+  TAXI_ASSETS.cab_front.onload = onAssetLoad;
+  TAXI_ASSETS.cab_front.src = 'assets/taxi/cab_front.png';
+
+  TAXI_ASSETS.cab_rear.onload = onAssetLoad;
+  TAXI_ASSETS.cab_rear.src = 'assets/taxi/cab_rear.png';
+
+  TAXI_ASSETS.cab_left.onload = onAssetLoad;
+  TAXI_ASSETS.cab_left.src = 'assets/taxi/cab_left.png';
+
+  TAXI_ASSETS.cab_right.onload = onAssetLoad;
+  TAXI_ASSETS.cab_right.src = 'assets/taxi/cab_right.png';
+
+  TAXI_ASSETS.passenger.onload = onAssetLoad;
+  TAXI_ASSETS.passenger.src = 'assets/taxi/passenger.png';
+
+  TAXI_ASSETS.hotel.onload = onAssetLoad;
+  TAXI_ASSETS.hotel.src = 'assets/taxi/hotel.png';
+
+  TAXI_ASSETS.median_top.onload = onAssetLoad;
+  TAXI_ASSETS.median_top.src = 'assets/taxi/gridworld_median_top.png';
+
+  TAXI_ASSETS.median_bottom.onload = onAssetLoad;
+  TAXI_ASSETS.median_bottom.src = 'assets/taxi/gridworld_median_bottom.png';
+
+  TAXI_ASSETS.median_vert.onload = onAssetLoad;
+  TAXI_ASSETS.median_vert.src = 'assets/taxi/gridworld_median_vert.png';
+
+  TAXI_ASSETS.median_horiz.onload = onAssetLoad;
+  TAXI_ASSETS.median_horiz.src = 'assets/taxi/gridworld_median_horiz.png';
+}
+
 function renderSingleTaxiGrid(ctx, t, startX, startY, size, agentName) {
   const cellSize = size / 5;
   const stations = [
-    { row: 0, col: 0, name: 'R', color: '#ef4444' },
-    { row: 0, col: 4, name: 'G', color: '#10b981' },
-    { row: 4, col: 0, name: 'Y', color: '#f59e0b' },
-    { row: 4, col: 3, name: 'B', color: '#3b82f6' }
+    { row: 0, col: 0, name: 'R', color: '#cc292b' },
+    { row: 0, col: 4, name: 'G', color: '#2e9e44' },
+    { row: 4, col: 0, name: 'Y', color: '#eab308' },
+    { row: 4, col: 3, name: 'B', color: '#3a5bd8' }
   ];
 
-  ctx.font = '12px Outfit';
+  ctx.font = '600 12px var(--font-sans)';
   ctx.fillStyle = '#cbd5e1';
   ctx.fillText(agentName.substring(0, 24), startX, startY - 14);
   ctx.font = '11px JetBrains Mono';
   ctx.fillStyle = '#94a3b8';
   ctx.fillText(`Puntos: ${t.score} | Pasos: ${t.steps}`, startX + 160, startY - 14);
 
-  // Official Gymnasium Asphalt Road Background
-  ctx.fillStyle = '#6b7280';
-  ctx.fillRect(startX, startY, size, size);
-
-  // Subtle lane markings
+  // 1. Gymnasium Road Background Tiles
   for (let r = 0; r < 5; r++) {
     for (let c = 0; c < 5; c++) {
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
-      ctx.lineWidth = 1;
-      ctx.strokeRect(startX + c * cellSize, startY + r * cellSize, cellSize, cellSize);
+      const cx = startX + c * cellSize;
+      const cy = startY + r * cellSize;
+      if (TAXI_ASSETS.loaded && TAXI_ASSETS.bg.complete) {
+        ctx.drawImage(TAXI_ASSETS.bg, cx, cy, cellSize, cellSize);
+      } else {
+        ctx.fillStyle = '#787b84';
+        ctx.fillRect(cx, cy, cellSize, cellSize);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+        ctx.strokeRect(cx, cy, cellSize, cellSize);
+      }
     }
   }
 
-  // 4 Official Colored Stations (R, G, Y, B)
-  stations.forEach((st, idx) => {
+  // 2. Official Colored Stations
+  stations.forEach((st) => {
     const sx = startX + st.col * cellSize;
     const sy = startY + st.row * cellSize;
+    ctx.save();
     ctx.fillStyle = st.color;
-    ctx.fillRect(sx + 3, sy + 3, cellSize - 6, cellSize - 6);
+    ctx.globalAlpha = 0.55;
+    ctx.fillRect(sx, sy, cellSize, cellSize);
+    ctx.restore();
 
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 18px Outfit';
-    ctx.fillText(st.name, sx + cellSize / 2 - 6, sy + cellSize / 2 + 7);
-
-    // Destination target flag
-    if (idx === t.destinationIdx) {
-      ctx.font = '16px Outfit';
-      ctx.fillText('🏁', sx + 4, sy + 20);
-    }
-
-    // Passenger waiting at station
-    if (idx === t.passengerIdx && !t.passengerInTaxi) {
-      ctx.font = '22px Outfit';
-      ctx.fillText('🙋‍♂️', sx + cellSize / 2 - 11, sy + cellSize / 2 + 10);
-    }
+    ctx.font = 'bold 15px JetBrains Mono';
+    ctx.fillText(st.name, sx + 6, sy + 18);
   });
 
-  // Official Gymnasium Taxi Hedge Walls (Green median barriers)
-  ctx.strokeStyle = '#4d8c28';
-  ctx.lineWidth = 6;
-  ctx.lineCap = 'round';
-  drawGridWall(ctx, startX, startY, cellSize, 0, 2, 2, 2);
-  drawGridWall(ctx, startX, startY, cellSize, 3, 1, 5, 1);
-  drawGridWall(ctx, startX, startY, cellSize, 3, 3, 5, 3);
-  ctx.lineCap = 'butt';
+  // 3. Destination Hotel (Transparent building over destination station)
+  const destStation = stations[t.destinationIdx];
+  if (destStation) {
+    const dx = startX + destStation.col * cellSize;
+    const dy = startY + destStation.row * cellSize;
+    if (TAXI_ASSETS.loaded && TAXI_ASSETS.hotel.complete) {
+      ctx.save();
+      ctx.globalAlpha = 0.75;
+      ctx.drawImage(TAXI_ASSETS.hotel, dx + cellSize * 0.1, dy + cellSize * 0.05, cellSize * 0.8, cellSize * 0.85);
+      ctx.restore();
+    } else {
+      ctx.fillStyle = '#f8fafc';
+      ctx.font = '18px Outfit';
+      ctx.fillText('🏨', dx + cellSize / 2 - 9, dy + cellSize / 2 + 7);
+    }
+  }
 
-  // Taxi Sprite (Gymnasium Yellow Taxi)
-  const tx = startX + t.col * cellSize + cellSize / 2;
-  const ty = startY + t.row * cellSize + cellSize / 2;
-  ctx.fillStyle = '#facc15';
-  ctx.fillRect(tx - 16, ty - 12, 32, 24);
-  ctx.fillStyle = '#1e293b'; // Windshield
-  ctx.fillRect(tx - 10, ty - 8, 20, 16);
-  ctx.fillStyle = '#facc15';
-  ctx.font = '11px Outfit';
-  ctx.fillText(t.passengerInTaxi ? '👨‍✈️' : '🚖', tx - 8, ty + 4);
+  // 4. Passenger at station (if not in taxi)
+  if (!t.passengerInTaxi) {
+    const pStation = stations[t.passengerIdx];
+    if (pStation) {
+      const px = startX + pStation.col * cellSize;
+      const py = startY + pStation.row * cellSize;
+      if (TAXI_ASSETS.loaded && TAXI_ASSETS.passenger.complete) {
+        ctx.drawImage(TAXI_ASSETS.passenger, px + cellSize * 0.2, py + cellSize * 0.15, cellSize * 0.6, cellSize * 0.7);
+      } else {
+        ctx.font = '20px Outfit';
+        ctx.fillText('🧍', px + cellSize / 2 - 10, py + cellSize / 2 + 8);
+      }
+    }
+  }
 
+  // 5. Official Gymnasium Vertical Medians (Hedge Walls)
+  const drawMedianSegment = (colBoundary, startRow, isTop) => {
+    const mx = startX + colBoundary * cellSize - cellSize * 0.14;
+    const my = startY + startRow * cellSize;
+    const img = isTop ? TAXI_ASSETS.median_top : TAXI_ASSETS.median_bottom;
+    if (TAXI_ASSETS.loaded && img.complete) {
+      ctx.drawImage(img, mx, my, cellSize * 0.28, cellSize);
+    } else {
+      ctx.strokeStyle = '#4d8c28';
+      ctx.lineWidth = 6;
+      ctx.beginPath();
+      ctx.moveTo(startX + colBoundary * cellSize, my);
+      ctx.lineTo(startX + colBoundary * cellSize, my + cellSize);
+      ctx.stroke();
+    }
+  };
+
+  // Wall between col 1 and 2 (row 0 to 1)
+  drawMedianSegment(2, 0, true);
+  drawMedianSegment(2, 1, false);
+
+  // Wall between col 0 and 1 (row 3 to 4)
+  drawMedianSegment(1, 3, true);
+  drawMedianSegment(1, 4, false);
+
+  // Wall between col 2 and 3 (row 3 to 4)
+  drawMedianSegment(3, 3, true);
+  drawMedianSegment(3, 4, false);
+
+  // Outer Perimeter Stone Curb
+  ctx.strokeStyle = '#9ca3af';
+  ctx.lineWidth = 2.5;
+  ctx.strokeRect(startX, startY, size, size);
+
+  // 6. Taxi Cab Sprite
+  const tx = startX + t.col * cellSize;
+  const ty = startY + t.row * cellSize;
+  let cabImg = TAXI_ASSETS.cab_front;
+  if (t.orientation === 'up') cabImg = TAXI_ASSETS.cab_rear;
+  else if (t.orientation === 'left') cabImg = TAXI_ASSETS.cab_left;
+  else if (t.orientation === 'right') cabImg = TAXI_ASSETS.cab_right;
+
+  if (TAXI_ASSETS.loaded && cabImg.complete) {
+    ctx.drawImage(cabImg, tx + cellSize * 0.12, ty + cellSize * 0.12, cellSize * 0.76, cellSize * 0.76);
+  } else {
+    ctx.fillStyle = '#eab308';
+    ctx.fillRect(tx + cellSize * 0.15, ty + cellSize * 0.2, cellSize * 0.7, cellSize * 0.6);
+  }
+
+  // Indicator if passenger is in taxi
+  if (t.passengerInTaxi) {
+    ctx.fillStyle = '#22c55e';
+    ctx.beginPath();
+    ctx.arc(tx + cellSize * 0.8, ty + cellSize * 0.25, 4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Success Banner
   if (t.delivered) {
     ctx.fillStyle = '#10b981';
-    ctx.font = 'bold 18px Outfit';
-    ctx.fillText('¡MISIÓN CUMPLIDA! 🏁', startX + 50, startY + size / 2);
+    ctx.font = 'bold 16px Outfit';
+    ctx.fillText('¡MISIÓN CUMPLIDA! (+20 PTS)', startX + 40, startY + size / 2);
   }
-}
-
-function drawGridWall(ctx, startX, startY, cellSize, r1, c1, r2, c2) {
-  ctx.beginPath();
-  ctx.moveTo(startX + c1 * cellSize, startY + r1 * cellSize);
-  ctx.lineTo(startX + c2 * cellSize, startY + r2 * cellSize);
-  ctx.stroke();
 }
 
 
@@ -1583,15 +1708,19 @@ function executeTaxiStep(taxi, act) {
   };
 
   if (act === 'up') {
+    taxi.orientation = 'up';
     if (!hasWall(taxi.row, taxi.col, taxi.row - 1, taxi.col)) taxi.row--;
     taxi.score -= 1;
   } else if (act === 'down') {
+    taxi.orientation = 'down';
     if (!hasWall(taxi.row, taxi.col, taxi.row + 1, taxi.col)) taxi.row++;
     taxi.score -= 1;
   } else if (act === 'left') {
+    taxi.orientation = 'left';
     if (!hasWall(taxi.row, taxi.col, taxi.row, taxi.col - 1)) taxi.col--;
     taxi.score -= 1;
   } else if (act === 'right') {
+    taxi.orientation = 'right';
     if (!hasWall(taxi.row, taxi.col, taxi.row, taxi.col + 1)) taxi.col++;
     taxi.score -= 1;
   } else if (act === 'pickup') {
