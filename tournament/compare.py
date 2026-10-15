@@ -60,7 +60,7 @@ PRACTICAL_CONFIGS = {
     },
 }
 
-GITHUB_OWNER = "rflor01"
+GITHUB_OWNER = "gramuah"
 GITHUB_REPO = "RL_tournament"
 
 
@@ -666,8 +666,8 @@ def save_video(frames, output_path, fps=30):
 
 def run_head_to_head(
     practical_id=1,
-    agent_a="submissions/practical1/demo_student",
-    agent_b="baseline_heuristic",
+    agent_a="rafael_flor",
+    agent_b="baseline_random",
     episodes=5,
     base_seed=42,
     video_path=None,
@@ -835,7 +835,7 @@ def duel_agents(practical_id, agent_a, agent_b, episodes=5, seed=42, output_vide
 def main():
     parser = argparse.ArgumentParser(description="RL Course Head-to-Head Agent Duel & Comparator")
     parser.add_argument("--practical", type=int, choices=[1, 2], default=1, help="Practical session (1 or 2)")
-    parser.add_argument("--agent-a", type=str, default="baseline_heuristic", help="Path, baseline, or username for Agent A")
+    parser.add_argument("--agent-a", type=str, default="rafael_flor", help="Path, baseline, or username for Agent A")
     parser.add_argument("--agent-b", type=str, default="baseline_random", help="Path, baseline, or username for Agent B")
     parser.add_argument("--episodes", type=int, default=5, help="Number of benchmark duel episodes")
     parser.add_argument("--seed", type=int, default=42, help="Base random seed")

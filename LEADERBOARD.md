@@ -21,7 +21,7 @@ All agents uploaded to GitHub are automatically benchmarked under identical cond
 Ambos agentes comienzan con la **misma semilla determinista** (terreno, altitud, objetivo y viento idénticos):
 
 <p align="center">
-  <img src="assets/duels/duel_lunarlander_preview.gif" alt="LunarLander Synchronized Duel Replay" width="100%" style="border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.5);" />
+  <img src="docs/assets/duel_lunarlander_preview.gif" alt="LunarLander Synchronized Duel Replay" width="100%" style="border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.5);" />
 </p>
 
 ---

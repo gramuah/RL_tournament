@@ -1,21 +1,36 @@
-# Course about Reinforcement Learning
+# Reinforcement Learning Assignments & Tournament
 
-Repository to prepare the materials for the course about RL
+Public student materials and agent tournament for the University of Alcalá Reinforcement Learning master's subject. Students work on the assignment notebooks, train their agents, and submit them through pull requests for evaluation.
 
-## General Info
-Structure of the course: 9 h (Theory sessions) + 6 h (Practical sessions)
+## Assignment notebooks
 
-For the practical sessions:
+| Assignment | Student notebook | Submission guide |
+| --- | --- | --- |
+| Practical 1: PPO / LunarLander | [Open notebook](Lab_sessions/Practical1/unit1_uah_student.ipynb) | [Submit an agent](submissions/practical1/) |
+| Practical 2: Q-learning / Taxi | [Open notebook](Lab_sessions/Practical2/unit2_uah_student.ipynb) | [Submit an agent](submissions/practical2/) |
+| Final project: Deep Q-learning / Atari | [Open notebook](Lab_sessions/Practical_final/unit3_uah_student.ipynb) | Presentation and oral defense |
 
-1. https://huggingface.co/learn/deep-rl-course/en/unit1/hands-on
+Read the [practical sessions guide](Lab_sessions/Guide_Practical_Sessions.pdf) for notebook setup, deliverables, and assessment. Its editable [LaTeX source](Lab_sessions/Guide_Practical_Sessions.tex) is maintained here alongside the PDF.
 
-2. https://huggingface.co/learn/deep-rl-course/en/unit2/hands-on
+## Repository ownership
 
-3. https://huggingface.co/learn/deep-rl-course/en/unit3/hands-on
+- `Lab_sessions/`: canonical student notebooks and practical guide. Notebook illustrations are embedded so downloaded notebooks work independently.
+- `tournament/`: canonical submission helper, evaluator, comparator, and leaderboard generator.
+- `submissions/`: submitted agents and their model artifacts, plus the random baselines.
+- `docs/`: GitHub Pages arena, shared media, and canonical leaderboard JSON in `docs/data/`.
+- `.github/workflows/`: submission evaluation, leaderboard updates, and on-demand duels.
 
-In every practical session the students: interact with the RL environments, train their models following a tutorial (colab-based), implement something, submit their final solutions to a challenge.
+The private `RL_course` repository holds instructor master notebooks, teaching resources, and illustration source files. Edit public assignments and tournament tooling here; edit instructor solutions there. Changes shared by a master and its student assignment require a deliberate review in both repositories. Never copy master notebooks or solution outputs into this public repository.
 
-The practicals will be assessed in a presentation session: defense + oral questions.
+## Local setup
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install -r tournament/requirements.txt
+```
+
+Box2D installation may require SWIG and a C/C++ toolchain. Video export also requires FFmpeg. The workflows contain the Ubuntu setup used for automated evaluation.
 
 ## 🏆 Class Competitions & Automated Leaderboard
 
@@ -26,7 +41,7 @@ Students can submit their trained models directly to GitHub! An automated **GitH
 - 🚀 **Practical 1:** `LunarLander-v3` — [Folder & Submission Guide](submissions/practical1/)
 - 🚕 **Practical 2:** `Taxi-v3 / Taxi-v4` — [Folder & Submission Guide](submissions/practical2/)
 
-When you submit via Pull Request, a bot evaluates your agent and leaves a score report on your PR within 2 minutes!
+When you submit via Pull Request, a bot evaluates your agent and leaves a score report on your PR when the evaluation workflow completes.
 
 ### 🥊 Head-to-Head Agent Duel (Side-by-Side Comparator)
 
@@ -36,7 +51,7 @@ Run the synchronized head-to-head duel tool locally or directly inside Google Co
 
 ```bash
 # Compare two agents side-by-side with synchronized broadcast video
-python tournament/compare.py --practical 1 --agent-a submissions/practical1/demo_student --agent-b baseline_heuristic --episodes 5 --video duel.mp4
+python tournament/compare.py --practical 1 --agent-a submissions/practical1/rafael_flor --agent-b baseline_random --episodes 5 --video duel.mp4
 ```
 
 Or inside your Colab notebook:
@@ -44,41 +59,21 @@ Or inside your Colab notebook:
 import urllib.request
 exec(urllib.request.urlopen("https://raw.githubusercontent.com/gramuah/RL_tournament/main/tournament/compare.py").read().decode("utf-8"))
 
-duel_agents(practical_id=1, agent_a="agent.py", agent_b="baseline_heuristic", output_video="duel.mp4")
+duel_agents(practical_id=1, agent_a="agent.py", agent_b="baseline_random", output_video="duel.mp4")
 display_duel("duel.mp4")
 ```
 - **Same seed**: Identical terrain, wind turbulence, and initial conditions.
 - **Speed & Score metrics**: Identifies the faster touchdown and action efficiency.
 - **Side-by-side replay**: Broadcast HUD with real-time stats and celebration victory screens.
 
-## Schedule
+## Updating the leaderboard
 
-1. October 20 
-    
-    a. Theory (3h): Slides (Module 1.1 + Module 2.1)
-    
-2. October 27 
+```bash
+# Evaluate all submitted agents and update the Markdown and Pages data.
+python tournament/update_leaderboard.py --episodes 30
 
-   a. Theory (1h): Slides (Module 2.2)
-   b. Practical (2h): Practical 1 
+# Rebuild Markdown from the existing canonical scores without running agents.
+python tournament/update_leaderboard.py --from-json
+```
 
-3. November 3
-   a. Theory (3h): Slides (Module 2.2, Module 2.3)
-
-4. November 10
-
-   a. Theory (1h): Slides (Module 2.3)
-   b. Practical (2h): Practical 2 
-
-5. November 17
-   a. Theory (1h): Slides (Module 2.4)
-   b. Practical (2h): Final project 
-
-## Evaluation
-
-Final mark: Practical marks (PM) + Oral exam (OE)
-
-PM -> 3 points
-OE -> 3.5 (Test + interview) + 3.5 (Final project (1.5) + oral exam (2))
-
-
+Cached scores live in `docs/data/`; full evaluation replaces that cache, while `--from-json` reads it. The shared duel GIF and MP4 live in `docs/assets/` and serve both GitHub Markdown and GitHub Pages.

@@ -20,3 +20,12 @@ Thumbs.db
 # Prevent accidental committing of teacher/solution files
 *_solution.ipynb
 *_master.ipynb
+
+# LaTeX build intermediates (keep the distributed guide PDF)
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.synctex.gz
+*.toc
