@@ -70,5 +70,40 @@ jobs:
           path: artifacts/web/*.png
           if-no-files-found: ignore
           retention-days: 7
+      - name: Generate and validate full isolated tournament preview
+        id: preview
+        # Student PRs use the separate single-agent evaluation workflow. A full
+        # preview verifies trusted instructor infrastructure changes and main.
+        if: github.event_name != 'pull_request' || contains(fromJSON('["CarlosGual", "rflor01", "rlopezsastre"]'), github.event.pull_request.user.login)
+        run: |
+          mkdir "$RUNNER_TEMP/tournament-preview"
+          cp -R tournament submissions "$RUNNER_TEMP/tournament-preview/"
+          cd "$RUNNER_TEMP/tournament-preview"
+          python tournament/update_leaderboard.py --episodes 30 --seed 42 --isolated
+          python -m tournament.result_artifacts site --data-dir web/data --sha "$GITHUB_SHA"
+          python - <<'PYCODE'
+          import json
+          from pathlib import Path
+          for lab in (1, 2):
+              results = json.loads(Path(f'web/data/leaderboard_p{lab}.json').read_text())
+              by_name = {result['participant']: result for result in results}
+              for name in ('baseline_random', 'rafael_flor'):
+                  result = by_name[name]
+                  assert result['success'], f'Known-good Lab {lab} agent {name} failed'
+                  assert result['num_episodes'] == 30 and result['base_seed'] == 42
+          assert Path('LEADERBOARD.md').is_file()
+          PYCODE
+      - name: Upload validated tournament preview
+        if: steps.preview.outcome == 'success'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: tournament-preview
+          path: |
+            ${{ runner.temp }}/tournament-preview/web/data/leaderboard_p1.json
+            ${{ runner.temp }}/tournament-preview/web/data/leaderboard_p2.json
+            ${{ runner.temp }}/tournament-preview/web/data/manifest.json
+            ${{ runner.temp }}/tournament-preview/LEADERBOARD.md
+          if-no-files-found: error
+          retention-days: 7
       - name: Check Python syntax
         run: python -m compileall -q tournament tests

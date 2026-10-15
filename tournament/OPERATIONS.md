@@ -50,6 +50,9 @@ failure, so a Docker/Gym outage cannot silently publish an all-error leaderboard
    for admins, keeps tokens read-only, and requires approval for external Actions.
    It preserves existing stronger rules and does not change Pages or require new
    checks before those checks exist on main.
+   Until this PR merges, the legacy leaderboard workflow on main still attempts
+   a direct bot commit; the new protection blocks that write. The existing Pages
+   deployment remains available while the replacement artifact pipeline is reviewed.
 2. Review and merge the infrastructure PR. Its first `Evaluate submission` run
    performs no agent evaluation because the policy is not on the trusted base.
    The independent security workflow tests the proposed implementation. Then run
