@@ -23,6 +23,16 @@ def main():
     if not callable(agent):
         raise TypeError('agent must be callable')
     protocol.write('{"ready":true}\n')
+    if sys.argv[1:] == ['--browser-export']:
+        sys.path.insert(0, "/opt")
+        from browser_model import export_policy
+        request = json.loads(sys.stdin.buffer.readline(4096))
+        try:
+            result = export_policy(agent, request['lab'])
+        except Exception:
+            result = {'error': 'No compatible browser export. Supply browser_policy.json or a supported Q-table/PPO MLP.'}
+        protocol.write(json.dumps(result, allow_nan=False) + '\n')
+        return
     for line in sys.stdin.buffer:
         if len(line) > 4096:
             raise ValueError('Observation exceeds protocol limit')

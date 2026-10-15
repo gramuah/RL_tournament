@@ -65,7 +65,7 @@ def _github_request(url, method="GET", data=None, token=None):
 
 # Kept self-contained: course notebooks execute this file directly from main.
 # tests/test_submit.py checks these admission constants against policy.json.
-_ALLOWED_EXTENSIONS = {".py", ".npy", ".npz", ".pkl", ".pickle", ".zip"}
+_ALLOWED_EXTENSIONS = {".py", ".npy", ".npz", ".pkl", ".pickle", ".zip", ".json"}
 _MAX_FILES = 100
 _MAX_FILE_BYTES = 50 * 1024 * 1024
 _MAX_TOTAL_BYTES = 100 * 1024 * 1024

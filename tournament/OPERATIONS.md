@@ -70,7 +70,7 @@ failure, so a Docker/Gym outage cannot silently publish an all-error leaderboard
 4. Dispatch `gh workflow run tournament.yml --ref main`. Verify all three jobs
    succeed, the environment records the expected SHA, and
    <https://gramuah.github.io/RL_tournament/> serves the new design and fresh
-   `data/manifest.json` alongside both leaderboards.
+   `data/manifest.json` alongside both leaderboards. Verify that `data/policies.json` has the same source SHA and that the existing Taxi and PPO policies load and finish live browser duels without a local service.
 5. Open a controlled fork PR with only an allowed submission and confirm the
    policy/evaluation report, instructor review gate, and post-merge publication.
    A mixed workflow/submission diff and another student's folder must be rejected.

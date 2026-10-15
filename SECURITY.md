@@ -28,7 +28,9 @@ The PR report publisher runs from the default branch on a fresh runner. It check
 
 Official evaluation has read-only repository permission. A fresh build job validates scalar results and source provenance; only the deployment job receives Pages and OIDC permissions. No job needs `contents: write`. Pages accepts deployments from `main` only after rollout. Infrastructure failures preserve the prior deployment.
 
-The static site renders participant names as text, loads same-origin assets, and enforces a restrictive meta Content Security Policy. Educational simulations and historical snapshots are labelled explicitly.
+The static site renders participant names as text, loads same-origin assets, and enforces a restrictive meta Content Security Policy. Historical snapshots and browser/Python simulation differences are labelled explicitly.
+
+The browser-policy exporter uses the same container boundary as inference. Student Python and checkpoint loading remain isolated; the host accepts at most 2 MB of declarative JSON per export. Model dimensions, activations, numeric bounds, reference observations/actions, identifiers, digests and source revision are validated. The complete bundle is limited to 16 MB and 200 policies, with a second validation in the fresh Pages build. Only dense numeric parameters, Q-tables or an explicit random-policy declaration reach the browser; downloaded scripts, Python and pickle are never executed there. Unsupported exports leave the official agent eligible for ranking but disable its live browser duel. Reference probes catch common discrepancies; they do not prove arbitrary student code is equivalent to the exported model.
 
 ## Verification and settings
 

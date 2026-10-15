@@ -51,8 +51,11 @@ def preflight_sandbox(image=DEFAULT_IMAGE):
 
 
 class IsolatedAgent:
+    message_limit = MAX_MESSAGE
+
     def __init__(self, directory, action_count, image=DEFAULT_IMAGE,
-                 startup_timeout=60, action_timeout=2, total_timeout=600):
+                 startup_timeout=60, action_timeout=2, total_timeout=600, browser_export=False):
+        self.message_limit = 2_000_000 if browser_export else MAX_MESSAGE
         self.directory = validate_submission(directory)
         self.action_count = action_count
         self.action_timeout = action_timeout
@@ -75,6 +78,8 @@ class IsolatedAgent:
             '--env=HOME=/tmp', '--env=OMP_NUM_THREADS=1', '--env=OPENBLAS_NUM_THREADS=1',
             image,
         ]
+        if browser_export:
+            command.append("--browser-export")
         # No credentials or host Actions environment are passed into Docker.
         try:
             self.process = subprocess.Popen(command, stdin=subprocess.PIPE,
@@ -92,11 +97,11 @@ class IsolatedAgent:
             remaining = deadline - time.monotonic()
             if remaining <= 0 or not self.selector.select(remaining):
                 raise SandboxError('Agent exceeded execution deadline')
-            chunk = os.read(self.process.stdout.fileno(), MAX_MESSAGE + 1)
+            chunk = os.read(self.process.stdout.fileno(), min(65536, self.message_limit + 1))
             if not chunk:
                 raise SandboxError('Agent exited or Docker isolation is unavailable')
             self.buffer.extend(chunk)
-            if len(self.buffer) > MAX_MESSAGE:
+            if len(self.buffer) > self.message_limit:
                 raise SandboxError('Agent response exceeds protocol limit')
         line, _, rest = self.buffer.partition(b'\n')
         self.buffer = bytearray(rest)

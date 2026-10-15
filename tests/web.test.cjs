@@ -9,6 +9,7 @@ const root = path.resolve(__dirname, "../web");
 const mime = {
   ".html": "text/html",
   ".js": "text/javascript",
+  ".mjs": "text/javascript",
   ".css": "text/css",
   ".json": "application/json",
   ".svg": "image/svg+xml",
@@ -301,9 +302,18 @@ test("Every ranked policy is selectable and standings load the requested matchup
     await p.locator("#duel-b-policy").inputValue(),
     "agent:rafael_flor",
   );
-  assert.equal(await p.locator("#duel-toggle").isDisabled(), true);
-  assert.equal(await p.locator("#duel-policy-help").isVisible(), true);
-  assert.equal(await p.locator("#duel-b-score").innerText(), "—");
+  await p.waitForFunction(
+    () => !document.querySelector("#duel-toggle").disabled,
+  );
+  assert.equal(await p.locator("#duel-policy-help").isVisible(), false);
+  assert.equal(await p.locator("#duel-b-score").innerText(), "0");
+  await p.locator("#duel-speed").selectOption("4");
+  await p.locator("#duel-toggle").click();
+  await p.waitForFunction(() =>
+    document
+      .querySelector("#duel-b-telemetry")
+      .textContent.includes("DESTINATION REACHED"),
+  );
   await p.locator('[data-view="standings"]').click();
   await p
     .getByRole("button", { name: "Compare rafael_flor", exact: true })
@@ -501,7 +511,9 @@ test(
         );
       }
       await p.locator("#duel-b-policy").selectOption("heuristic");
-      await p.waitForFunction(() => !document.querySelector("#duel-toggle").disabled);
+      await p.waitForFunction(
+        () => !document.querySelector("#duel-toggle").disabled,
+      );
       await p.locator('[data-lab="1"]').click();
       await p.waitForFunction(
         () =>
@@ -538,7 +550,7 @@ test(
       assert.equal(await p.locator("#duel-a-steps").innerText(), "0");
       assert.match(
         await p.locator("#duel-a-telemetry").innerText(),
-        /Browser model/,
+        /browser Box2D/,
       );
       await p.unroute("**/api/step");
       await p.locator("#duel-engine").selectOption("gym");
@@ -568,3 +580,136 @@ test(
     }
   },
 );
+
+test("Browser policy inference matches Python references and all Taxi transitions", async () => {
+  const p = await page();
+  await loaded(p);
+  const transitions = JSON.parse(
+    await fs.readFile(
+      path.join(__dirname, "fixtures/taxi-transitions.json"),
+      "utf8",
+    ),
+  );
+  const result = await p.evaluate(async (transitions) => {
+    const { Simulation } = await import("./js/simulation.js");
+    const { loadPolicy } = await import("./js/policies.js");
+    for (const lab of [1, 2])
+      for (const name of ["rafael_flor", "baseline_random"])
+        await loadPolicy(lab, name);
+    const failures = [];
+    for (let obs = 0; obs < 500; obs++)
+      for (let a = 0; a < 6; a++) {
+        const sim = new Simulation(2, "manual", 42),
+          s = sim.state;
+        s.destination = obs % 4;
+        const rem = Math.floor(obs / 4);
+        s.passenger = rem % 5;
+        s.onboard = s.passenger === 4;
+        s.col = Math.floor(rem / 5) % 5;
+        s.row = Math.floor(rem / 25);
+        sim.step(
+          new Set(),
+          ["down", "up", "right", "left", "pickup", "dropoff"][a],
+        );
+        const actual = [sim.observation(), s.score, s.done];
+        if (JSON.stringify(actual) !== JSON.stringify(transitions[obs * 6 + a]))
+          failures.push({ obs, a, actual, expected: transitions[obs * 6 + a] });
+      }
+    return failures;
+  }, transitions);
+  assert.deepEqual(result, []);
+  assert.deepEqual(p.errors, []);
+  await p.context().close();
+});
+
+test("Box2D browser dynamics follow independent Gymnasium reference trajectory", async () => {
+  const p = await page();
+  await loaded(p);
+  const reference = JSON.parse(
+    await fs.readFile(
+      path.join(__dirname, "fixtures/lander-trajectory.json"),
+      "utf8",
+    ),
+  );
+  const errors = await p.evaluate(async (reference) => {
+    const { Lander } = await import("./js/lander.js");
+    let seed = 42;
+    const lander = new Lander(() => {
+      seed = (Math.imul(1664525, seed) + 1013904223) >>> 0;
+      return seed / 4294967296;
+    });
+    const errors = [];
+    for (let i = 0; i < reference.length; i++) {
+      const row = reference[i],
+        previous = lander.state.score;
+      if (i) lander.step(row.action);
+      const observation = lander.observation();
+      const error = Math.max(
+        ...observation.map((v, j) => Math.abs(v - row.observation[j])),
+      );
+      const rewardError = Math.abs(lander.state.score - previous - row.reward);
+      // Bound floating-point drift against 100 independently generated Python steps.
+      if (
+        error > 0.0001 ||
+        rewardError > 0.001 ||
+        lander.state.done !== row.done
+      )
+        errors.push({ step: i, error, rewardError });
+    }
+    return errors;
+  }, reference);
+  assert.deepEqual(errors, []);
+  await p.context().close();
+});
+
+test("Actual PPO completes a static browser duel and policy failures never substitute a heuristic", async () => {
+  const p = await page({ viewport: { width: 1440, height: 1000 } });
+  await loaded(p);
+  await p.locator('[data-lab="1"]').click();
+  await p
+    .getByRole("button", { name: "Duel rafael_flor", exact: true })
+    .click();
+  await p.locator("#duel-a-policy").selectOption("agent:rafael_flor");
+  await p.waitForFunction(
+    () => !document.querySelector("#duel-toggle").disabled,
+  );
+  await p.locator("#duel-speed").selectOption("4");
+  await p.locator("#duel-toggle").click();
+  await p.waitForFunction(
+    () => document.querySelector("#duel-status").textContent === "DRAW",
+    null,
+    { timeout: 20000 },
+  );
+  assert.equal(
+    await p.locator("#duel-a-score").innerText(),
+    await p.locator("#duel-b-score").innerText(),
+  );
+  assert.deepEqual(p.errors, []);
+  await p.screenshot({
+    path: path.resolve(__dirname, "../artifacts/web/browser-ppo-duel.png"),
+    fullPage: true,
+  });
+  await p.context().close();
+  const bad = await page();
+  await bad.route("**/data/policies.json", (route) =>
+    route.fulfill({
+      json: { schema_version: 1, source_sha: "a".repeat(40), policies: {} },
+    }),
+  );
+  await loaded(bad);
+  await bad
+    .getByRole("button", { name: "Duel rafael_flor", exact: true })
+    .click();
+  await bad.waitForFunction(() =>
+    document
+      .querySelector("#duel-status")
+      .textContent.includes("no published browser export"),
+  );
+  assert.equal(await bad.locator("#duel-toggle").isDisabled(), true);
+  assert.equal(await bad.locator("#duel-b-score").innerText(), "—");
+  assert.equal(
+    await bad.locator("#duel-b-policy").inputValue(),
+    "agent:rafael_flor",
+  );
+  await bad.context().close();
+});

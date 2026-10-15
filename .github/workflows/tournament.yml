@@ -42,6 +42,7 @@ jobs:
         run: |
           python tournament/update_leaderboard.py --episodes 30 --seed 42 --isolated
           python -m tournament.result_artifacts site --data-dir web/data --sha "$GITHUB_SHA"
+          python -m tournament.browser_artifacts build --sha "$GITHUB_SHA"
       - name: Upload JSON results only
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
@@ -50,6 +51,7 @@ jobs:
             web/data/leaderboard_p1.json
             web/data/leaderboard_p2.json
             web/data/manifest.json
+            web/data/policies.json
           if-no-files-found: error
           retention-days: 14
       - name: Upload Markdown snapshot
@@ -78,6 +80,8 @@ jobs:
       - name: Validate provenance and copy bounded results
         run: |
           python3 -m tournament.result_artifacts site --data-dir "$RUNNER_TEMP/results" --sha "$GITHUB_SHA"
+          python3 -m tournament.browser_artifacts validate --path "$RUNNER_TEMP/results/policies.json" --sha "$GITHUB_SHA"
+          cp "$RUNNER_TEMP/results/policies.json" web/data/
           cp "$RUNNER_TEMP/results/leaderboard_p1.json" "$RUNNER_TEMP/results/leaderboard_p2.json" "$RUNNER_TEMP/results/manifest.json" web/data/
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:

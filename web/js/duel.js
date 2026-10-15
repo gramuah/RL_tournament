@@ -1,3 +1,4 @@
+import { loadPolicy } from "./policies.js";
 import { Simulation } from "./simulation.js";
 import { spritesReady } from "./renderers.js";
 
@@ -263,26 +264,16 @@ export class LiveDuel {
       const agents = this.selects
         .map((select) => select.value)
         .filter((value) => value.startsWith("agent:"));
-      if (agents.length) {
-        if (this.get("engine").value !== "gym") {
-          this.get("policy-help").hidden = false;
-          this.get("runtime-help").open = true;
-          throw new Error(
-            "To run ranked policies, open this site with the Gymnasium server and isolated agents enabled.",
-          );
-        }
+      if (agents.length && this.get("engine").value === "gym") {
         const available = this.config?.agents[String(this.lab)] || [];
         if (
           agents.some(
             (value) => !available.some((agent) => agent.value === value),
           )
-        ) {
-          this.get("policy-help").hidden = false;
-          this.get("runtime-help").open = true;
+        )
           throw new Error(
-            "Selected policy is not available in this server. Update your checkout and enable isolated agents.",
+            "Selected policy is unavailable in this optional Gymnasium runtime. Select Browser to use its published export.",
           );
-        }
       }
       this.get("policy-help").hidden = true;
       if (this.get("engine").value === "gym") {
@@ -298,13 +289,28 @@ export class LiveDuel {
         this.session = response.id;
         await this.receive(response, generation);
       } else {
-        this.simulations = this.selects.map(
-          (select) => new Simulation(this.lab, select.value, seed),
+        const policies = this.selects.map((select) => select.value);
+        const inferences = await Promise.all(
+          policies.map((value) =>
+            value.startsWith("agent:")
+              ? loadPolicy(this.lab, value.slice(6))
+              : null,
+          ),
+        );
+        if (generation !== this.generation) return;
+        this.simulations = policies.map(
+          (policy, index) =>
+            new Simulation(this.lab, policy, seed, inferences[index]),
         );
         this.states = this.simulations.map((simulation) => simulation.state);
       }
     } catch (error) {
-      if (generation === this.generation) this.error = error.message;
+      if (generation === this.generation) {
+        this.error = error.message;
+        this.get("policy-help").hidden = !this.selects.some((s) =>
+          s.value.startsWith("agent:"),
+        );
+      }
     } finally {
       if (generation === this.generation) {
         this.loading = false;
@@ -414,10 +420,10 @@ export class LiveDuel {
   update() {
     const gym = this.get("engine").value === "gym";
     this.get("title").textContent =
-      `${this.lab === 2 ? "Taxi" : "LunarLander"} / ${gym ? "Gymnasium" : "browser practice"}`;
+      `${this.lab === 2 ? "Taxi" : "LunarLander"} / ${gym ? "Gymnasium" : "live browser duel"}`;
     this.get("notice").textContent = gym
       ? "Original Gymnasium environment and rendered frames. Both players reset with the same seed. Saved agents, when enabled, run in Docker. Practice results do not update the leaderboard."
-      : "Live browser practice with the original Taxi sprites and LunarLander-style visuals. Policies are built-in demonstrations; physics and scores are illustrative. Use local Gymnasium mode for original physics, rendering and saved agents.";
+      : "Policies run here in your browser; no local server is needed. Taxi uses the original sprites and transition rules; LunarLander uses a Box2D port of Gymnasium. Both players share a seed. Browser physics and random sequences can differ from Python, so these duels do not update official rankings.";
     this.get("toggle").disabled =
       this.loading || Boolean(this.error) || this.states.length === 0;
     this.get("toggle").textContent = this.loading

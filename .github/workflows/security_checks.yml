@@ -61,7 +61,9 @@ jobs:
         run: |
           npm ci
           npx playwright install --with-deps chromium
-      - name: Test Pages UI and real Gymnasium live controls
+      - name: Export actual trained policies in isolated containers
+        run: python -m tournament.browser_artifacts build --sha "$GITHUB_SHA"
+      - name: Test Pages UI, browser inference and optional Gymnasium controls
         env:
           GYM_PYTHON: python
           GYM_ISOLATED_AGENTS: "1"
@@ -107,6 +109,7 @@ jobs:
             ${{ runner.temp }}/tournament-preview/web/data/leaderboard_p2.json
             ${{ runner.temp }}/tournament-preview/web/data/manifest.json
             ${{ runner.temp }}/tournament-preview/LEADERBOARD.md
+            web/data/policies.json
           if-no-files-found: error
           retention-days: 7
       - name: Check Python syntax

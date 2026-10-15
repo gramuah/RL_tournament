@@ -123,6 +123,11 @@ button {
   letter-spacing: -0.6px;
   line-height: 1.2;
 }
+.brand .uah-logo {
+  width: 160px;
+  height: auto;
+  object-fit: contain;
+}
 .brand-light {
   font-weight: 400;
   color: var(--muted);
@@ -1038,9 +1043,9 @@ pre {
   .brand {
     font-size: 18px;
   }
-  .brand img {
-    width: 32px;
-    height: 32px;
+  .brand .uah-logo {
+    width: 125px;
+    height: auto;
   }
   .brand small {
     font-size: 9px;

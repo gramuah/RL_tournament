@@ -47,25 +47,11 @@ The tournament workflow evaluates the merged revision and uploads JSON results p
 
 The published manifest records the source SHA, evaluation time, episode count, and base seed. Infrastructure failures stop publication and leave the previous deployment intact. Failed agents appear as unranked errors. Repository snapshots are labelled historical when previewed locally; the browser never substitutes fabricated scores.
 
-The **Live Duel** arena supports human versus policy and policy versus policy for both labs, with synchronized seeded starts, live reward/step counters, winner/tie detection, pause/reset, new scenarios, and speed controls. All practice takes place in the Live Duel arena. Both selectors list every successfully evaluated agent in the current lab ranking. Use a row’s **Duel** action for human versus agent, or **Load selection into Live Duel** to load the two agents selected for comparison. Saved agents run using the local Gymnasium runtime with `--isolated-agents`; the static Pages site shows setup instructions when that runtime is unavailable, keeping the requested names selected and never substituting a heuristic. Keyboard shortcuts from the original site (arrows/WASD, Space/P, Enter/O, R) and touch controls are preserved.
+The **Live Duel** arena runs trained policies directly in the published page, with no local service required. Both selectors list every successful ranking entry. Use a row's **Duel** action for human versus policy, or **Load selection into Live Duel** for policy versus policy. Seeded scenarios, live rewards/steps, winner/tie detection, pause/reset, speed controls, keyboard shortcuts and touch controls are supported.
 
-On GitHub Pages, browser practice uses the original bundled Taxi sprites and the original LunarLander-style canvas rendering, with labelled built-in heuristic/random policies and illustrative physics. The old `main` site also used JavaScript physics and substituted heuristics for named student agents; this UI does not misrepresent those as model inference.
+CI exports the current Taxi Q-table and LunarLander PPO weights in isolated containers, validates the resulting data, and publishes it with the page. The browser performs actual inference and checks its predictions against the exported reference actions. Incompatible policies show an explicit error, never a substitute heuristic. Authors can supply compatible models through `browser_policy.json`; see [formats, limits and export checks](docs/browser-policies.md).
 
-For **original Gymnasium physics, rewards and rendered frames**, serve this same UI locally with Python:
-
-```bash
-# Python 3.11; activate your environment first. Box2D needs SWIG and a compiler.
-python -m pip install -r tournament/requirements-ci.txt
-python -m tournament.serve
-# Open the printed http://127.0.0.1:8000/ URL. Gymnasium is selected automatically.
-
-# Optional: expose existing repository submissions in the policy selectors.
-# Docker must be running; agents execute only in the existing isolated image.
-docker build -f tournament/Dockerfile.agent -t rl-tournament-agent:local tournament
-python -m tournament.serve --isolated-agents
-```
-
-Both players use separate Gymnasium environments reset to the same seed. Taxi uses discrete keypresses; LunarLander advances while running and accepts held engine controls. Runtime errors stop play with an explicit error; they never switch to a substitute simulation or import student code on the host. The local runtime binds loopback, serves only `web/`, and rejects cross-origin API calls. Practice results never update official standings.
+Taxi uses the original sprites and transition/reward rules. LunarLander ports Gymnasium's geometry, Box2D forces/joints, observation and reward rules to Planck. Browser random streams and physics numerics differ from Python, so live episodes do not change official standings. The optional `python -m tournament.serve --isolated-agents` developer runtime still provides original Gymnasium/Pygame frames, but is not needed for the published duels.
 
 The archived LunarLander recording is a fixed example, not a selected-agent replay. For an exportable real-agent video, use the [duel workflow](https://github.com/gramuah/RL_tournament/actions/workflows/duel.yml) or the comparator below.
 

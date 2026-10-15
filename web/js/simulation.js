@@ -1,9 +1,6 @@
-import {
-  drawGymnasiumLander,
-  drawGymnasiumTerrain,
-  renderSingleTaxiGrid,
-} from "./renderers.js";
-// Browser practice model. Real Gymnasium mode uses the Python environment and renderer.
+import { Lander } from "./lander.js";
+import { renderSingleTaxiGrid } from "./renderers.js";
+// Browser environment: Taxi transitions and Box2D LunarLander observation/action semantics.
 const stations = [
   [0, 0],
   [0, 4],
@@ -22,27 +19,24 @@ function blocked(row, col, nextRow, nextCol) {
   );
 }
 export class Simulation {
-  constructor(lab, policy, seed = 42) {
+  constructor(lab, policy, seed = 42, inference = null) {
     this.lab = lab;
     this.policy = policy;
     this.seed = seed;
-    this.state =
-      lab === 2
-        ? {
-            row: Math.floor(this.random() * 5),
-            col: Math.floor(this.random() * 5),
-            passenger: Math.floor(this.random() * 4),
-            destination: 0,
-            onboard: false,
-            orientation: "down",
-          }
-        : {
-            x: 260 + this.random() * 240,
-            y: 75,
-            vx: (this.random() - 0.5) * 1.2,
-            vy: 0,
-            angle: 0,
-          };
+    this.inference = inference;
+    if (lab === 1) {
+      this.lander = new Lander(() => this.random());
+      this.state = this.lander.state;
+      return;
+    }
+    this.state = {
+      row: Math.floor(this.random() * 5),
+      col: Math.floor(this.random() * 5),
+      passenger: Math.floor(this.random() * 4),
+      destination: 0,
+      onboard: false,
+      orientation: "down",
+    };
     if (lab === 2)
       this.state.destination =
         (this.state.passenger + 1 + Math.floor(this.random() * 3)) % 4;
@@ -60,11 +54,15 @@ export class Simulation {
       const action =
         this.policy === "manual"
           ? manualAction
-          : this.policy === "heuristic"
-            ? this.taxiHeuristic()
-            : ["up", "down", "left", "right", "pickup", "dropoff"][
-                Math.floor(this.random() * 6)
-              ];
+          : this.inference
+            ? ["down", "up", "right", "left", "pickup", "dropoff"][
+                this.inference(this.observation(), () => this.random())
+              ]
+            : this.policy === "heuristic"
+              ? this.taxiHeuristic()
+              : ["up", "down", "left", "right", "pickup", "dropoff"][
+                  Math.floor(this.random() * 6)
+                ];
       if (action) this.taxiStep(action);
     }
   }
@@ -107,6 +105,8 @@ export class Simulation {
         s.row === stations[s.destination][0] &&
         s.col === stations[s.destination][1]
       ) {
+        s.passenger = s.destination;
+        s.onboard = false;
         s.score += 20;
         s.done = true;
         s.message = "DESTINATION REACHED";
@@ -156,60 +156,35 @@ export class Simulation {
     }
     return "down";
   }
-  landerStep(keys) {
+  observation() {
+    if (this.lander) return this.lander.observation();
     const s = this.state;
-    let thrust = keys.has("up"),
-      left = keys.has("left"),
-      right = keys.has("right");
-    if (this.policy === "heuristic") {
-      const target = Math.max(
-        -0.25,
-        Math.min(0.25, (380 - s.x) * 0.006 - s.vx * 0.18),
-      );
-      left = s.angle > target + 0.02;
-      right = s.angle < target - 0.02;
-      thrust = s.vy > (s.y > 300 ? 0.45 : 1.4);
-    } else if (this.policy === "random") {
-      thrust = this.random() > 0.48;
-      left = this.random() < 0.14;
-      right = this.random() < 0.14;
-    }
-    if (left) s.angle -= 0.025;
-    if (right) s.angle += 0.025;
-    s.angle = Math.max(-1, Math.min(1, s.angle));
-    s.vy += 0.045;
-    if (thrust) {
-      s.vx += Math.sin(s.angle) * 0.075;
-      s.vy -= Math.cos(s.angle) * 0.075;
-      s.score -= 0.03;
-    }
-    s.vx *= 0.998;
-    s.x += s.vx;
-    s.y += s.vy;
-    s.steps++;
-    s.thrust = thrust;
-    s.leftThrust = left;
-    s.rightThrust = right;
-    s.message = "IN FLIGHT";
-    if (s.x < 20 || s.x > 740 || s.y < 0 || s.steps >= 1000) {
-      s.done = true;
-      s.message = "OUT OF BOUNDS";
-      s.score -= 100;
-    }
-    if (s.y >= 388) {
-      s.y = 388;
-      s.done = true;
-      const landed =
-        Math.abs(s.x - 380) < 60 &&
-        Math.abs(s.vx) < 1 &&
-        s.vy < 1.5 &&
-        Math.abs(s.angle) < 0.25;
-      s.message = landed ? "SOFT LANDING" : "HARD LANDING";
-      s.score += landed ? 100 : -100;
-    }
-    if (s.done) this.running = false;
+    return (
+      ((s.row * 5 + s.col) * 5 + (s.onboard ? 4 : s.passenger)) * 4 +
+      s.destination
+    );
+  }
+  landerStep(keys) {
+    const action = this.inference
+      ? this.inference(this.observation(), () => this.random())
+      : this.policy === "heuristic"
+        ? this.lander.heuristic()
+        : this.policy === "random"
+          ? Math.floor(this.random() * 4)
+          : keys.has("up")
+            ? 2
+            : keys.has("left")
+              ? 1
+              : keys.has("right")
+                ? 3
+                : 0;
+    this.lander.step(action);
   }
   draw(canvas) {
+    if (this.lander) {
+      this.lander.draw(canvas);
+      return;
+    }
     const width = this.lab === 2 ? 500 : 760,
       height = this.lab === 2 ? 500 : 480;
     if (canvas.width !== width) canvas.width = width;
@@ -233,41 +208,6 @@ export class Simulation {
         420,
         "Taxi",
       );
-    } else {
-      drawGymnasiumTerrain(c, 0, 760, 380, 410, 120);
-      // Extend the original 450px ground to this canvas's height.
-      c.fillStyle = "#fff";
-      c.fillRect(0, 450, 760, 30);
-      drawGymnasiumLander(
-        c,
-        s.x,
-        s.y,
-        s.angle,
-        s.thrust,
-        s.leftThrust,
-        s.rightThrust,
-        s.message === "SOFT LANDING",
-        s.done && s.message !== "SOFT LANDING",
-      );
-      if (!s.done) {
-        c.save();
-        c.translate(s.x, s.y);
-        c.rotate(s.angle);
-        c.fillStyle = "#ff8b32";
-        for (const [on, x, y, dx, dy] of [
-          [s.thrust, 0, 12, 0, 25],
-          [s.leftThrust, 17, 0, 18, 4],
-          [s.rightThrust, -17, 0, -18, 4],
-        ]) {
-          if (!on) continue;
-          c.beginPath();
-          c.moveTo(x - 4, y);
-          c.lineTo(x + dx, y + dy);
-          c.lineTo(x + 4, y + 4);
-          c.fill();
-        }
-        c.restore();
-      }
     }
   }
 }

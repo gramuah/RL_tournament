@@ -13,7 +13,7 @@
       content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; media-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'"
     />
     <title>RL Tournament — University of Alcalá</title>
-    <link rel="icon" type="image/svg+xml" href="assets/mark.svg" />
+    <link rel="icon" type="image/png" href="assets/uah-logo.png" />
     <link
       rel="preload"
       href="assets/fonts/plex-sans-semibold.ttf"
@@ -28,7 +28,11 @@
     <a class="skip-link" href="#main">Skip to content</a>
     <header class="site-header">
       <a class="brand" href="#standings?lab=2" aria-label="RL Tournament home"
-        ><img src="assets/mark.svg" width="38" height="38" alt="" /><span
+        ><img
+          src="assets/uah-logo.png"
+          class="uah-logo"
+          alt="Universidad de Alcalá"
+        /><span
           >RL<span class="brand-light"> / </span>Tournament<small
             >University of Alcalá</small
           ></span
@@ -228,22 +232,11 @@
           <p id="duel-notice"></p>
         </div>
         <div id="duel-policy-help" class="notice" hidden>
-          <div>
-            <strong>Run a trained policy from the ranking</strong>
-            <p>
-              Open a current checkout of this repository with the local
-              Gymnasium server. Every saved agent for the chosen lab is loaded
-              by name and runs in isolation.
-            </p>
-            <pre>python -m tournament.serve --isolated-agents</pre>
-            <p>
-              The selected policy stays selected. See the setup instructions
-              below for dependencies and the Docker image.
-            </p>
-            <a href="#duel-runtime-help" class="text-link"
-              >Setup instructions ↓</a
-            >
-          </div>
+          <p>
+            The selected policy could not be loaded. Trained policies need a
+            published browser export; unsupported agents are never replaced with
+            a built-in policy. See the policy formats below.
+          </p>
         </div>
         <div class="stage-heading">
           <span class="eyebrow" id="duel-title"></span
@@ -310,7 +303,7 @@
             <p id="duel-human" class="eyebrow">You control player A</p>
             <label for="duel-engine">Environment runtime</label
             ><select id="duel-engine">
-              <option value="browser">Browser practice</option>
+              <option value="browser">Browser · no setup required</option>
             </select>
             <div class="session-settings">
               <div>
@@ -379,32 +372,29 @@
           must finish. Select at most one human player.
         </p>
         <details id="duel-runtime-help" class="runtime-help">
-          <summary>Use original Gymnasium and your saved agents</summary>
+          <summary>Which trained policies can I run?</summary>
           <p>
-            Run the local server from your repository checkout and open the URL
-            it prints. The same interface then offers original Gymnasium physics
-            and rendered frames.
+            Select a ranked policy for either player, or click Duel in the
+            standings. The published page downloads its exported parameters and
+            runs each action in your browser. Nothing needs to run on your
+            computer outside this page.
           </p>
-          <pre>
-python -m pip install -r tournament/requirements-ci.txt
-python -m tournament.serve</pre
-          >
           <p>
-            For saved student policies, start Docker and build the tournament
-            image, then enable isolated agents:
+            Taxi Q-tables and discrete LunarLander PPO MLPs are exported
+            automatically during the tournament build. Authors can also supply a
+            compatible <code>browser_policy.json</code>. Other Python agents
+            remain eligible for the ranking, but need a browser export to play
+            here.
           </p>
-          <pre>
-docker build -f tournament/Dockerfile.agent -t rl-tournament-agent:local tournament
-python -m tournament.serve --isolated-agents</pre
-          >
           <p>
-            Saved agents appear by name in the player menus. GitHub Pages runs
-            browser practice; it cannot host Python or Docker.
+            Live duels use Gymnasium's controls, observations and reward rules.
+            The browser's random sequence and Box2D implementation differ from
+            Python, so official evaluation results remain authoritative.
           </p>
           <a
             class="text-link"
-            href="https://github.com/gramuah/RL_tournament/actions/workflows/duel.yml"
-            >Generate a real agent replay on GitHub ↗</a
+            href="https://github.com/gramuah/RL_tournament/blob/main/docs/browser-policies.md"
+            >Browser policy formats and export checks ↗</a
           >
         </details>
         <details class="archive-video">
