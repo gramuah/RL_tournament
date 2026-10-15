@@ -47,7 +47,7 @@ The tournament workflow evaluates the merged revision and uploads JSON results p
 
 The published manifest records the source SHA, evaluation time, episode count, and base seed. Infrastructure failures stop publication and leave the previous deployment intact. Failed agents appear as unranked errors. Repository snapshots are labelled historical when previewed locally; the browser never substitutes fabricated scores.
 
-The **Live Duel** arena supports human versus policy and policy versus policy for both labs, with synchronized seeded starts, live reward/step counters, winner/tie detection, pause/reset, new scenarios, and speed controls. The **Playground** uses the same environment controls for solo practice. Keyboard shortcuts from the original site (arrows/WASD, Space/P, Enter/O, R) and touch controls are preserved.
+The **Live Duel** arena supports human versus policy and policy versus policy for both labs, with synchronized seeded starts, live reward/step counters, winner/tie detection, pause/reset, new scenarios, and speed controls. All practice takes place in the Live Duel arena. Both selectors list every successfully evaluated agent in the current lab ranking. Use a row’s **Duel** action for human versus agent, or **Load selection into Live Duel** to load the two agents selected for comparison. Saved agents run using the local Gymnasium runtime with `--isolated-agents`; the static Pages site shows setup instructions when that runtime is unavailable, keeping the requested names selected and never substituting a heuristic. Keyboard shortcuts from the original site (arrows/WASD, Space/P, Enter/O, R) and touch controls are preserved.
 
 On GitHub Pages, browser practice uses the original bundled Taxi sprites and the original LunarLander-style canvas rendering, with labelled built-in heuristic/random policies and illustrative physics. The old `main` site also used JavaScript physics and substituted heuristics for named student agents; this UI does not misrepresent those as model inference.
 
@@ -115,3 +115,5 @@ python tournament/update_leaderboard.py --from-json
 ```
 
 Read [SECURITY.md](SECURITY.md) for the trust boundaries and [the rollout guide](tournament/OPERATIONS.md) before activating repository settings and the new Pages source.
+
+The website accent is UAH institutional blue, `#002C91` (RGB 0, 44, 145), read from the [official blue logo](https://www.uah.es/export/shared/es/.galleries/imagen-institucional/logotipos-principales/vA_azul_LogoPrincipal.png) on the [institutional identity page](https://www.uah.es/es/imagen-institucional/). Environment sprites retain their original task colours.

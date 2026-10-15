@@ -22,8 +22,9 @@
   --ink: #272c28;
   --muted: #656b60;
   --line: #d5d7c9;
-  --accent: #c84224;
-  --orange: #d74b2c;
+  /* UAH 2026 blue: official vA_azul_LogoPrincipal.png, RGB(0, 44, 145). */
+  --accent: #002c91;
+  --accent-hover: #001f66;
   --soft: #eae8df;
   --green: #3a6447;
   --mono: PlexMono, monospace;
@@ -152,7 +153,7 @@ button {
 .main-nav a[aria-current="page"]:after {
   content: "";
   height: 3px;
-  background: var(--orange);
+  background: var(--accent);
   position: absolute;
   bottom: 1px;
   left: 0;
@@ -258,7 +259,7 @@ main {
   color: var(--white);
 }
 .primary:hover {
-  background: #ab351c;
+  background: var(--accent-hover);
 }
 .outline {
   border-color: var(--ink);
@@ -469,9 +470,9 @@ tbody tr:hover {
   flex-shrink: 0;
 }
 .agent-avatar.top {
-  background: #f1dfd3;
+  background: #e5ecfa;
   color: var(--accent);
-  border-color: #e9ccba;
+  border-color: #b4c4e8;
 }
 .agent-name {
   font-size: 14px;
@@ -601,7 +602,7 @@ tbody tr:hover {
 }
 .comparison-card {
   border: 1px solid var(--line);
-  border-top: 3px solid var(--orange);
+  border-top: 3px solid var(--accent);
   padding: 22px;
 }
 .comparison-card h3 {
@@ -665,11 +666,6 @@ tbody tr:hover {
   line-height: 17px;
   flex-shrink: 0;
 }
-.playground-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 280px;
-  gap: 30px;
-}
 .play-stage {
   border: 1px solid var(--line);
   background: var(--white);
@@ -679,12 +675,6 @@ tbody tr:hover {
   justify-content: space-between;
   padding: 17px 22px;
   border-bottom: 1px solid var(--line);
-}
-#demo-canvas {
-  display: block;
-  width: 100%;
-  height: auto;
-  touch-action: none;
 }
 .demo-hud {
   display: flex;
@@ -1016,10 +1006,6 @@ pre {
     gap: 40px;
     grid-template-columns: 1fr 300px;
   }
-  .playground-layout {
-    grid-template-columns: minmax(0, 1fr) 230px;
-    gap: 20px;
-  }
   .stage-heading {
     padding: 14px 16px;
   }
@@ -1212,9 +1198,6 @@ pre {
   }
   .page-heading > p:last-child {
     font-size: 15px;
-  }
-  .playground-layout {
-    grid-template-columns: 1fr;
   }
   .play-sidebar {
     display: block;
@@ -1513,4 +1496,13 @@ pre {
   .play-sidebar > .session-settings {
     order: 3;
   }
+}
+
+#duel-policy-help pre {
+  overflow-x: auto;
+  max-width: 100%;
+  font-size: 12px;
+}
+#duel-selected {
+  margin-top: 20px;
 }

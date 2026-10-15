@@ -39,19 +39,14 @@ const runtime = ["localhost", "127.0.0.1"].includes(location.hostname)
       .catch(() => null)
   : Promise.resolve(null);
 
-export class Playground {
-  constructor(prefix = "demo", duel = false) {
-    this.prefix = prefix;
-    this.duel = duel;
-    this.root = document.getElementById(duel ? "arena" : "playground");
-    this.get = (suffix) => document.getElementById(`${prefix}-${suffix}`);
-    this.canvases = duel
-      ? [this.get("a-canvas"), this.get("b-canvas")]
-      : [this.get("canvas")];
-    this.selects = duel
-      ? [this.get("a-policy"), this.get("b-policy")]
-      : [this.get("policy")];
+export class LiveDuel {
+  constructor() {
+    this.root = document.getElementById("arena");
+    this.get = (suffix) => document.getElementById(`duel-${suffix}`);
+    this.canvases = [this.get("a-canvas"), this.get("b-canvas")];
+    this.selects = [this.get("a-policy"), this.get("b-policy")];
     this.lab = 2;
+    this.rankings = new Map();
     this.keys = new Set();
     this.pendingActions = [];
     this.active = false;
@@ -77,10 +72,11 @@ export class Playground {
     for (const select of this.selects)
       select.addEventListener("change", () => {
         // A single set of human controls can control either side, never both.
-        if (duel && select.value === "manual")
+        if (select.value === "manual")
           this.selects
             .filter((s) => s !== select && s.value === "manual")
             .forEach((s) => (s.value = "heuristic"));
+        this.useRequiredRuntime();
         this.reset();
       });
     this.get("seed").addEventListener("change", () => this.reset());
@@ -159,24 +155,57 @@ export class Playground {
         });
     });
   }
+  setRankedPolicies(lab, records) {
+    this.rankings.set(
+      lab,
+      records.filter((row) => row.success).map((row) => row.participant),
+    );
+    if (lab !== this.lab) return;
+    const previous = this.selects.map((select) => select.value);
+    this.populatePolicies();
+    if (previous.some((value, index) => value !== this.selects[index].value))
+      this.reset();
+  }
+  selectRanked(names) {
+    this.populatePolicies();
+    const values =
+      names.length === 1
+        ? ["manual", `agent:${names[0]}`]
+        : names.map((name) => `agent:${name}`);
+    this.selects.forEach((select, index) => (select.value = values[index]));
+    this.useRequiredRuntime();
+    this.reset();
+  }
+  useRequiredRuntime() {
+    if (
+      this.config &&
+      this.selects.some((select) => select.value.startsWith("agent:"))
+    )
+      this.get("engine").value = "gym";
+  }
   populatePolicies() {
+    const ranked = this.rankings.get(this.lab) || [];
+    const available = this.config?.agents[String(this.lab)] || [];
     for (const select of this.selects) {
       const previous = select.value;
-      select
-        .querySelectorAll("[data-agent]")
-        .forEach((option) => option.remove());
-      if (this.get("engine").value === "gym") {
-        for (const agent of this.config?.agents[String(this.lab)] || []) {
-          const option = new Option(
-            `${agent.label} / saved agent`,
-            agent.value,
-          );
-          option.dataset.agent = "true";
-          select.append(option);
-        }
+      select.querySelectorAll("optgroup").forEach((group) => group.remove());
+      const group = document.createElement("optgroup");
+      group.label = "Policies in the ranking";
+      for (const name of ranked)
+        group.append(new Option(name, `agent:${name}`));
+      if (group.children.length) select.append(group);
+      const local = document.createElement("optgroup");
+      local.label = "Other saved policies";
+      for (const agent of available) {
+        if (!ranked.some((name) => `agent:${name}` === agent.value))
+          local.append(new Option(agent.label, agent.value));
       }
-      if ([...select.options].some((o) => o.value === previous))
-        select.value = previous;
+      if (local.children.length) select.append(local);
+      select.value = [...select.options].some(
+        (option) => option.value === previous,
+      )
+        ? previous
+        : "heuristic";
     }
   }
   setView(active, lab) {
@@ -231,6 +260,31 @@ export class Playground {
     try {
       if (old) await api("close", { id: old }).catch(() => {});
       if (generation !== this.generation) return;
+      const agents = this.selects
+        .map((select) => select.value)
+        .filter((value) => value.startsWith("agent:"));
+      if (agents.length) {
+        if (this.get("engine").value !== "gym") {
+          this.get("policy-help").hidden = false;
+          this.get("runtime-help").open = true;
+          throw new Error(
+            "To run ranked policies, open this site with the Gymnasium server and isolated agents enabled.",
+          );
+        }
+        const available = this.config?.agents[String(this.lab)] || [];
+        if (
+          agents.some(
+            (value) => !available.some((agent) => agent.value === value),
+          )
+        ) {
+          this.get("policy-help").hidden = false;
+          this.get("runtime-help").open = true;
+          throw new Error(
+            "Selected policy is not available in this server. Update your checkout and enable isolated agents.",
+          );
+        }
+      }
+      this.get("policy-help").hidden = true;
       if (this.get("engine").value === "gym") {
         const response = await api("session", {
           lab: this.lab,
@@ -372,13 +426,20 @@ export class Playground {
         ? "Try again ↻"
         : this.running
           ? "Pause Ⅱ"
-          : this.duel
-            ? "Start duel →"
-            : "Start demo →";
+          : "Start duel →";
     this.get("status").textContent =
       this.error || (this.loading ? "LOADING" : this.result());
+    if (!this.states.length) {
+      for (const side of ["a", "b"]) {
+        this.get(`${side}-score`).textContent = "—";
+        this.get(`${side}-steps`).textContent = "—";
+        this.get(`${side}-telemetry`).textContent = this.loading
+          ? "Loading selected policy"
+          : "No episode started";
+      }
+    }
     this.states.forEach((state, i) => {
-      const stem = this.duel ? (i === 0 ? "a-" : "b-") : "";
+      const stem = i === 0 ? "a-" : "b-";
       this.get(`${stem}score`).textContent = String(
         Number(state.score.toFixed(1)),
       );
@@ -387,11 +448,10 @@ export class Playground {
         `${state.env_id || "Browser model"} · ${state.message}`;
     });
     const manual = this.selects.findIndex((s) => s.value === "manual");
-    if (this.duel)
-      this.get("human").textContent =
-        manual < 0
-          ? "Watching two policies"
-          : `You control player ${manual === 0 ? "A" : "B"}`;
+    this.get("human").textContent =
+      manual < 0
+        ? "Watching two policies"
+        : `You control player ${manual === 0 ? "A" : "B"}`;
     this.root
       .querySelectorAll("[data-action]")
       .forEach(
@@ -401,7 +461,6 @@ export class Playground {
   }
   result() {
     if (!this.states.length) return "READY";
-    if (!this.duel) return this.states[0].message;
     if (!this.states.every((s) => s.done))
       return this.running
         ? "DUEL IN PROGRESS"
@@ -418,6 +477,14 @@ export class Playground {
     return `Player ${winner === 0 ? "A" : "B"} wins · ${name}`;
   }
   draw() {
+    if (!this.states.length) {
+      for (const canvas of this.canvases) {
+        const ctx = canvas.getContext("2d");
+        ctx.fillStyle = "#000";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+      return;
+    }
     if (this.images)
       this.images.forEach((img, i) => {
         const canvas = this.canvases[i];

@@ -39,7 +39,6 @@
           >Standings</a
         >
         <a href="#arena?lab=2" data-view="arena">Live Duel</a>
-        <a href="#playground?lab=2" data-view="playground">Playground</a>
         <a href="#submit?lab=2" data-view="submit">Submit</a>
         <a href="#rules?lab=2" data-view="rules">Rules</a>
       </nav>
@@ -197,6 +196,9 @@
             head to head.
           </p>
           <div id="comparison-cards" class="comparison-cards"></div>
+          <button id="duel-selected" class="button primary">
+            Load selection into Live Duel →
+          </button>
         </div>
         <div class="bottom-callout">
           <span class="callout-number">↗</span>
@@ -224,6 +226,24 @@
         <div class="notice">
           <span class="notice-symbol">i</span>
           <p id="duel-notice"></p>
+        </div>
+        <div id="duel-policy-help" class="notice" hidden>
+          <div>
+            <strong>Run a trained policy from the ranking</strong>
+            <p>
+              Open a current checkout of this repository with the local
+              Gymnasium server. Every saved agent for the chosen lab is loaded
+              by name and runs in isolation.
+            </p>
+            <pre>python -m tournament.serve --isolated-agents</pre>
+            <p>
+              The selected policy stays selected. See the setup instructions
+              below for dependencies and the Docker image.
+            </p>
+            <a href="#duel-runtime-help" class="text-link"
+              >Setup instructions ↓</a
+            >
+          </div>
         </div>
         <div class="stage-heading">
           <span class="eyebrow" id="duel-title"></span
@@ -358,7 +378,7 @@
           Winner: highest episode reward; fewer steps breaks a tie. Both players
           must finish. Select at most one human player.
         </p>
-        <details class="runtime-help">
+        <details id="duel-runtime-help" class="runtime-help">
           <summary>Use original Gymnasium and your saved agents</summary>
           <p>
             Run the local server from your repository checkout and open the URL
@@ -407,158 +427,6 @@ python -m tournament.serve --isolated-agents</pre
               type="video/mp4"
             />
           </video>
-        </details>
-      </section>
-      <section
-        id="playground"
-        class="view"
-        hidden
-        aria-labelledby="playground-title"
-      >
-        <div class="page-heading">
-          <p class="eyebrow accent">A little intuition, before the training</p>
-          <h1 id="playground-title">
-            Take the controls<span class="accent">.</span>
-          </h1>
-          <p>
-            Explore either environment by hand, or watch a built-in policy find
-            its way.
-          </p>
-        </div>
-        <div class="notice">
-          <span class="notice-symbol">i</span>
-          <p id="demo-notice"></p>
-        </div>
-        <div class="stage-heading">
-          <span class="eyebrow" id="demo-title"></span
-          ><span id="demo-status" role="status">READY</span>
-        </div>
-        <div class="playground-layout">
-          <div class="solo-stage">
-            <div class="play-stage">
-              <canvas
-                id="demo-canvas"
-                width="760"
-                height="480"
-                tabindex="0"
-                aria-label="Playground environment. Focus here for keyboard controls."
-                >Use a canvas-capable browser to play.</canvas
-              >
-              <div class="demo-hud">
-                <div>
-                  <span class="eyebrow">Reward</span
-                  ><strong id="demo-score">0</strong>
-                </div>
-                <div>
-                  <span class="eyebrow">Steps</span
-                  ><strong id="demo-steps">0</strong>
-                </div>
-              </div>
-              <p id="demo-telemetry" class="telemetry">READY</p>
-            </div>
-          </div>
-          <aside class="play-sidebar">
-            <label for="demo-policy">Control mode</label
-            ><select id="demo-policy">
-              <option value="manual" selected>You / manual control</option>
-              <option value="heuristic">Built-in heuristic</option>
-              <option value="random">Built-in random policy</option>
-            </select>
-            <label for="demo-engine">Environment runtime</label
-            ><select id="demo-engine">
-              <option value="browser">Browser practice</option>
-            </select>
-            <div class="session-settings">
-              <div>
-                <label for="demo-seed">Scenario seed</label
-                ><input
-                  id="demo-seed"
-                  type="number"
-                  min="0"
-                  max="1000000"
-                  step="1"
-                  value="42"
-                />
-              </div>
-              <div>
-                <label for="demo-speed">Playback speed</label
-                ><select id="demo-speed">
-                  <option value="0.5">0.5×</option>
-                  <option value="1" selected>1×</option>
-                  <option value="2">2×</option>
-                  <option value="4">4×</option>
-                </select>
-              </div>
-            </div>
-            <button id="demo-toggle" class="button primary">
-              Start demo →
-            </button>
-            <div class="action-pair">
-              <button id="demo-reset">Reset ↻</button
-              ><button id="demo-new">New scenario</button>
-            </div>
-            <div data-controls="taxi">
-              <h3>Get from A to B.</h3>
-              <p>Pick up the passenger and deliver them to the hotel.</p>
-              <div class="dpad">
-                <button data-action="up" aria-label="Move north">↑</button
-                ><button data-action="left" aria-label="Move west">←</button
-                ><button data-action="down" aria-label="Move south">↓</button
-                ><button data-action="right" aria-label="Move east">→</button>
-              </div>
-              <div class="action-pair">
-                <button data-action="pickup">Pick up <kbd>P</kbd></button
-                ><button data-action="dropoff">Drop off <kbd>O</kbd></button>
-              </div>
-              <p class="keyboard-note">
-                Focus either grid. Move with arrows / WASD. Pick up with P /
-                Space; drop off with O / Enter. R resets.
-              </p>
-            </div>
-            <div data-controls="lander" hidden>
-              <h3>A softer landing.</h3>
-              <p>Control the engines and keep your descent slow.</p>
-              <div class="action-pair">
-                <button data-action="left">Left <kbd>←</kbd></button
-                ><button data-action="up">Thrust <kbd>↑</kbd></button
-                ><button data-action="right">Right <kbd>→</kbd></button>
-              </div>
-              <p class="keyboard-note">
-                Focus either canvas. Use ← / A and → / D for side engines, ↑ / W
-                / Space for main thrust. Hold touch buttons to fire. R resets.
-              </p>
-            </div>
-          </aside>
-        </div>
-
-        <details class="runtime-help">
-          <summary>Use original Gymnasium and your saved agents</summary>
-          <p>
-            Run the local server from your repository checkout and open the URL
-            it prints. The same interface then offers original Gymnasium physics
-            and rendered frames.
-          </p>
-          <pre>
-python -m pip install -r tournament/requirements-ci.txt
-python -m tournament.serve</pre
-          >
-          <p>
-            For saved student policies, start Docker and build the tournament
-            image, then enable isolated agents:
-          </p>
-          <pre>
-docker build -f tournament/Dockerfile.agent -t rl-tournament-agent:local tournament
-python -m tournament.serve --isolated-agents</pre
-          >
-          <p>
-            Saved agents appear by name in the player menus. GitHub Pages runs
-            browser practice; it cannot host Python or Docker.
-          </p>
-          <a
-            class="text-link"
-            href="https://github.com/gramuah/RL_tournament/actions/workflows/duel.yml"
-            >Generate a real agent replay on GitHub ↗</a
-          >
         </details>
       </section>
       <section id="submit" class="view" hidden aria-labelledby="submit-title">
@@ -714,8 +582,8 @@ submissions/lab2/your-github-login/
             </p>
             <p>
               PR results are provisional. Published standings come from the
-              merged revision’s official evaluation. The playground is a
-              separate educational demo.
+              merged revision’s official evaluation. Live Duel is for practice
+              and does not change the official ranking.
             </p>
           </article>
         </div>
@@ -732,7 +600,7 @@ submissions/lab2/your-github-login/
     </footer>
     <noscript
       ><p class="notice">
-        Enable JavaScript to load standings and use the playground.
+        Enable JavaScript to load standings and play a live duel.
         <a href="https://github.com/gramuah/RL_tournament"
           >Read the submission guides on GitHub.</a
         >

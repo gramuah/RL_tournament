@@ -115,13 +115,17 @@ test("Pages subpath, honest data, navigation, search, comparison, and screenshot
   assert.deepEqual(p.errors, []);
   await p.context().close();
 });
-test("Mobile layout, keyboard navigation and deterministic demo controls", async () => {
+test("Mobile navigation exposes Live Duel without a separate Playground", async () => {
   const p = await page({
     viewport: { width: 390, height: 844 },
     isMobile: true,
     hasTouch: true,
   });
   await loaded(p);
+  assert.equal(
+    await p.locator('[data-view="playground"], #playground').count(),
+    0,
+  );
   assert.equal(
     await p.evaluate(
       () =>
@@ -134,41 +138,8 @@ test("Mobile layout, keyboard navigation and deterministic demo controls", async
     path: path.resolve(__dirname, "../artifacts/web/standings-mobile.png"),
     fullPage: true,
   });
-  await p.locator('[data-view="playground"]').click();
-  await p.locator("#demo-canvas").waitFor({ state: "visible" });
-  await p.locator("#demo-canvas").focus();
-  await p.keyboard.press("ArrowUp");
-  assert.equal(await p.locator("#demo-steps").innerText(), "1");
-  await p.locator("#demo-reset").click();
-  assert.equal(await p.locator("#demo-steps").innerText(), "0");
-  await p.locator("#demo-policy").selectOption("heuristic");
-  await p.locator("#demo-toggle").click();
-  await p.waitForFunction(
-    () =>
-      document.querySelector("#demo-status").textContent ===
-      "DESTINATION REACHED",
-    null,
-    { timeout: 15000 },
-  );
-  assert.equal(
-    await p.evaluate(
-      () =>
-        document.documentElement.scrollWidth <=
-        document.documentElement.clientWidth,
-    ),
-    true,
-  );
-  await p.locator('[data-lab="1"]').click();
-  await p.locator("#demo-policy").selectOption("manual");
-  await p.locator("#demo-toggle").click();
-  await p.waitForFunction(
-    () => Number(document.querySelector("#demo-steps").textContent) > 2,
-  );
-  await p.locator('[data-view="standings"]').click();
-  await p.locator("#demo-canvas").waitFor({ state: "hidden" });
-  const steps = await p.locator("#demo-steps").innerText();
-  await p.waitForTimeout(100);
-  assert.equal(await p.locator("#demo-steps").innerText(), steps);
+  await p.locator('[data-view="arena"]').click();
+  await p.locator("#duel-a-canvas").waitFor({ state: "visible" });
   assert.deepEqual(p.errors, []);
   await p.context().close();
 });
@@ -302,6 +273,58 @@ test("Live duels finish, tie fairly, reset reproducibly, and expose original Tax
     path: path.resolve(__dirname, "../artifacts/web/duel-desktop.png"),
     fullPage: true,
   });
+  assert.deepEqual(p.errors, []);
+  await p.context().close();
+});
+test("Every ranked policy is selectable and standings load the requested matchup", async () => {
+  const p = await page();
+  await loaded(p);
+  const ranked = JSON.parse(
+    await fs.readFile(path.join(root, "data/leaderboard_p2.json"), "utf8"),
+  )
+    .filter((row) => row.success)
+    .map((row) => `agent:${row.participant}`);
+  assert.deepEqual(
+    await p
+      .locator(
+        '#duel-a-policy optgroup[label="Policies in the ranking"] option',
+      )
+      .evaluateAll((options) => options.map((o) => o.value)),
+    ranked,
+  );
+  await p
+    .getByRole("button", { name: "Duel rafael_flor", exact: true })
+    .click();
+  await p.locator("#duel-a-canvas").waitFor({ state: "visible" });
+  assert.equal(await p.locator("#duel-a-policy").inputValue(), "manual");
+  assert.equal(
+    await p.locator("#duel-b-policy").inputValue(),
+    "agent:rafael_flor",
+  );
+  assert.equal(await p.locator("#duel-toggle").isDisabled(), true);
+  assert.equal(await p.locator("#duel-policy-help").isVisible(), true);
+  assert.equal(await p.locator("#duel-b-score").innerText(), "—");
+  await p.locator('[data-view="standings"]').click();
+  await p
+    .getByRole("button", { name: "Compare rafael_flor", exact: true })
+    .click();
+  await p
+    .getByRole("button", { name: "Compare baseline_random", exact: true })
+    .click();
+  await p.locator("#duel-selected").click();
+  assert.equal(
+    await p.locator("#duel-a-policy").inputValue(),
+    "agent:rafael_flor",
+  );
+  assert.equal(
+    await p.locator("#duel-b-policy").inputValue(),
+    "agent:baseline_random",
+  );
+  // Explicitly returning to built-in policies makes browser practice playable again.
+  await p.locator("#duel-a-policy").selectOption("manual");
+  await p.locator("#duel-b-policy").selectOption("heuristic");
+  assert.equal(await p.locator("#duel-toggle").isDisabled(), false);
+  assert.equal(await p.locator("#duel-policy-help").isVisible(), false);
   assert.deepEqual(p.errors, []);
   await p.context().close();
 });
@@ -458,17 +481,27 @@ test(
         fullPage: true,
       });
       if (process.env.GYM_ISOLATED_AGENTS === "1") {
-        await p.locator("#duel-a-policy").selectOption("agent:rafael_flor");
+        await p.locator('[data-view="standings"]').click();
+        await p
+          .getByRole("button", { name: "Duel rafael_flor", exact: true })
+          .click();
+        assert.equal(
+          await p.locator("#duel-b-policy").inputValue(),
+          "agent:rafael_flor",
+        );
+        await p.locator("#duel-a-policy").selectOption("heuristic");
         await p.waitForFunction(
           () => !document.querySelector("#duel-toggle").disabled,
         );
         await p.locator("#duel-toggle").click();
         await p.waitForFunction(() =>
           document
-            .querySelector("#duel-a-telemetry")
+            .querySelector("#duel-b-telemetry")
             .textContent.includes("DESTINATION REACHED"),
         );
       }
+      await p.locator("#duel-b-policy").selectOption("heuristic");
+      await p.waitForFunction(() => !document.querySelector("#duel-toggle").disabled);
       await p.locator('[data-lab="1"]').click();
       await p.waitForFunction(
         () =>

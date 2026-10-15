@@ -1,4 +1,4 @@
-import { Playground } from "./playground.js";
+import { LiveDuel } from "./duel.js";
 const $ = (id) => document.getElementById(id);
 const repo = "https://github.com/gramuah/RL_tournament";
 const configs = {
@@ -42,11 +42,10 @@ let lab = 2,
   selected = new Set(),
   request = 0,
   loadState = "loading";
-const playground = new Playground();
-const arena = new Playground("duel", true);
+const arena = new LiveDuel();
 function route() {
   const [name, query = ""] = location.hash.slice(1).split("?");
-  view = ["standings", "arena", "playground", "submit", "rules"].includes(name)
+  view = ["standings", "arena", "submit", "rules"].includes(name)
     ? name
     : "standings";
   const nextLab = new URLSearchParams(query).get("lab") === "1" ? 1 : 2;
@@ -95,7 +94,6 @@ function route() {
     `${repo}/blob/main/Lab_sessions/Lab${lab}/unit${lab}_uah_student.ipynb`;
   $("submission-guide").href = `${repo}/tree/main/submissions/lab${lab}`;
   document.title = `${view[0].toUpperCase() + view.slice(1)} · Lab ${lab} — RL Tournament`;
-  playground.setView(view === "playground", lab);
   arena.setView(view === "arena", lab);
   document
     .querySelectorAll("[data-arena-link]")
@@ -174,11 +172,13 @@ async function loadData() {
         records.some((row) => row.participant === name && row.success),
       ),
     );
+    arena.setRankedPolicies(selectedLab, records);
     render();
   } catch (error) {
     if (current !== request) return;
     loadState = "error";
     records = [];
+    arena.setRankedPolicies(selectedLab, []);
     $("data-state").textContent =
       "Standings are unavailable right now. Try refreshing, or check the latest tournament run on GitHub.";
     $("data-provenance").textContent = "Evaluation data unavailable";
@@ -324,6 +324,13 @@ function render() {
       render();
     });
     action.append(button);
+    if (row.success) {
+      const duel = text("button", "Duel ↗", "quiet-button");
+      duel.type = "button";
+      duel.setAttribute("aria-label", `Duel ${row.participant}`);
+      duel.addEventListener("click", () => launchDuel([row.participant]));
+      action.append(duel);
+    }
     tr.append(action);
     $("standings-body").append(tr);
   }
@@ -334,6 +341,11 @@ function render() {
     : "No evaluated agents yet. Be the first to submit a policy.";
   renderComparison();
 }
+function launchDuel(names) {
+  arena.selectRanked(names);
+  location.hash = `arena?lab=${lab}`;
+}
+$("duel-selected").addEventListener("click", () => launchDuel([...selected]));
 function renderComparison() {
   $("comparison").hidden = selected.size === 0;
   $("comparison-cards").replaceChildren();
