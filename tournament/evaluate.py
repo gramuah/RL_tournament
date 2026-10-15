@@ -204,8 +204,8 @@ def evaluate_agent(agent_fn, lab_id, num_episodes=30, base_seed=42):
         status_code = "warning"
 
     return {
-        "practical_id": lab_id,
-        "practical_name": config["name"],
+        "lab_id": lab_id,
+        "lab_name": config["name"],
         "env_id": active_env_id,
         "num_episodes": num_episodes,
         "base_seed": base_seed,
@@ -269,7 +269,7 @@ Please verify that:
 
     return f"""### {status_icon} RL Tournament Evaluation Report: `{result['participant']}`
 
-**Assignment:** {result['practical_name']} (`{result['env_id']}`)  
+**Assignment:** {result.get('lab_name', result.get('practical_name', 'Unknown lab'))} (`{result['env_id']}`)<br>
 **Status:** **{result['status']}** (Threshold: $\\ge {result['pass_threshold']}$ pass, $\\ge {result['mastery_threshold']}$ mastery)  
 **Evaluated Episodes:** {result['num_episodes']} (Base Seed: {result['base_seed']})
 
@@ -319,7 +319,7 @@ def main():
             sys.exit(1)
 
     elif args.all:
-        submissions_dir = Path("submissions") / f"practical{lab_id}"
+        submissions_dir = Path("submissions") / f"lab{lab_id}"
         if not submissions_dir.exists():
             print(f"Directory {submissions_dir} does not exist.")
             sys.exit(1)

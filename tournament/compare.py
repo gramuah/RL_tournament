@@ -157,7 +157,7 @@ def list_available_opponents(lab_id=1, repo_root=None):
     else:
         repo_root = Path(repo_root).resolve()
 
-    sub_dir = repo_root / "submissions" / f"practical{lab_id}"
+    sub_dir = repo_root / "submissions" / f"lab{lab_id}"
     opponents = []
     if sub_dir.exists():
         for entry in sorted(sub_dir.iterdir()):
@@ -170,7 +170,7 @@ def list_available_opponents(lab_id=1, repo_root=None):
 def download_github_submission(lab_id, github_username, target_dir):
     """Downloads a classmate's submission folder from the official GitHub repository."""
     os.makedirs(target_dir, exist_ok=True)
-    api_url = f"https://api.github.com/repos/{GITHUB_OWNER}/{GITHUB_REPO}/contents/submissions/practical{lab_id}/{github_username}"
+    api_url = f"https://api.github.com/repos/{GITHUB_OWNER}/{GITHUB_REPO}/contents/submissions/lab{lab_id}/{github_username}"
 
     headers = {"Accept": "application/vnd.github+json", "User-Agent": "RL-Duel-Comparator"}
     req = urllib.request.Request(api_url, headers=headers)
@@ -228,10 +228,10 @@ def resolve_agent(agent_spec, lab_id, repo_root=None):
     if path.is_dir() and (path / "agent.py").exists():
         return load_agent_from_dir(path), path.name, None
 
-    # Case 2: In submissions/practicalX/
+    # Case 2: In submissions/labX/
     if repo_root is None:
         repo_root = get_default_repo_root()
-    sub_candidate = Path(repo_root) / "submissions" / f"practical{lab_id}" / agent_str
+    sub_candidate = Path(repo_root) / "submissions" / f"lab{lab_id}" / agent_str
     if sub_candidate.is_dir() and (sub_candidate / "agent.py").exists():
         return load_agent_from_dir(sub_candidate), agent_str, None
 

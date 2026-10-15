@@ -167,7 +167,7 @@ main {
 }
 
 /* Lab Selector Bar */
-.practical-selector {
+.lab-selector {
   display: flex;
   justify-content: center;
   margin-bottom: 2rem;

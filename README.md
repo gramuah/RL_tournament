@@ -6,13 +6,13 @@ Public student materials and agent tournament for the University of Alcalá Rein
 
 | Assignment | Student notebook | Submission guide |
 | --- | --- | --- |
-| Lab 1: PPO / LunarLander | [Open notebook](Lab_sessions/Lab1/unit1_uah_student.ipynb) | [Submit an agent](submissions/practical1/) |
-| Lab 2: Q-learning / Taxi | [Open notebook](Lab_sessions/Lab2/unit2_uah_student.ipynb) | [Submit an agent](submissions/practical2/) |
+| Lab 1: PPO / LunarLander | [Open notebook](Lab_sessions/Lab1/unit1_uah_student.ipynb) | [Submit an agent](submissions/lab1/) |
+| Lab 2: Q-learning / Taxi | [Open notebook](Lab_sessions/Lab2/unit2_uah_student.ipynb) | [Submit an agent](submissions/lab2/) |
 | Final project: Deep Q-learning / Atari | [Open notebook](Lab_sessions/FinalProject/unit3_uah_student.ipynb) | Presentation and oral defense |
 
 Read the [lab guide](Lab_sessions/Lab_Guide.pdf) for notebook setup, deliverables, and assessment. Its editable [LaTeX source](Lab_sessions/Lab_Guide.tex) is maintained here alongside the PDF.
 
-Use **Lab 1** and **Lab 2**, the `--lab` CLI option, the `lab` workflow input, and `lab_id` in Python calls. The submission helper is `submit_lab`. For existing notebooks, `--practical`, the `practical_id` keyword, `submit_practical`, and `PRACTICAL_CONFIGS` remain compatibility aliases. Passing both Python keywords raises `TypeError`. Submission directories (`submissions/practical1/` and `submissions/practical2/`), submission branch names, and stored JSON keys (`practical_id` and `practical_name`) retain their existing names so agents, scores, and existing submissions continue to work.
+Use **Lab 1** and **Lab 2**, the `--lab` CLI option, the `lab` workflow input, and `lab_id` in Python calls. Submit agents with `submit_lab` into `submissions/lab1/` or `submissions/lab2/`; new submission branches use `submission-lab1-...` or `submission-lab2-...`, and evaluation results use `lab_id` and `lab_name`. Existing agents and model files have been retained in the renamed directories. The old `--practical`, `practical_id` keyword, `submit_practical`, and `PRACTICAL_CONFIGS` names remain API aliases for saved notebooks. Passing both Python keywords raises `TypeError`.
 
 ## Repository ownership
 
@@ -40,8 +40,8 @@ Students can submit their trained models directly to GitHub! An automated **GitH
 
 👉 **[View the Live Class Leaderboard (LEADERBOARD.md)](LEADERBOARD.md)** 👈
 
-- 🚀 **Lab 1:** `LunarLander-v3` — [Folder & Submission Guide](submissions/practical1/)
-- 🚕 **Lab 2:** `Taxi-v3 / Taxi-v4` — [Folder & Submission Guide](submissions/practical2/)
+- 🚀 **Lab 1:** `LunarLander-v3` — [Folder & Submission Guide](submissions/lab1/)
+- 🚕 **Lab 2:** `Taxi-v3 / Taxi-v4` — [Folder & Submission Guide](submissions/lab2/)
 
 When you submit via Pull Request, a bot evaluates your agent and leaves a score report on your PR when the evaluation workflow completes.
 
@@ -53,7 +53,7 @@ Run the synchronized head-to-head duel tool locally or directly inside Google Co
 
 ```bash
 # Compare two agents side-by-side with synchronized broadcast video
-python tournament/compare.py --lab 1 --agent-a submissions/practical1/rafael_flor --agent-b baseline_random --episodes 5 --video duel.mp4
+python tournament/compare.py --lab 1 --agent-a submissions/lab1/rafael_flor --agent-b baseline_random --episodes 5 --video duel.mp4
 ```
 
 Or inside your Colab notebook:

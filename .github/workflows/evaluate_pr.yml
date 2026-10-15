@@ -41,7 +41,7 @@ jobs:
         run: |
           # Compare PR against base branch to find modified directories under submissions/
           CHANGED_DIRS=$(git diff --name-only origin/${{ github.base_ref }} HEAD -- 'submissions/**' | \
-            grep -E '^submissions/practical[12]/[^/]+/' | \
+            grep -E '^submissions/lab[12]/[^/]+/' | \
             cut -d'/' -f1-3 | sort -u || true)
 
           echo "Found modified submission dirs:"
@@ -59,9 +59,9 @@ jobs:
           echo "Evaluating: $SUB_DIR"
 
           # Determine lab number (1 or 2)
-          if [[ "$SUB_DIR" == *"practical1"* ]]; then
+          if [[ "$SUB_DIR" == *"lab1"* ]]; then
             LAB_ID=1
-          elif [[ "$SUB_DIR" == *"practical2"* ]]; then
+          elif [[ "$SUB_DIR" == *"lab2"* ]]; then
             LAB_ID=2
           else
             echo "Cannot determine lab ID from $SUB_DIR"

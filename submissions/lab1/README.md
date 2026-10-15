@@ -7,7 +7,7 @@ This folder contains all participant models submitted for the **Lab 1 Tournament
 Each participant or team must place their submission inside their own subfolder named after their GitHub username (or student ID):
 
 ```text
-submissions/practical1/
+submissions/lab1/
 ├── baseline_random/
 │   └── agent.py
 └── <your_github_username>/
@@ -37,7 +37,7 @@ def agent(observation):
 ## 🤖 Automated Evaluation via GitHub Actions
 
 1. Fork this repository.
-2. Add your folder `submissions/practical1/<your_github_username>/`.
+2. Add your folder `submissions/lab1/<your_github_username>/`.
 3. Open a **Pull Request** targeting `main`.
 4. Our automated CI bot will test your agent across 30 evaluation episodes and comment your score directly on the PR!
 5. Once merged, your rank appears on [LEADERBOARD.md](../../LEADERBOARD.md).

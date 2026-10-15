@@ -114,7 +114,7 @@ def submit_lab(lab_id, files_to_submit, github_token, github_username=None):
     print("   Fork is ready.")
 
     # 3. Create or sync submission branch
-    branch_name = f"submission-practical{lab_id}-{username.lower()}"
+    branch_name = f"submission-lab{lab_id}-{username.lower()}"
     print(f"🌿 3. Setting up branch '{branch_name}'...")
 
     # Get SHA of upstream main
@@ -150,8 +150,8 @@ def submit_lab(lab_id, files_to_submit, github_token, github_username=None):
         print(f"   Branch '{branch_name}' already exists. Updating files...")
 
     # 4. Upload files
-    print(f"📤 4. Uploading submission files to 'submissions/practical{lab_id}/{username}/'...")
-    target_dir = f"submissions/practical{lab_id}/{username}"
+    print(f"📤 4. Uploading submission files to 'submissions/lab{lab_id}/{username}/'...")
+    target_dir = f"submissions/lab{lab_id}/{username}"
 
     for target_name, local_path in files_to_submit.items():
         if not os.path.exists(local_path):

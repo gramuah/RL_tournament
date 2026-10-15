@@ -39,7 +39,7 @@ def get_rank_medal(rank):
 @_accept_legacy_practical_id(lab_position=0)
 def run_full_evaluation(lab_id, episodes=30, seed=42):
     """Evaluates all submission folders for the given lab."""
-    submissions_dir = Path("submissions") / f"practical{lab_id}"
+    submissions_dir = Path("submissions") / f"lab{lab_id}"
     results = []
 
     if not submissions_dir.exists():
@@ -71,7 +71,7 @@ def build_markdown_table(results, lab_id):
     for idx, r in enumerate(results, start=1):
         rank_str = get_rank_medal(idx)
         participant = r["participant"]
-        sub_rel_path = f"submissions/practical{lab_id}/{participant}"
+        sub_rel_path = f"submissions/lab{lab_id}/{participant}"
         participant_link = f"[{participant}]({sub_rel_path})"
 
         if not r.get("success", False):
@@ -172,12 +172,12 @@ Participating in the tournament is completely automated:
 3. **Fork or branch this repository** and create your submission directory:
    ```bash
    # For Lab 1:
-   submissions/practical1/<your_github_username>/
+   submissions/lab1/<your_github_username>/
        ├── agent.py
        └── ppo-LunarLander-v3.zip
 
    # For Lab 2:
-   submissions/practical2/<your_github_username>/
+   submissions/lab2/<your_github_username>/
        ├── agent.py
        └── q-learning.pkl
    ```

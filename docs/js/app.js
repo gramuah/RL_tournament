@@ -5,7 +5,7 @@
 const HUMAN_AGENT = "🎮 You (Human / Manual Control)";
 
 const STATE = {
-  currentPractical: 1, // 1 for LunarLander, 2 for Taxi
+  currentLab: 1, // 1 for LunarLander, 2 for Taxi
   currentTab: 'arena',
   leaderboards: {
     1: [],
@@ -84,7 +84,7 @@ const FALLBACK_DATA_P2 = [
 // Initialize application on DOM load
 document.addEventListener('DOMContentLoaded', async () => {
   setupNavigation();
-  setupPracticalSelector();
+  setupLabSelector();
   setupKeyListeners();
   setupPointerControls();
   await loadData();
@@ -128,15 +128,15 @@ function setupNavigation() {
   });
 }
 
-function setupPracticalSelector() {
+function setupLabSelector() {
   const pills = document.querySelectorAll('.p-pill');
   pills.forEach(pill => {
     pill.addEventListener('click', () => {
       pills.forEach(p => p.classList.remove('active'));
       pill.classList.add('active');
-      STATE.currentPractical = parseInt(pill.dataset.practical, 10);
+      STATE.currentLab = parseInt(pill.dataset.lab, 10);
       
-      syncSandboxEnvButton(STATE.currentPractical);
+      syncSandboxEnvButton(STATE.currentLab);
       populateDropdowns();
       updateArenaView();
       renderLeaderboard();
@@ -199,12 +199,12 @@ function setupKeyListeners() {
     if (STATE.currentTab === 'arena') {
       const hasHuman = (STATE.agentA === HUMAN_AGENT || STATE.agentB === HUMAN_AGENT);
       if (hasHuman) {
-        if (STATE.currentPractical === 1) {
+        if (STATE.currentLab === 1) {
           if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W' || e.key === ' ') STATE.keys.thrust = true;
           if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') STATE.keys.left = true;
           if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') STATE.keys.right = true;
           if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') STATE.keys.down = true;
-        } else if (STATE.currentPractical === 2) {
+        } else if (STATE.currentLab === 2) {
           if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') handleDuelTaxiAction('up');
           if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') handleDuelTaxiAction('down');
           if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') handleDuelTaxiAction('left');
@@ -320,7 +320,7 @@ function populateDropdowns() {
   selectA.innerHTML = '';
   selectB.innerHTML = '';
 
-  const list = STATE.leaderboards[STATE.currentPractical] || [];
+  const list = STATE.leaderboards[STATE.currentLab] || [];
   const participants = [HUMAN_AGENT, ...list.map(item => item.participant)];
 
   participants.forEach((p) => {
@@ -358,7 +358,7 @@ function populateDropdowns() {
 
 function updateCornerStats(corner, participantName) {
   const isHuman = participantName === HUMAN_AGENT;
-  const list = STATE.leaderboards[STATE.currentPractical] || [];
+  const list = STATE.leaderboards[STATE.currentLab] || [];
   const agent = list.find(item => item.participant === participantName) || {
     mean_reward: 0,
     std_reward: 0,
@@ -405,7 +405,7 @@ function updateArenaView() {
     const landerRow = document.getElementById('arena-touch-buttons');
     const taxiRow = document.getElementById('arena-touch-taxi-buttons');
     const hints = document.getElementById('arena-keyboard-hints');
-    if (STATE.currentPractical === 1) {
+    if (STATE.currentLab === 1) {
       if (landerRow) landerRow.style.display = 'flex';
       if (taxiRow) taxiRow.style.display = 'none';
       if (hints) hints.textContent = "Keys: [Space / W / ⬆️] Thruster | [A / ⬅️] Rotate Left | [D / ➡️] Rotate Right";
@@ -429,7 +429,7 @@ function updateArenaView() {
 }
 
 function updateComparisonBars() {
-  const list = STATE.leaderboards[STATE.currentPractical] || [];
+  const list = STATE.leaderboards[STATE.currentLab] || [];
   const getStats = (pName) => {
     if (pName === HUMAN_AGENT) {
       return { avg_steps: 240, mean_reward: 250 };
@@ -475,7 +475,7 @@ function renderLeaderboard(filter = '') {
   if (!tbody) return;
   tbody.innerHTML = '';
 
-  const list = STATE.leaderboards[STATE.currentPractical] || [];
+  const list = STATE.leaderboards[STATE.currentLab] || [];
   const filtered = list.filter(item => item.participant.toLowerCase().includes(filter));
 
   filtered.forEach((item, idx) => {
@@ -800,7 +800,7 @@ function startLiveDuel() {
 }
 
 function handleDuelTaxiAction(act) {
-  if (STATE.currentPractical !== 2) return;
+  if (STATE.currentLab !== 2) return;
   if (!STATE.duelRunning) {
     STATE.duelRunning = true;
     const badge = document.getElementById('duel-winner-badge');
@@ -815,7 +815,7 @@ function handleDuelTaxiAction(act) {
 
 function duelLoop() {
   if (STATE.currentTab === 'arena' && duelCtx) {
-    if (STATE.currentPractical === 1) {
+    if (STATE.currentLab === 1) {
       updateDuelLanderPhysics();
       renderDuelLander();
     } else {
@@ -1013,7 +1013,7 @@ function checkDuelEnd() {
   if (!STATE.duelRunning) return;
 
   let endedA = false, endedB = false;
-  if (STATE.currentPractical === 1) {
+  if (STATE.currentLab === 1) {
     endedA = duelLanderA.landed || duelLanderA.crashed || duelLanderA.steps > 700;
     endedB = duelLanderB.landed || duelLanderB.crashed || duelLanderB.steps > 700;
   } else {
@@ -1021,10 +1021,10 @@ function checkDuelEnd() {
     endedB = duelTaxiB.delivered || duelTaxiB.steps >= 120;
   }
 
-  const scoreA = STATE.currentPractical === 1 ? duelLanderA.score : duelTaxiA.score;
-  const scoreB = STATE.currentPractical === 1 ? duelLanderB.score : duelTaxiB.score;
-  const stepsA = STATE.currentPractical === 1 ? duelLanderA.steps : duelTaxiA.steps;
-  const stepsB = STATE.currentPractical === 1 ? duelLanderB.steps : duelTaxiB.steps;
+  const scoreA = STATE.currentLab === 1 ? duelLanderA.score : duelTaxiA.score;
+  const scoreB = STATE.currentLab === 1 ? duelLanderB.score : duelTaxiB.score;
+  const stepsA = STATE.currentLab === 1 ? duelLanderA.steps : duelTaxiA.steps;
+  const stepsB = STATE.currentLab === 1 ? duelLanderB.steps : duelTaxiB.steps;
 
   document.getElementById('bar-val-reward-a').textContent = `${scoreA > 0 ? '+' : ''}${scoreA.toFixed(1)}`;
   document.getElementById('bar-val-reward-b').textContent = `${scoreB > 0 ? '+' : ''}${scoreB.toFixed(1)}`;
