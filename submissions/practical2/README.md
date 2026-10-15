@@ -1,6 +1,6 @@
-# 🚕 Submissions: Practical 2 (Taxi-v3 / Taxi-v4)
+# 🚕 Submissions: Lab 2 (Taxi-v3 / Taxi-v4)
 
-This folder contains all participant models submitted for the **Practical 2 Tournament** (Master in AI Applications, Universidad de Alcalá).
+This folder contains all participant models submitted for the **Lab 2 Tournament** (Master in AI Applications, University of Alcalá).
 
 ## 📂 Directory Structure
 

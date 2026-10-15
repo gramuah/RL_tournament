@@ -6,6 +6,8 @@ Description: Enables students to automatically fork, commit, and create a
 Pull Request to the course repository directly from a Jupyter/Colab notebook.
 """
 
+from functools import wraps
+
 import base64
 import json
 import os
@@ -16,6 +18,20 @@ import urllib.request
 COURSE_OWNER = "gramuah"
 COURSE_REPO = "RL_tournament"
 BASE_BRANCH = "main"
+
+
+def _accept_legacy_practical_id(lab_position=0):
+    """Keep the old keyword working while exposing lab_id in Python signatures."""
+    def decorate(function):
+        @wraps(function)
+        def compatible(*args, **kwargs):
+            if "practical_id" in kwargs:
+                if "lab_id" in kwargs or len(args) > lab_position:
+                    raise TypeError("Specify lab_id or practical_id, not both")
+                kwargs["lab_id"] = kwargs.pop("practical_id")
+            return function(*args, **kwargs)
+        return compatible
+    return decorate
 
 
 def _github_request(url, method="GET", data=None, token=None):
@@ -46,16 +62,17 @@ def _github_request(url, method="GET", data=None, token=None):
         return e.code, err_json
 
 
-def submit_practical(practical_id, files_to_submit, github_token, github_username=None):
+@_accept_legacy_practical_id(lab_position=0)
+def submit_lab(lab_id, files_to_submit, github_token, github_username=None):
     """
-    Submits a practical directly to GitHub by:
+    Submits a lab assignment directly to GitHub by:
     1. Authenticating the token.
     2. Forking the repository (if not already forked).
     3. Creating or updating a submission branch.
     4. Uploading agent.py and model weight files.
     5. Opening a Pull Request against gramuah/RL_tournament:main.
 
-    :param practical_id: 1 or 2
+    :param lab_id: 1 or 2
     :param files_to_submit: dict of {target_filename: local_path}
     :param github_token: GitHub Personal Access Token (classic 'repo' or fine-grained)
     :param github_username: (Optional) GitHub username; detected from token if omitted
@@ -97,7 +114,7 @@ def submit_practical(practical_id, files_to_submit, github_token, github_usernam
     print("   Fork is ready.")
 
     # 3. Create or sync submission branch
-    branch_name = f"submission-practical{practical_id}-{username.lower()}"
+    branch_name = f"submission-practical{lab_id}-{username.lower()}"
     print(f"🌿 3. Setting up branch '{branch_name}'...")
 
     # Get SHA of upstream main
@@ -133,8 +150,8 @@ def submit_practical(practical_id, files_to_submit, github_token, github_usernam
         print(f"   Branch '{branch_name}' already exists. Updating files...")
 
     # 4. Upload files
-    print(f"📤 4. Uploading submission files to 'submissions/practical{practical_id}/{username}/'...")
-    target_dir = f"submissions/practical{practical_id}/{username}"
+    print(f"📤 4. Uploading submission files to 'submissions/practical{lab_id}/{username}/'...")
+    target_dir = f"submissions/practical{lab_id}/{username}"
 
     for target_name, local_path in files_to_submit.items():
         if not os.path.exists(local_path):
@@ -149,7 +166,7 @@ def submit_practical(practical_id, files_to_submit, github_token, github_usernam
         # Check if file exists to get its SHA for update
         status, existing_file = _github_request(f"{contents_url}?ref={branch_name}", token=token)
         payload = {
-            "message": f"Upload {target_name} for Practical {practical_id} (@{username})",
+            "message": f"Upload {target_name} for Lab {lab_id} (@{username})",
             "content": content_b64,
             "branch": branch_name,
         }
@@ -165,13 +182,13 @@ def submit_practical(practical_id, files_to_submit, github_token, github_usernam
     print("🚀 5. Opening Pull Request to course repository...")
     pr_url = f"https://api.github.com/repos/{COURSE_OWNER}/{COURSE_REPO}/pulls"
     pr_payload = {
-        "title": f"Submission Practical {practical_id}: @{username}",
+        "title": f"Lab {lab_id} Submission: @{username}",
         "head": f"{username}:{branch_name}",
         "base": BASE_BRANCH,
-        "body": f"""### 🏆 Automated Submission: Practical {practical_id}
+        "body": f"""### 🏆 Automated Submission: Lab {lab_id}
 
 - **Participant:** @{username}
-- **Assignment:** Practical {practical_id}
+- **Assignment:** Lab {lab_id}
 - **Submitted Files:** `{', '.join(files_to_submit.keys())}`
 
 *This pull request was automatically generated and submitted from Jupyter Notebook.*
@@ -204,3 +221,7 @@ def submit_practical(practical_id, files_to_submit, github_token, github_usernam
             return html_url
 
     raise RuntimeError(f"Failed to create Pull Request (HTTP {status}): {pr_res.get('message', pr_res)}")
+
+
+# Existing notebooks may keep importing or calling this name.
+submit_practical = submit_lab

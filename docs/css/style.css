@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Universidad de Alcalá (UAH) - Master in AI Applications
+   University of Alcalá (UAH) - Master in AI Applications
    Reinforcement Learning Course Tournament Arena & Visual Comparator
    Clean, Professional & Academic Engineering Theme
    ========================================================================== */
@@ -166,7 +166,7 @@ main {
   padding: 0 1.5rem 3rem;
 }
 
-/* Practical Selector Bar */
+/* Lab Selector Bar */
 .practical-selector {
   display: flex;
   justify-content: center;

@@ -2,7 +2,7 @@
 
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
-\usepackage[spanish,english]{babel}
+\usepackage[english]{babel}
 \usepackage{graphicx}
 \usepackage{hyperref}
 \usepackage{xcolor}
@@ -25,14 +25,14 @@
 \fancyhf{}
 \renewcommand{\headrulewidth}{0.4pt}
 \rhead{\small Reinforcement Learning Course}
-\lhead{\small Practical Sessions Guide}
+\lhead{\small Lab Guide}
 \rfoot{\small Page \thepage}
 
 \newtcolorbox{infobox}[1][]{colback=blue!5!white, colframe=blue!55!black, title=#1, fonttitle=\bfseries, boxrule=0.6pt, arc=2pt}
 \newtcolorbox{warnbox}[1][]{colback=red!5!white, colframe=red!60!black, title=#1, fonttitle=\bfseries, boxrule=0.6pt, arc=2pt}
 
-\title{\bfseries Guide to the Practical Sessions \\ \large Reinforcement Learning Course}
-\author{Universidad de Alcal\'a}
+\title{\bfseries Guide to the Lab Sessions \\ \large Reinforcement Learning Course}
+\author{University of Alcal\'a}
 \date{\today}
 
 \begin{document}
@@ -44,11 +44,11 @@
 \newpage
 
 \section{Introduction}
-This document explains how the practical sessions of the Reinforcement Learning (RL) course are organized, and how to work with the provided materials. These materials are distributed as \textbf{Jupyter Notebooks} (\texttt{.ipynb} files). The purpose of this guide is to help every student get started, even without any prior experience using notebooks or Google Colab.
+This document explains how the lab sessions of the Reinforcement Learning (RL) course are organized, and how to work with the provided materials. These materials are distributed as \textbf{Jupyter Notebooks} (\texttt{.ipynb} files). The purpose of this guide is to help every student get started, even without any prior experience using notebooks or Google Colab.
 
 \section{Course Structure}
 
-The course combines theory sessions (9h) and practical sessions (6h). The practical part consists of \textbf{three mandatory deliverables}, each based on a Jupyter Notebook:
+The course combines theory sessions (9h) and lab sessions (6h). The lab component consists of \textbf{three mandatory deliverables}, each based on a Jupyter Notebook:
 
 \begin{table}[h!]
 \centering
@@ -56,14 +56,14 @@ The course combines theory sessions (9h) and practical sessions (6h). The practi
 \toprule
 \textbf{Session} & \textbf{Topic} & \textbf{Notebook} \\
 \midrule
-Practical 1 & Introduction to RL \& Deep PPO & \texttt{Practical1/unit1\_uah\_student.ipynb} \\
-Practical 2 & Tabular Q-Learning (Taxi-v3/v4) & \texttt{Practical2/unit2\_uah\_student.ipynb} \\
-Final Practical & Final project & \texttt{Practical\_final/unit3\_uah\_student.ipynb} \\
+Lab 1 & Introduction to RL \& Deep PPO & \texttt{Lab1/unit1\_uah\_student.ipynb} \\
+Lab 2 & Tabular Q-Learning (Taxi-v3/v4) & \texttt{Lab2/unit2\_uah\_student.ipynb} \\
+Final Project & Final project & \texttt{FinalProject/unit3\_uah\_student.ipynb} \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
-In every practical session, students will: interact with RL environments, train models following a guided (Colab-based) tutorial, implement the requested parts of the code, and submit their final solution. \textbf{Practical 1} and \textbf{Practical 2} are evaluated and contribute to the \textbf{Practical Mark (PM)} of the course. The \textbf{Final Practical} is not part of the PM: it will instead be assessed as part of the \textbf{oral exam}, through its defense and oral questions.
+In every lab session, students will: interact with RL environments, train models following a guided (Colab-based) tutorial, implement the requested parts of the code, and submit their final solution. \textbf{Lab 1} and \textbf{Lab 2} are evaluated and contribute to the \textbf{Lab Mark (LM)} of the course. The \textbf{Final Project} is not part of the LM: it will instead be assessed as part of the \textbf{oral exam}, through its defense and oral questions.
 
 \section{What is a Jupyter Notebook (\texttt{.ipynb})?}
 
@@ -78,11 +78,11 @@ You do \textbf{not} need to install Python or any library on your own computer t
 
 \section{Accessing the Notebooks (Blackboard \& GitHub)}
 
-The \texttt{.ipynb} files for the practical sessions \textbf{are available both on Blackboard} (the Universidad de Alcal\'a's e-learning platform) and directly in the official \textbf{course GitHub repository} (\url{https://github.com/gramuah/RL_tournament}).
+The \texttt{.ipynb} files for the lab sessions \textbf{are available both on Blackboard} (the University of Alcal\'a's e-learning platform) and directly in the official \textbf{course GitHub repository} (\url{https://github.com/gramuah/RL_tournament}).
 
 \begin{infobox}[Step by step]
 \begin{enumerate}
-    \item Navigate to the course page on Blackboard and locate the section for the corresponding practical session (Practical 1, Practical 2, or Final Practical).
+    \item Navigate to the course page on Blackboard and locate the section for the corresponding lab session (Lab 1, Lab 2, or Final Project).
     \item Click on the \texttt{.ipynb} file to download it (e.g.\ \texttt{unit1\_uah\_student.ipynb}). Depending on your browser, it may download directly or open a preview with a download button.
     \item Save the file somewhere easy to find on your computer, such as the \textit{Downloads} folder or Desktop.
 \end{enumerate}
@@ -161,15 +161,15 @@ If you are working \textbf{locally} with an IDE, simply save the file regularly 
 \section{Class Competition: Automated GitHub Leaderboard}
 \label{sec:leaderboard}
 
-In \textbf{Practical 1} and \textbf{Practical 2}, the final section of the notebook will guide you through the packaging of your agent: an \texttt{agent.py} file (which defines an \texttt{agent(observation)} function) together with your trained model weights (\texttt{ppo-LunarLander-v3.zip} or \texttt{q-learning.pkl}).
+In \textbf{Lab 1} and \textbf{Lab 2}, the final section of the notebook will guide you through the packaging of your agent: an \texttt{agent.py} file (which defines an \texttt{agent(observation)} function) together with your trained model weights (\texttt{ppo-LunarLander-v3.zip} or \texttt{q-learning.pkl}).
 
 To foster friendly competition, peer learning, and benchmark reproducibility, all agents participate in an \textbf{automated class tournament hosted directly on GitHub}:
 
 \begin{enumerate}
-    \item \textbf{Submission via GitHub Pull Request}: You can submit directly from the notebook! The final section of each practical includes a 1-click cell that automatically forks the repository, uploads your files, and creates the Pull Request for you using your GitHub token. Alternatively, you can do it manually by placing your files in:
+    \item \textbf{Submission via GitHub Pull Request}: You can submit directly from the notebook! The final section of each lab includes a 1-click cell that automatically forks the repository, uploads your files, and creates the Pull Request for you using your GitHub token. Alternatively, you can do it manually by placing your files in:
     \begin{itemize}
-        \item Practical 1: \texttt{submissions/practical1/<your\_github\_username>/}
-        \item Practical 2: \texttt{submissions/practical2/<your\_github\_username>/}
+        \item Lab 1: \texttt{submissions/practical1/<your\_github\_username>/}
+        \item Lab 2: \texttt{submissions/practical2/<your\_github\_username>/}
     \end{itemize}
     and opening a \textbf{Pull Request (PR)} against the main repository.
     \item \textbf{Instant CI Evaluation}: A \textbf{GitHub Actions} robot runner immediately triggers, runs your agent across fixed, fair benchmark seeds, and posts a detailed evaluation card (mean reward, standard deviation, success rate, and inference latency) directly as a comment on your PR within 2 minutes!
@@ -226,16 +226,16 @@ Beyond overall leaderboard ranks, students can directly challenge and compare th
 You do not need to install anything locally or run Python to visualize duels:
 
 \begin{enumerate}
-    \item \textbf{Interactive Web Arena (GitHub Pages)}: Visit the official public web arena at \\ \url{https://gramuah.github.io/RL_tournament/}. You can pick any two participants from dropdown menus, click \textbf{``Iniciar Duelo''}, and watch the split-screen replay with live landing speed gauges, fuel burn rates, and comparative statistics.
+    \item \textbf{Interactive Web Arena (GitHub Pages)}: Visit the official public web arena at \\ \url{https://gramuah.github.io/RL_tournament/}. You can pick any two participants from dropdown menus, click \textbf{``Start Duel''}, and watch the split-screen replay with live landing speed gauges, fuel burn rates, and comparative statistics.
     \item \textbf{Animated GIFs in \texttt{LEADERBOARD.md}}:\\ The repository's official leaderboard (see \href{https://github.com/gramuah/RL_tournament/blob/main/LEADERBOARD.md}{\texttt{LEADERBOARD.md}}) includes embedded animated duel replays showing the agents maneuvering and landing side-by-side directly inside GitHub Markdown.
     \item \textbf{On-Demand Duels via GitHub Actions}: In the \textbf{Actions} tab of the repository (see \href{https://github.com/gramuah/RL_tournament/actions/workflows/duel.yml}{\texttt{Actions $\rightarrow$ duel.yml}}), click \textbf{``Run workflow''}, select your agent and an opponent, and the CI bot will execute the match and post an animated GIF replay with full scorecards directly in the job summary.
-    \item \textbf{Inside Google Colab}: Run the dedicated duel cell provided at the end of each practical notebook to execute duels and render the synchronized video inline.
+    \item \textbf{Inside Google Colab}: Run the dedicated duel cell provided at the end of each lab notebook to execute duels and render the synchronized video inline.
 \end{enumerate}
 
-\section{Submitting Your Practical}
+\section{Submitting Your Lab Assignment}
 \label{sec:submitting}
 
-At the end of each practical session (or by the deadline indicated by the instructor), you must submit your work for evaluation. To do so:
+At the end of each lab session (or by the deadline indicated by the instructor), you must submit your work for evaluation. To do so:
 
 \begin{enumerate}
     \item Make sure \textbf{all cells have been executed} and their outputs are visible. Do not clear the outputs before submitting: the instructor needs to see the results of your training/experiments.
@@ -244,13 +244,13 @@ At the end of each practical session (or by the deadline indicated by the instru
         \item \textbf{Google Colab}: \textbf{File $\rightarrow$ Download $\rightarrow$ Download .ipynb}.
         \item \textbf{Local IDE}: the file on your disk \textit{is} already the \texttt{.ipynb} file; just make sure it has been saved with the latest changes (\texttt{Ctrl+S}).
     \end{itemize}
-    \item Rename the file following the convention: \\ \texttt{Surname\_Name\_PracticalX.ipynb} \\ (e.g.\ \texttt{Garcia\_Juan\_Practical1.ipynb}).
-    \item \textbf{For Practical 1 and Practical 2}, also download the \texttt{submission.zip} file generated at the end of the notebook (see Section~\ref{sec:leaderboard}).
-    \item Submit both the notebook and, when applicable, the \texttt{submission.zip} file through the \textbf{Blackboard} assignment/submission box corresponding to that practical session, before the deadline indicated by the instructor.
+    \item Rename the file following the convention: \\ \texttt{Surname\_Name\_LabX.ipynb} \\ (e.g.\ \texttt{Garcia\_Juan\_Lab1.ipynb}).
+    \item \textbf{For Lab 1 and Lab 2}, also download the \texttt{submission.zip} file generated at the end of the notebook (see Section~\ref{sec:leaderboard}).
+    \item Submit both the notebook and, when applicable, the \texttt{submission.zip} file through the \textbf{Blackboard} assignment/submission box corresponding to that lab session, before the deadline indicated by the instructor.
 \end{enumerate}
 
 \begin{warnbox}[Important]
-All three deliverables (\textbf{Practical 1}, \textbf{Practical 2} and the \textbf{Final Practical}) are mandatory and must be submitted. Practical 1 and Practical 2 are evaluated individually and contribute to the Practical Mark (PM) of the final grade. The Final Practical will be assessed during the oral exam, through its defense and oral questions. Late or missing submissions may negatively affect your final mark.
+All three deliverables (\textbf{Lab 1}, \textbf{Lab 2} and the \textbf{Final Project}) are mandatory and must be submitted. Lab 1 and Lab 2 are evaluated individually and contribute to the Lab Mark (LM) of the final grade. The Final Project will be assessed during the oral exam, through its defense and oral questions. Late or missing submissions may negatively affect your final mark.
 \end{warnbox}
 
 \section{Evaluation Overview}
@@ -258,12 +258,12 @@ All three deliverables (\textbf{Practical 1}, \textbf{Practical 2} and the \text
 As a reminder, the final mark of the course is composed as follows:
 
 \begin{itemize}
-    \item \textbf{Practical Mark (PM)}: based on \textbf{Practical 1} and \textbf{Practical 2}, described in this guide.
-    \item \textbf{Oral Exam}: accounts for \textbf{70\%} of the final grade, and includes the defense of the \textbf{Final Practical}.
+    \item \textbf{Lab Mark (LM)}: based on \textbf{Lab 1} and \textbf{Lab 2}, described in this guide.
+    \item \textbf{Oral Exam}: accounts for \textbf{70\%} of the final grade, and includes the defense of the \textbf{Final Project}.
 \end{itemize}
 
 \begin{infobox}[Originality and Research Bonus]
-In all practical assignments, originality, critical thinking, and independent research are actively valued and rewarded. Students who go beyond the baseline solutions—by thoroughly experimenting with hyperparameters, exploring alternative algorithmic strategies or neural network architectures, and clearly documenting their investigations—will be rewarded with higher marks.
+In all lab assignments, originality, critical thinking, and independent research are actively valued and rewarded. Students who go beyond the baseline solutions—by thoroughly experimenting with hyperparameters, exploring alternative algorithmic strategies or neural network architectures, and clearly documenting their investigations—will be rewarded with higher marks.
 \end{infobox}
 
 \section{Getting Help}
@@ -272,13 +272,13 @@ If you encounter errors or have doubts while working on a notebook:
 
 \begin{itemize}
     \item Re-read the instructions in the notebook: most exercises include hints or links to relevant documentation.
-    \item Check the original Hugging Face Deep RL Course material on which these practicals are based:
+    \item Check the original Hugging Face Deep RL Course material on which these labs are based:
     \begin{itemize}
         \item Unit 1: \url{https://huggingface.co/learn/deep-rl-course/en/unit1/hands-on}
         \item Unit 2: \url{https://huggingface.co/learn/deep-rl-course/en/unit2/hands-on}
         \item Unit 3: \url{https://huggingface.co/learn/deep-rl-course/en/unit3/hands-on}
     \end{itemize}
-    \item Ask the instructor during the practical sessions, or by email, if the problem persists.
+    \item Ask the instructor during the lab sessions, or by email, if the problem persists.
 \end{itemize}
 
 \end{document}

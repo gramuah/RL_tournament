@@ -14,7 +14,10 @@ import time
 from pathlib import Path
 
 # Import evaluation logic
-from evaluate import evaluate_single_submission, PRACTICAL_CONFIGS
+from evaluate import evaluate_single_submission, LAB_CONFIGS, _accept_legacy_practical_id
+
+# Backward-compatible module attribute.
+PRACTICAL_CONFIGS = LAB_CONFIGS
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -33,9 +36,10 @@ def get_rank_medal(rank):
         return f"{rank}th"
 
 
-def run_full_evaluation(practical_id, episodes=30, seed=42):
-    """Evaluates all submission folders for the given practical."""
-    submissions_dir = Path("submissions") / f"practical{practical_id}"
+@_accept_legacy_practical_id(lab_position=0)
+def run_full_evaluation(lab_id, episodes=30, seed=42):
+    """Evaluates all submission folders for the given lab."""
+    submissions_dir = Path("submissions") / f"practical{lab_id}"
     results = []
 
     if not submissions_dir.exists():
@@ -44,8 +48,8 @@ def run_full_evaluation(practical_id, episodes=30, seed=42):
 
     for item in sorted(submissions_dir.iterdir()):
         if item.is_dir() and (item / "agent.py").exists():
-            print(f"Evaluating Practical {practical_id}: {item.name} ...")
-            r = evaluate_single_submission(item, practical_id, num_episodes=episodes, base_seed=seed)
+            print(f"Evaluating Lab {lab_id}: {item.name} ...")
+            r = evaluate_single_submission(item, lab_id, num_episodes=episodes, base_seed=seed)
             results.append(r)
 
     # Sort descending by mean_reward
@@ -53,7 +57,8 @@ def run_full_evaluation(practical_id, episodes=30, seed=42):
     return results
 
 
-def build_markdown_table(results, practical_id):
+@_accept_legacy_practical_id(lab_position=1)
+def build_markdown_table(results, lab_id):
     """Builds a formatted markdown table from evaluation results."""
     if not results:
         return "_No submissions recorded yet. Be the first to open a Pull Request!_\n"
@@ -66,7 +71,7 @@ def build_markdown_table(results, practical_id):
     for idx, r in enumerate(results, start=1):
         rank_str = get_rank_medal(idx)
         participant = r["participant"]
-        sub_rel_path = f"submissions/practical{practical_id}/{participant}"
+        sub_rel_path = f"submissions/practical{lab_id}/{participant}"
         participant_link = f"[{participant}]({sub_rel_path})"
 
         if not r.get("success", False):
@@ -91,8 +96,8 @@ def build_markdown_table(results, practical_id):
 
 
 def generate_leaderboard_content(p1_results, p2_results, timestamp):
-    p1_cfg = PRACTICAL_CONFIGS[1]
-    p2_cfg = PRACTICAL_CONFIGS[2]
+    p1_cfg = LAB_CONFIGS[1]
+    p2_cfg = LAB_CONFIGS[2]
 
     p1_table = build_markdown_table(p1_results, 1)
     p2_table = build_markdown_table(p2_results, 2)
@@ -101,7 +106,7 @@ def generate_leaderboard_content(p1_results, p2_results, timestamp):
 
     content = f"""# 🏆 Reinforcement Learning Course — Official Class Tournament Leaderboard
 
-Welcome to the automated competition leaderboard for the **Reinforcement Learning** course (Master in AI Applications, Universidad de Alcalá).
+Welcome to the automated competition leaderboard for the **Reinforcement Learning** course (Master in AI Applications, University of Alcalá).
 
 All agents uploaded to GitHub are automatically benchmarked under identical conditions using fixed seeds and evaluated with **GitHub Actions**.
 
@@ -109,17 +114,17 @@ All agents uploaded to GitHub are automatically benchmarked under identical cond
 > **Total Evaluated Agents:** `{total_submissions}`  
 > **Evaluation Engine:** Automated CI Runner (`ubuntu-latest` / Python 3.10)
 
-### 🌐 Arena Interactiva y Visualizador Web en GitHub
-👉 **[CLICK AQUÍ PARA ABRIR LA ARENA INTERACTIVA (GitHub Pages)](https://gramuah.github.io/RL_tournament/)** 👈  
-*Permite seleccionar dos agentes cualesquiera y ver el enfrentamiento cara a cara en vídeo sincronizado con métricas de velocidad de aterrizaje y telemetría en tiempo real.*
+### 🌐 Interactive Arena and Web Viewer on GitHub
+👉 **[OPEN THE INTERACTIVE ARENA (GitHub Pages)](https://gramuah.github.io/RL_tournament/)** 👈<br>
+*Select any two agents and watch their head-to-head duel in synchronized video with landing-speed metrics and real-time telemetry.*
 
-👉 **[Ejecutar Duelo Interactivo a la Carta en GitHub Actions](https://github.com/gramuah/RL_tournament/actions/workflows/duel.yml)**  
-*(Pulsa "Run workflow" en GitHub para generar un duelo personalizado con animación y reporte instantáneo).*
+👉 **[Run an On-Demand Interactive Duel in GitHub Actions](https://github.com/gramuah/RL_tournament/actions/workflows/duel.yml)**<br>
+*(Click "Run workflow" on GitHub to generate a custom duel with animation and an instant report).*
 
 ---
 
-### 🎬 Repetición en Directo: Enfrentamiento Cara a Cara (*Split-Screen*)
-Ambos agentes comienzan con la **misma semilla determinista** (terreno, altitud, objetivo y viento idénticos):
+### 🎬 Live Replay: Head-to-Head Duel (*Split-Screen*)
+Both agents start with the **same deterministic seed** (identical terrain, altitude, target, and wind):
 
 <p align="center">
   <img src="docs/assets/duel_lunarlander_preview.gif" alt="LunarLander Synchronized Duel Replay" width="100%" style="border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.5);" />
@@ -128,15 +133,15 @@ Ambos agentes comienzan con la **misma semilla determinista** (terreno, altitud,
 ---
 
 ## 📌 Table of Contents
-- [🌐 Arena Interactiva en GitHub Pages](https://gramuah.github.io/RL_tournament/)
-- [🚀 Practical 1: LunarLander-v3](#-practical-1-lunarlander-v3)
-- [🚕 Practical 2: Taxi-v3 / Taxi-v4](#-practical-2-taxi-v3--taxi-v4)
+- [🌐 Interactive Arena on GitHub Pages](https://gramuah.github.io/RL_tournament/)
+- [🚀 Lab 1: LunarLander-v3](#-lab-1-lunarlander-v3)
+- [🚕 Lab 2: Taxi-v3 / Taxi-v4](#-lab-2-taxi-v3--taxi-v4)
 - [📝 How to Submit Your Model](#-how-to-submit-your-model)
 - [⚙️ Evaluation Criteria & Rules](#-evaluation-criteria--rules)
 
 ---
 
-## 🚀 Practical 1: LunarLander-v3
+## 🚀 Lab 1: LunarLander-v3
 
 In this challenge, agents learn attitude and thruster control to land a spacecraft safely on the lunar surface between landing flags.
 - **Pass Threshold:** $\\text{{Mean Reward}} \\ge {p1_cfg['pass_threshold']}$
@@ -147,7 +152,7 @@ In this challenge, agents learn attitude and thruster control to land a spacecra
 
 ---
 
-## 🚕 Practical 2: Taxi-v3 / Taxi-v4
+## 🚕 Lab 2: Taxi-v3 / Taxi-v4
 
 In this challenge, agents learn a tabular Q-learning policy to pick up and drop off passengers in a discrete gridworld.
 - **Pass Threshold:** $\\text{{Mean Reward}} \\ge {p2_cfg['pass_threshold']}$
@@ -162,16 +167,16 @@ In this challenge, agents learn a tabular Q-learning policy to pick up and drop 
 
 Participating in the tournament is completely automated:
 
-1. **Train your model in the practical notebook** (`unit1_uah_master.ipynb` or `unit2_uah_master.ipynb`).
+1. **Train your model in the lab notebook** (`unit1_uah_master.ipynb` or `unit2_uah_master.ipynb`).
 2. Run the final packaging cell in the notebook. It generates your `agent.py` and model weights.
 3. **Fork or branch this repository** and create your submission directory:
    ```bash
-   # For Practical 1:
+   # For Lab 1:
    submissions/practical1/<your_github_username>/
        ├── agent.py
        └── ppo-LunarLander-v3.zip
 
-   # For Practical 2:
+   # For Lab 2:
    submissions/practical2/<your_github_username>/
        ├── agent.py
        └── q-learning.pkl

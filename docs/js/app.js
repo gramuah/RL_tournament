@@ -2,7 +2,7 @@
 // Gymnasium LunarLander-v3 & Taxi-v4 Authentic Engine
 // Author: Course Teaching Staff & Rafael Flor (rflor01)
 
-const HUMAN_AGENT = "🎮 Tú (Humano / Control Manual)";
+const HUMAN_AGENT = "🎮 You (Human / Manual Control)";
 
 const STATE = {
   currentPractical: 1, // 1 for LunarLander, 2 for Taxi
@@ -98,7 +98,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 // ---------------------------------------------------------------------------
-// Navigation & Practical Selectors
+// Navigation & Lab Selectors
 // ---------------------------------------------------------------------------
 function setupNavigation() {
   const tabs = document.querySelectorAll('.tab-btn');
@@ -195,7 +195,7 @@ function setupKeyListeners() {
       }
     }
 
-    // --- Tab: ARENA DE DUELOS ---
+    // --- Tab: DUEL ARENA ---
     if (STATE.currentTab === 'arena') {
       const hasHuman = (STATE.agentA === HUMAN_AGENT || STATE.agentB === HUMAN_AGENT);
       if (hasHuman) {
@@ -372,9 +372,9 @@ function updateCornerStats(corner, participantName) {
   const statStd = document.getElementById(`stat-std-${corner}`);
 
   if (isHuman) {
-    if (statReward) statReward.textContent = "EN VIVO 🎮";
-    if (statSteps) statSteps.textContent = "Tu ritmo";
-    if (statSuccess) statSuccess.textContent = "Tú decides";
+    if (statReward) statReward.textContent = "LIVE 🎮";
+    if (statSteps) statSteps.textContent = "Your pace";
+    if (statSuccess) statSuccess.textContent = "You decide";
     if (statStd) statStd.textContent = "Manual";
   } else {
     if (statReward) statReward.textContent = `${agent.mean_reward > 0 ? '+' : ''}${agent.mean_reward.toFixed(1)} pts`;
@@ -390,8 +390,8 @@ function updateArenaView() {
 
   const lblA = document.getElementById('lbl-agent-a-badge');
   const lblB = document.getElementById('lbl-agent-b-badge');
-  if (lblA) lblA.textContent = STATE.agentA === HUMAN_AGENT ? "🔵 TÚ (HUMANO)" : `🔵 ${STATE.agentA}`;
-  if (lblB) lblB.textContent = STATE.agentB === HUMAN_AGENT ? "🟠 TÚ (HUMANO)" : `🟠 ${STATE.agentB}`;
+  if (lblA) lblA.textContent = STATE.agentA === HUMAN_AGENT ? "🔵 YOU (HUMAN)" : `🔵 ${STATE.agentA}`;
+  if (lblB) lblB.textContent = STATE.agentB === HUMAN_AGENT ? "🟠 YOU (HUMAN)" : `🟠 ${STATE.agentB}`;
 
   const hasHuman = STATE.agentA === HUMAN_AGENT || STATE.agentB === HUMAN_AGENT;
   const humanCtrlPanel = document.getElementById('arena-human-controls');
@@ -408,11 +408,11 @@ function updateArenaView() {
     if (STATE.currentPractical === 1) {
       if (landerRow) landerRow.style.display = 'flex';
       if (taxiRow) taxiRow.style.display = 'none';
-      if (hints) hints.textContent = "Teclas: [Espacio / W / ⬆️] Propulsor | [A / ⬅️] Girar Izq | [D / ➡️] Girar Der";
+      if (hints) hints.textContent = "Keys: [Space / W / ⬆️] Thruster | [A / ⬅️] Rotate Left | [D / ➡️] Rotate Right";
     } else {
       if (landerRow) landerRow.style.display = 'none';
       if (taxiRow) taxiRow.style.display = 'flex';
-      if (hints) hints.textContent = "Teclas: Flechas o WASD | [P / Espacio] Recoger | [O / Enter] Dejar";
+      if (hints) hints.textContent = "Keys: Arrow Keys or WASD | [P / Space] Pick Up | [O / Enter] Drop Off";
     }
   }
 
@@ -491,7 +491,7 @@ function renderLeaderboard(filter = '') {
       <td>${rankBadge}</td>
       <td class="participant-cell">
         <span>${item.participant}</span>
-        ${item.participant === 'rafael_flor' ? '<span style="font-size: 0.72rem; background: rgba(0,240,255,0.2); color: var(--accent-cyan); padding: 2px 7px; border-radius: 4px; border: 1px solid var(--accent-cyan); font-weight: 800;">TU AGENTE</span>' : ''}
+        ${item.participant === 'rafael_flor' ? '<span style="font-size: 0.72rem; background: rgba(0,240,255,0.2); color: var(--accent-cyan); padding: 2px 7px; border-radius: 4px; border: 1px solid var(--accent-cyan); font-weight: 800;">YOUR AGENT</span>' : ''}
         ${item.participant.includes('baseline') ? '<span style="font-size: 0.7rem; background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px;">BASELINE</span>' : ''}
       </td>
       <td style="font-family: var(--font-mono); font-weight: 700;" class="${rewardClass}">
@@ -508,7 +508,7 @@ function renderLeaderboard(filter = '') {
       </td>
       <td>
         <button class="btn-challenge" onclick="challengeAgent('${item.participant}')">
-          ⚔️ Retar en Arena
+          ⚔️ Challenge in Arena
         </button>
       </td>
     `;
@@ -775,18 +775,18 @@ function startLiveDuel() {
   const overlay = document.getElementById('duel-overlay');
   const overlayText = document.getElementById('duel-overlay-text');
   const badge = document.getElementById('duel-winner-badge');
-  if (badge) badge.textContent = "⚔️ ¡Duelo en curso! Ambos agentes compitiendo bajo el mismo reto...";
+  if (badge) badge.textContent = "⚔️ Duel in progress! Both agents are competing in the same challenge...";
 
   if (overlay && overlayText) {
     overlay.style.display = 'flex';
-    overlayText.textContent = "¡PREPARADOS!";
+    overlayText.textContent = "GET READY!";
 
     setTimeout(() => {
       overlayText.textContent = "3...";
       setTimeout(() => {
         overlayText.textContent = "2...";
         setTimeout(() => {
-          overlayText.textContent = "1... ¡YA!";
+          overlayText.textContent = "1... GO!";
           setTimeout(() => {
             overlay.style.display = 'none';
             STATE.duelRunning = true;
@@ -804,7 +804,7 @@ function handleDuelTaxiAction(act) {
   if (!STATE.duelRunning) {
     STATE.duelRunning = true;
     const badge = document.getElementById('duel-winner-badge');
-    if (badge) badge.textContent = "⚔️ ¡Duelo en curso! Ambos agentes compitiendo bajo el mismo reto...";
+    if (badge) badge.textContent = "⚔️ Duel in progress! Both agents are competing in the same challenge...";
     const overlay = document.getElementById('duel-overlay');
     if (overlay) overlay.style.display = 'none';
   }
@@ -1048,13 +1048,13 @@ function declareDuelWinner(scoreA, scoreB, stepsA, stepsB) {
   if (scoreA > scoreB) {
     winnerName = STATE.agentA;
     const delta = (scoreA - scoreB).toFixed(1);
-    message = `🏆 ¡${winnerName} GANA EL DUELO! (+${delta} pts de ventaja en ${stepsA} pasos)`;
+    message = `🏆 ${winnerName} WINS THE DUEL! (+${delta} pts ahead in ${stepsA} steps)`;
   } else if (scoreB > scoreA) {
     winnerName = STATE.agentB;
     const delta = (scoreB - scoreA).toFixed(1);
-    message = `🏆 ¡${winnerName} GANA EL DUELO! (+${delta} pts de ventaja en ${stepsB} pasos)`;
+    message = `🏆 ${winnerName} WINS THE DUEL! (+${delta} pts ahead in ${stepsB} steps)`;
   } else {
-    message = `⚖️ ¡EMPATE TÉCNICO! Ambos obtuvieron puntuación similar.`;
+    message = `⚖️ VIRTUAL TIE! Both achieved similar scores.`;
   }
 
   if (badge) badge.innerHTML = `<strong>${message}</strong>`;
@@ -1122,17 +1122,17 @@ function drawLanderHudSide(ctx, l, x, y, name) {
   ctx.fillStyle = '#cbd5e1';
   ctx.fillText(`${name.substring(0, 22)}`, x, y);
   ctx.fillStyle = '#94a3b8';
-  ctx.fillText(`Puntos: ${l.score > 0 ? '+' : ''}${l.score.toFixed(1)} | Pasos: ${l.steps}`, x, y + 16);
-  ctx.fillText(`Vel: ${l.vy.toFixed(2)} m/s | Alt: ${Math.max(0, (l.padY - l.y)).toFixed(0)}m`, x, y + 32);
+  ctx.fillText(`Points: ${l.score > 0 ? '+' : ''}${l.score.toFixed(1)} | Steps: ${l.steps}`, x, y + 16);
+  ctx.fillText(`Speed: ${l.vy.toFixed(2)} m/s | Alt: ${Math.max(0, (l.padY - l.y)).toFixed(0)}m`, x, y + 32);
 
   if (l.landed) {
     ctx.fillStyle = '#10b981';
     ctx.font = 'bold 15px Outfit';
-    ctx.fillText('¡ATERRIZAJE CON ÉXITO! 🚀', x + 20, y + 75);
+    ctx.fillText('SUCCESSFUL LANDING! 🚀', x + 20, y + 75);
   } else if (l.crashed) {
     ctx.fillStyle = '#f43f5e';
     ctx.font = 'bold 15px Outfit';
-    ctx.fillText('¡IMPACTO CRÍTICO / CRASH! 💥', x + 20, y + 75);
+    ctx.fillText('CRITICAL IMPACT / CRASH! 💥', x + 20, y + 75);
   }
 }
 
@@ -1229,8 +1229,8 @@ function renderSingleTaxiGrid(ctx, t, startX, startY, size, agentName) {
   const pName = stNames[t.passengerIdx] || '?';
   const dName = stNames[t.destinationIdx] || '?';
   const statusStr = t.delivered
-    ? '¡ÉXITO!'
-    : (t.passengerInTaxi ? `➔ Dest: ${dName}` : `➔ Recoger: ${pName}`);
+    ? 'SUCCESS!'
+    : (t.passengerInTaxi ? `➔ Dest: ${dName}` : `➔ Pick Up: ${pName}`);
 
   ctx.font = '600 12px var(--font-sans)';
   ctx.fillStyle = '#cbd5e1';
@@ -1365,7 +1365,7 @@ function renderSingleTaxiGrid(ctx, t, startX, startY, size, agentName) {
     ctx.stroke();
   }
 
-  // Quick action feedback toast (¡RECOGIDO! / ¡AQUÍ NO! / ¡ENTREGADO!)
+  // Quick action feedback toast (PICKED UP! / NOT HERE! / DELIVERED!)
   if (t.flashMsg && Date.now() < t.flashTimer) {
     ctx.save();
     ctx.font = 'bold 12px var(--font-sans)';
@@ -1378,7 +1378,7 @@ function renderSingleTaxiGrid(ctx, t, startX, startY, size, agentName) {
   if (t.delivered) {
     ctx.fillStyle = '#10b981';
     ctx.font = 'bold 16px Outfit';
-    ctx.fillText('¡MISIÓN CUMPLIDA! (+20 PTS)', startX + 40, startY + size / 2);
+    ctx.fillText('MISSION COMPLETE! (+20 PTS)', startX + 40, startY + size / 2);
   }
 }
 
@@ -1450,8 +1450,8 @@ function resetSandbox() {
       padY: 370
     };
 
-    document.getElementById('sb-hud-label-3').textContent = "VELOCIDAD VERTICAL";
-    document.getElementById('sb-hud-label-4').textContent = "ALTITUD";
+    document.getElementById('sb-hud-label-3').textContent = "VERTICAL SPEED";
+    document.getElementById('sb-hud-label-4').textContent = "ALTITUDE";
   } else {
     const pIdx = Math.floor(Math.random() * 4);
     let dIdx = Math.floor(Math.random() * 4);
@@ -1469,8 +1469,8 @@ function resetSandbox() {
       lastAiStepTime: 0
     };
 
-    document.getElementById('sb-hud-label-3').textContent = "PASAJERO";
-    document.getElementById('sb-hud-label-4').textContent = "DESTINO";
+    document.getElementById('sb-hud-label-3').textContent = "PASSENGER";
+    document.getElementById('sb-hud-label-4').textContent = "DESTINATION";
   }
 
   updateSandboxHud();
@@ -1631,17 +1631,17 @@ function renderSandboxLander() {
   if (sbLander.landed) {
     sbCtx.fillStyle = '#10b981';
     sbCtx.font = 'bold 24px Outfit';
-    sbCtx.fillText('¡ATERRIZAJE PERFECTO! (+100 PTS) 🏆', 210, 180);
+    sbCtx.fillText('PERFECT LANDING! (+100 PTS) 🏆', 210, 180);
     sbCtx.font = '14px Outfit';
     sbCtx.fillStyle = '#94a3b8';
-    sbCtx.fillText('Reiniciando siguiente vuelo...', 320, 210);
+    sbCtx.fillText('Starting the next flight...', 320, 210);
   } else if (sbLander.crashed) {
     sbCtx.fillStyle = '#f43f5e';
     sbCtx.font = 'bold 24px Outfit';
-    sbCtx.fillText('¡CRASH / IMPACTO DEMASIADO FUERTE! (-100 PTS) 💥', 140, 180);
+    sbCtx.fillText('CRASH / IMPACT TOO HARD! (-100 PTS) 💥', 140, 180);
     sbCtx.font = '14px Outfit';
     sbCtx.fillStyle = '#94a3b8';
-    sbCtx.fillText('Reiniciando siguiente vuelo...', 320, 210);
+    sbCtx.fillText('Starting the next flight...', 320, 210);
   }
 }
 
@@ -1669,7 +1669,7 @@ function renderSandboxTaxi() {
   const gridSize = 340;
   const startX = (w - gridSize) / 2;
   const startY = 35;
-  renderSingleTaxiGrid(sbCtx, sbTaxi, startX, startY, gridSize, 'Práctica 2: Taxi-v4');
+  renderSingleTaxiGrid(sbCtx, sbTaxi, startX, startY, gridSize, 'Lab 2: Taxi-v4');
 }
 
 function updateSandboxHud() {
@@ -1686,31 +1686,31 @@ function updateSandboxHud() {
     if (val4Elem) val4Elem.textContent = `${Math.max(0, (sbLander.padY - sbLander.y)).toFixed(0)} m`;
     if (statusElem) {
       if (sbLander.landed) {
-        statusElem.textContent = "ATERRIZADO 🏆";
+        statusElem.textContent = "LANDED 🏆";
         statusElem.style.color = "#10b981";
       } else if (sbLander.crashed) {
         statusElem.textContent = "CRASH 💥";
         statusElem.style.color = "#f43f5e";
       } else {
-        statusElem.textContent = "EN VUELO 🚀";
+        statusElem.textContent = "IN FLIGHT 🚀";
         statusElem.style.color = "#00f0ff";
       }
     }
   } else if (STATE.sandboxEnv === 2 && sbTaxi) {
-    const stations = ['R (Rojo)', 'G (Verde)', 'Y (Amarillo)', 'B (Azul)'];
+    const stations = ['R (Red)', 'G (Green)', 'Y (Yellow)', 'B (Blue)'];
     if (scoreElem) scoreElem.textContent = `${sbTaxi.score} pts`;
     if (stepsElem) stepsElem.textContent = `${sbTaxi.steps} st`;
-    if (val3Elem) val3Elem.textContent = sbTaxi.passengerInTaxi ? "A bordo 👨‍✈️" : stations[sbTaxi.passengerIdx];
+    if (val3Elem) val3Elem.textContent = sbTaxi.passengerInTaxi ? "On board 👨‍✈️" : stations[sbTaxi.passengerIdx];
     if (val4Elem) val4Elem.textContent = stations[sbTaxi.destinationIdx];
     if (statusElem) {
       if (sbTaxi.delivered) {
-        statusElem.textContent = "ENTREGADO 🏁";
+        statusElem.textContent = "DELIVERED 🏁";
         statusElem.style.color = "#10b981";
       } else if (sbTaxi.passengerInTaxi) {
-        statusElem.textContent = "HACIA DESTINO 🚕";
+        statusElem.textContent = "TO DESTINATION 🚕";
         statusElem.style.color = "#3b82f6";
       } else {
-        statusElem.textContent = "A POR PASAJERO 🙋‍♂️";
+        statusElem.textContent = "PICKING UP PASSENGER 🙋‍♂️";
         statusElem.style.color = "#f59e0b";
       }
     }
@@ -1769,11 +1769,11 @@ function executeTaxiStep(taxi, act) {
     if (!taxi.passengerInTaxi && taxi.row === pSt.row && taxi.col === pSt.col) {
       taxi.passengerInTaxi = true;
       taxi.score -= 1;
-      taxi.flashMsg = "¡RECOGIDO!";
+      taxi.flashMsg = "PICKED UP!";
       taxi.flashTimer = Date.now() + 1500;
     } else {
       taxi.score -= 10;
-      taxi.flashMsg = "¡AQUÍ NO!";
+      taxi.flashMsg = "NOT HERE!";
       taxi.flashTimer = Date.now() + 1000;
     }
   } else if (act === 'dropoff') {
@@ -1782,7 +1782,7 @@ function executeTaxiStep(taxi, act) {
       taxi.passengerInTaxi = false;
       taxi.delivered = true;
       taxi.score += 20;
-      taxi.flashMsg = "¡ENTREGADO!";
+      taxi.flashMsg = "DELIVERED!";
       taxi.flashTimer = Date.now() + 2500;
       if (taxi === sbTaxi) {
         setTimeout(() => {
@@ -1791,7 +1791,7 @@ function executeTaxiStep(taxi, act) {
       }
     } else {
       taxi.score -= 10;
-      taxi.flashMsg = "¡AQUÍ NO!";
+      taxi.flashMsg = "NOT HERE!";
       taxi.flashTimer = Date.now() + 1000;
     }
   }

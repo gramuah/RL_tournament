@@ -2,9 +2,11 @@
 """
 RL Course Tournament Evaluator
 Author: Course Teaching Staff
-Description: Evaluates RL agent submissions for Practical 1 (LunarLander-v3)
-and Practical 2 (Taxi-v3/v4), generating score reports and rankings.
+Description: Evaluates RL agent submissions for Lab 1 (LunarLander-v3)
+and Lab 2 (Taxi-v3/v4), generating score reports and rankings.
 """
+
+from functools import wraps
 
 import argparse
 import importlib.util
@@ -22,9 +24,9 @@ except ImportError:
     gym = None
 
 
-PRACTICAL_CONFIGS = {
+LAB_CONFIGS = {
     1: {
-        "name": "Practical 1 - LunarLander-v3",
+        "name": "Lab 1 - LunarLander-v3",
         "env_candidates": ["LunarLander-v3", "LunarLander-v2"],
         "max_steps": 1000,
         "default_episodes": 30,
@@ -34,7 +36,7 @@ PRACTICAL_CONFIGS = {
         "expected_action_space": 4,
     },
     2: {
-        "name": "Practical 2 - Taxi-v3 / Taxi-v4",
+        "name": "Lab 2 - Taxi-v3 / Taxi-v4",
         "env_candidates": ["Taxi-v4", "Taxi-v3"],
         "max_steps": 200,
         "default_episodes": 50,
@@ -44,6 +46,24 @@ PRACTICAL_CONFIGS = {
         "expected_action_space": 6,
     },
 }
+
+
+# Backward-compatible name for existing notebooks and integrations.
+PRACTICAL_CONFIGS = LAB_CONFIGS
+
+
+def _accept_legacy_practical_id(lab_position=0):
+    """Keep the old keyword working while exposing lab_id in Python signatures."""
+    def decorate(function):
+        @wraps(function)
+        def compatible(*args, **kwargs):
+            if "practical_id" in kwargs:
+                if "lab_id" in kwargs or len(args) > lab_position:
+                    raise TypeError("Specify lab_id or practical_id, not both")
+                kwargs["lab_id"] = kwargs.pop("practical_id")
+            return function(*args, **kwargs)
+        return compatible
+    return decorate
 
 
 def make_env(env_candidates, seed=None):
@@ -101,12 +121,13 @@ def load_agent_function(submission_dir):
             sys.path.remove(sub_dir_str)
 
 
-def evaluate_agent(agent_fn, practical_id, num_episodes=30, base_seed=42):
+@_accept_legacy_practical_id(lab_position=1)
+def evaluate_agent(agent_fn, lab_id, num_episodes=30, base_seed=42):
     """
     Evaluates an agent over a fixed set of seeded episodes.
     Returns detailed metrics dictionary.
     """
-    config = PRACTICAL_CONFIGS[practical_id]
+    config = LAB_CONFIGS[lab_id]
     max_steps = config["max_steps"]
 
     episode_rewards = []
@@ -152,7 +173,7 @@ def evaluate_agent(agent_fn, practical_id, num_episodes=30, base_seed=42):
         episode_lengths.append(steps)
 
         # Success criteria
-        if practical_id == 1:
+        if lab_id == 1:
             # LunarLander: score >= 200 indicates safe landing
             episode_successes.append(1 if ep_reward >= 200.0 else 0)
         else:
@@ -183,7 +204,7 @@ def evaluate_agent(agent_fn, practical_id, num_episodes=30, base_seed=42):
         status_code = "warning"
 
     return {
-        "practical_id": practical_id,
+        "practical_id": lab_id,
         "practical_name": config["name"],
         "env_id": active_env_id,
         "num_episodes": num_episodes,
@@ -203,7 +224,8 @@ def evaluate_agent(agent_fn, practical_id, num_episodes=30, base_seed=42):
     }
 
 
-def evaluate_single_submission(submission_path, practical_id, num_episodes=30, base_seed=42):
+@_accept_legacy_practical_id(lab_position=1)
+def evaluate_single_submission(submission_path, lab_id, num_episodes=30, base_seed=42):
     """Evaluates a single submission directory and returns report dict."""
     sub_path = Path(submission_path).resolve()
     participant_name = sub_path.name
@@ -218,7 +240,7 @@ def evaluate_single_submission(submission_path, practical_id, num_episodes=30, b
 
     try:
         agent_fn = load_agent_function(sub_path)
-        metrics = evaluate_agent(agent_fn, practical_id, num_episodes, base_seed)
+        metrics = evaluate_agent(agent_fn, lab_id, num_episodes, base_seed)
         result.update(metrics)
         result["success"] = True
     except Exception as e:
@@ -267,20 +289,20 @@ Please verify that:
 
 def main():
     parser = argparse.ArgumentParser(description="Evaluate RL Course Submissions")
-    parser.add_argument("--practical", type=int, choices=[1, 2], required=True, help="Practical ID (1 or 2)")
+    parser.add_argument("--lab", "--practical", dest="lab", type=int, choices=[1, 2], required=True, help="Lab ID (1 or 2)")
     parser.add_argument("--submission", type=str, help="Path to single submission folder")
-    parser.add_argument("--all", action="store_true", help="Evaluate all submissions in practical folder")
+    parser.add_argument("--all", action="store_true", help="Evaluate all submissions in lab folder")
     parser.add_argument("--episodes", type=int, default=None, help="Number of evaluation episodes")
     parser.add_argument("--seed", type=int, default=42, help="Base random seed for evaluation")
     parser.add_argument("--output-json", type=str, help="Path to write JSON results file")
     parser.add_argument("--output-pr-comment", type=str, help="Path to write markdown comment for PR")
     args = parser.parse_args()
 
-    practical_id = args.practical
-    episodes = args.episodes or PRACTICAL_CONFIGS[practical_id]["default_episodes"]
+    lab_id = args.lab
+    episodes = args.episodes or LAB_CONFIGS[lab_id]["default_episodes"]
 
     if args.submission:
-        res = evaluate_single_submission(args.submission, practical_id, episodes, args.seed)
+        res = evaluate_single_submission(args.submission, lab_id, episodes, args.seed)
         print(format_markdown_report(res))
 
         if args.output_json:
@@ -297,7 +319,7 @@ def main():
             sys.exit(1)
 
     elif args.all:
-        submissions_dir = Path("submissions") / f"practical{practical_id}"
+        submissions_dir = Path("submissions") / f"practical{lab_id}"
         if not submissions_dir.exists():
             print(f"Directory {submissions_dir} does not exist.")
             sys.exit(1)
@@ -306,7 +328,7 @@ def main():
         for item in sorted(submissions_dir.iterdir()):
             if item.is_dir() and (item / "agent.py").exists():
                 print(f"--- Evaluating {item.name} ---")
-                r = evaluate_single_submission(item, practical_id, episodes, args.seed)
+                r = evaluate_single_submission(item, lab_id, episodes, args.seed)
                 results.append(r)
                 print(f"Result: {r.get('mean_reward', 'ERR')} ± {r.get('std_reward', 0)} ({r.get('status')})\n")
 

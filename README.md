@@ -6,15 +6,17 @@ Public student materials and agent tournament for the University of Alcalá Rein
 
 | Assignment | Student notebook | Submission guide |
 | --- | --- | --- |
-| Practical 1: PPO / LunarLander | [Open notebook](Lab_sessions/Practical1/unit1_uah_student.ipynb) | [Submit an agent](submissions/practical1/) |
-| Practical 2: Q-learning / Taxi | [Open notebook](Lab_sessions/Practical2/unit2_uah_student.ipynb) | [Submit an agent](submissions/practical2/) |
-| Final project: Deep Q-learning / Atari | [Open notebook](Lab_sessions/Practical_final/unit3_uah_student.ipynb) | Presentation and oral defense |
+| Lab 1: PPO / LunarLander | [Open notebook](Lab_sessions/Lab1/unit1_uah_student.ipynb) | [Submit an agent](submissions/practical1/) |
+| Lab 2: Q-learning / Taxi | [Open notebook](Lab_sessions/Lab2/unit2_uah_student.ipynb) | [Submit an agent](submissions/practical2/) |
+| Final project: Deep Q-learning / Atari | [Open notebook](Lab_sessions/FinalProject/unit3_uah_student.ipynb) | Presentation and oral defense |
 
-Read the [practical sessions guide](Lab_sessions/Guide_Practical_Sessions.pdf) for notebook setup, deliverables, and assessment. Its editable [LaTeX source](Lab_sessions/Guide_Practical_Sessions.tex) is maintained here alongside the PDF.
+Read the [lab guide](Lab_sessions/Lab_Guide.pdf) for notebook setup, deliverables, and assessment. Its editable [LaTeX source](Lab_sessions/Lab_Guide.tex) is maintained here alongside the PDF.
+
+Use **Lab 1** and **Lab 2**, the `--lab` CLI option, the `lab` workflow input, and `lab_id` in Python calls. The submission helper is `submit_lab`. For existing notebooks, `--practical`, the `practical_id` keyword, `submit_practical`, and `PRACTICAL_CONFIGS` remain compatibility aliases. Passing both Python keywords raises `TypeError`. Submission directories (`submissions/practical1/` and `submissions/practical2/`), submission branch names, and stored JSON keys (`practical_id` and `practical_name`) retain their existing names so agents, scores, and existing submissions continue to work.
 
 ## Repository ownership
 
-- `Lab_sessions/`: canonical student notebooks and practical guide. Notebook illustrations are embedded so downloaded notebooks work independently.
+- `Lab_sessions/`: canonical student notebooks and lab guide. Notebook illustrations are embedded so downloaded notebooks work independently.
 - `tournament/`: canonical submission helper, evaluator, comparator, and leaderboard generator.
 - `submissions/`: submitted agents and their model artifacts, plus the random baselines.
 - `docs/`: GitHub Pages arena, shared media, and canonical leaderboard JSON in `docs/data/`.
@@ -38,8 +40,8 @@ Students can submit their trained models directly to GitHub! An automated **GitH
 
 👉 **[View the Live Class Leaderboard (LEADERBOARD.md)](LEADERBOARD.md)** 👈
 
-- 🚀 **Practical 1:** `LunarLander-v3` — [Folder & Submission Guide](submissions/practical1/)
-- 🚕 **Practical 2:** `Taxi-v3 / Taxi-v4` — [Folder & Submission Guide](submissions/practical2/)
+- 🚀 **Lab 1:** `LunarLander-v3` — [Folder & Submission Guide](submissions/practical1/)
+- 🚕 **Lab 2:** `Taxi-v3 / Taxi-v4` — [Folder & Submission Guide](submissions/practical2/)
 
 When you submit via Pull Request, a bot evaluates your agent and leaves a score report on your PR when the evaluation workflow completes.
 
@@ -51,7 +53,7 @@ Run the synchronized head-to-head duel tool locally or directly inside Google Co
 
 ```bash
 # Compare two agents side-by-side with synchronized broadcast video
-python tournament/compare.py --practical 1 --agent-a submissions/practical1/rafael_flor --agent-b baseline_random --episodes 5 --video duel.mp4
+python tournament/compare.py --lab 1 --agent-a submissions/practical1/rafael_flor --agent-b baseline_random --episodes 5 --video duel.mp4
 ```
 
 Or inside your Colab notebook:
@@ -59,12 +61,22 @@ Or inside your Colab notebook:
 import urllib.request
 exec(urllib.request.urlopen("https://raw.githubusercontent.com/gramuah/RL_tournament/main/tournament/compare.py").read().decode("utf-8"))
 
-duel_agents(practical_id=1, agent_a="agent.py", agent_b="baseline_random", output_video="duel.mp4")
+duel_agents(lab_id=1, agent_a="agent.py", agent_b="baseline_random", output_video="duel.mp4")
 display_duel("duel.mp4")
 ```
 - **Same seed**: Identical terrain, wind turbulence, and initial conditions.
 - **Speed & Score metrics**: Identifies the faster touchdown and action efficiency.
 - **Side-by-side replay**: Broadcast HUD with real-time stats and celebration victory screens.
+
+The notebook submission helper uses the same naming:
+
+```python
+submit_lab(
+    lab_id=1,
+    files_to_submit={"agent.py": "agent.py", "ppo-LunarLander-v3.zip": "ppo-LunarLander-v3.zip"},
+    github_token=github_token,
+)
+```
 
 ## Updating the leaderboard
 

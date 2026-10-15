@@ -8,6 +8,8 @@ Computes head-to-head metrics (speed to completion, score, fuel/actions) and
 generates a synchronized side-by-side broadcast duel video.
 """
 
+from functools import wraps
+
 import argparse
 import base64
 import importlib.util
@@ -39,9 +41,9 @@ except ImportError:
     imageio = None
 
 
-PRACTICAL_CONFIGS = {
+LAB_CONFIGS = {
     1: {
-        "name": "Practical 1 - LunarLander-v3",
+        "name": "Lab 1 - LunarLander-v3",
         "env_candidates": ["LunarLander-v3", "LunarLander-v2"],
         "max_steps": 1000,
         "default_episodes": 5,
@@ -50,7 +52,7 @@ PRACTICAL_CONFIGS = {
         "action_names": {0: "No-op", 1: "Left Eng", 2: "Main Eng", 3: "Right Eng"},
     },
     2: {
-        "name": "Practical 2 - Taxi-v3 / Taxi-v4",
+        "name": "Lab 2 - Taxi-v3 / Taxi-v4",
         "env_candidates": ["Taxi-v4", "Taxi-v3"],
         "max_steps": 200,
         "default_episodes": 10,
@@ -62,6 +64,24 @@ PRACTICAL_CONFIGS = {
 
 GITHUB_OWNER = "gramuah"
 GITHUB_REPO = "RL_tournament"
+
+
+# Backward-compatible name for existing notebooks and integrations.
+PRACTICAL_CONFIGS = LAB_CONFIGS
+
+
+def _accept_legacy_practical_id(lab_position=0):
+    """Keep the old keyword working while exposing lab_id in Python signatures."""
+    def decorate(function):
+        @wraps(function)
+        def compatible(*args, **kwargs):
+            if "practical_id" in kwargs:
+                if "lab_id" in kwargs or len(args) > lab_position:
+                    raise TypeError("Specify lab_id or practical_id, not both")
+                kwargs["lab_id"] = kwargs.pop("practical_id")
+            return function(*args, **kwargs)
+        return compatible
+    return decorate
 
 
 def get_default_repo_root():
@@ -129,14 +149,15 @@ def load_agent_from_dir(directory_path):
             sys.path.remove(sub_dir_str)
 
 
-def list_available_opponents(practical_id=1, repo_root=None):
+@_accept_legacy_practical_id(lab_position=0)
+def list_available_opponents(lab_id=1, repo_root=None):
     """Returns a list of all local and known opponent submissions."""
     if repo_root is None:
         repo_root = get_default_repo_root()
     else:
         repo_root = Path(repo_root).resolve()
 
-    sub_dir = repo_root / "submissions" / f"practical{practical_id}"
+    sub_dir = repo_root / "submissions" / f"practical{lab_id}"
     opponents = []
     if sub_dir.exists():
         for entry in sorted(sub_dir.iterdir()):
@@ -145,10 +166,11 @@ def list_available_opponents(practical_id=1, repo_root=None):
     return opponents
 
 
-def download_github_submission(practical_id, github_username, target_dir):
+@_accept_legacy_practical_id(lab_position=0)
+def download_github_submission(lab_id, github_username, target_dir):
     """Downloads a classmate's submission folder from the official GitHub repository."""
     os.makedirs(target_dir, exist_ok=True)
-    api_url = f"https://api.github.com/repos/{GITHUB_OWNER}/{GITHUB_REPO}/contents/submissions/practical{practical_id}/{github_username}"
+    api_url = f"https://api.github.com/repos/{GITHUB_OWNER}/{GITHUB_REPO}/contents/submissions/practical{lab_id}/{github_username}"
 
     headers = {"Accept": "application/vnd.github+json", "User-Agent": "RL-Duel-Comparator"}
     req = urllib.request.Request(api_url, headers=headers)
@@ -158,7 +180,7 @@ def download_github_submission(practical_id, github_username, target_dir):
     except urllib.error.HTTPError as e:
         if e.code == 404:
             raise ValueError(
-                f"Opponent '{github_username}' was not found in practical {practical_id} of repository {GITHUB_OWNER}/{GITHUB_REPO}."
+                f"Opponent '{github_username}' was not found in lab {lab_id} of repository {GITHUB_OWNER}/{GITHUB_REPO}."
             )
         raise RuntimeError(f"GitHub API Error ({e.code}): {e.reason}")
 
@@ -178,7 +200,8 @@ def download_github_submission(practical_id, github_username, target_dir):
     return target_dir
 
 
-def resolve_agent(agent_spec, practical_id, repo_root=None):
+@_accept_legacy_practical_id(lab_position=1)
+def resolve_agent(agent_spec, lab_id, repo_root=None):
     """
     Resolves agent_spec into:
     (callable_agent_fn, display_name, cleanup_callback_or_none)
@@ -208,7 +231,7 @@ def resolve_agent(agent_spec, practical_id, repo_root=None):
     # Case 2: In submissions/practicalX/
     if repo_root is None:
         repo_root = get_default_repo_root()
-    sub_candidate = Path(repo_root) / "submissions" / f"practical{practical_id}" / agent_str
+    sub_candidate = Path(repo_root) / "submissions" / f"practical{lab_id}" / agent_str
     if sub_candidate.is_dir() and (sub_candidate / "agent.py").exists():
         return load_agent_from_dir(sub_candidate), agent_str, None
 
@@ -216,7 +239,7 @@ def resolve_agent(agent_spec, practical_id, repo_root=None):
     print(f"🌐 Fetching opponent '{agent_str}' from repository {GITHUB_OWNER}/{GITHUB_REPO}...")
     temp_dir = tempfile.mkdtemp(prefix=f"opponent_{agent_str}_")
     try:
-        download_github_submission(practical_id, agent_str, temp_dir)
+        download_github_submission(lab_id, agent_str, temp_dir)
         agent_fn = load_agent_from_dir(temp_dir)
         def cleanup():
             shutil.rmtree(temp_dir, ignore_errors=True)
@@ -386,8 +409,9 @@ def _build_victory_screen(width, height, winner_title, subtitle, score_a, score_
     return splash
 
 
+@_accept_legacy_practical_id(lab_position=0)
 def run_single_duel_episode(
-    practical_id,
+    lab_id,
     agent_a_fn,
     agent_b_fn,
     name_a="Agent A",
@@ -399,7 +423,7 @@ def run_single_duel_episode(
     Executes a single head-to-head duel on identical seed.
     Returns: (metrics_dict, list_of_composite_bgr_frames)
     """
-    config = PRACTICAL_CONFIGS[practical_id]
+    config = LAB_CONFIGS[lab_id]
     env_candidates = config["env_candidates"]
     max_steps = config["max_steps"]
 
@@ -440,7 +464,7 @@ def run_single_duel_episode(
 
                 if term_a or trunc_a:
                     done_a = True
-                    if practical_id == 1:
+                    if lab_id == 1:
                         success_a = term_a and (r_a >= 100 or reward_a >= config["pass_threshold"])
                         crash_a = term_a and (r_a <= -100 or reward_a < 0)
                     else:  # Taxi
@@ -457,7 +481,7 @@ def run_single_duel_episode(
 
                 if term_b or trunc_b:
                     done_b = True
-                    if practical_id == 1:
+                    if lab_id == 1:
                         success_b = term_b and (r_b >= 100 or reward_b >= config["pass_threshold"])
                         crash_b = term_b and (r_b <= -100 or reward_b < 0)
                     else:
@@ -469,14 +493,14 @@ def run_single_duel_episode(
                 if not done_a or last_frame_a is None:
                     raw_a = env_a.render()
                     raw_a_bgr = cv2.cvtColor(raw_a, cv2.COLOR_RGB2BGR) if cv2 is not None else raw_a
-                    st_text_a = "FLYING" if practical_id == 1 else "NAVIGATING"
+                    st_text_a = "FLYING" if lab_id == 1 else "NAVIGATING"
                     st_color_a = (220, 200, 50)
                     panel_a = _draw_hud_panel(raw_a_bgr, name_a, steps_a, reward_a, st_text_a, st_color_a, "A")
                     last_frame_a = panel_a
                 else:
                     panel_a = last_frame_a.copy()
                     if success_a:
-                        status_str = "TOUCHDOWN! [OK]" if practical_id == 1 else "DELIVERED! [OK]"
+                        status_str = "TOUCHDOWN! [OK]" if lab_id == 1 else "DELIVERED! [OK]"
                         color = (40, 220, 50)
                     elif crash_a:
                         status_str = "CRASHED! [FAIL]"
@@ -489,14 +513,14 @@ def run_single_duel_episode(
                 if not done_b or last_frame_b is None:
                     raw_b = env_b.render()
                     raw_b_bgr = cv2.cvtColor(raw_b, cv2.COLOR_RGB2BGR) if cv2 is not None else raw_b
-                    st_text_b = "FLYING" if practical_id == 1 else "NAVIGATING"
+                    st_text_b = "FLYING" if lab_id == 1 else "NAVIGATING"
                     st_color_b = (220, 200, 50)
                     panel_b = _draw_hud_panel(raw_b_bgr, name_b, steps_b, reward_b, st_text_b, st_color_b, "B")
                     last_frame_b = panel_b
                 else:
                     panel_b = last_frame_b.copy()
                     if success_b:
-                        status_str = "TOUCHDOWN! [OK]" if practical_id == 1 else "DELIVERED! [OK]"
+                        status_str = "TOUCHDOWN! [OK]" if lab_id == 1 else "DELIVERED! [OK]"
                         color = (40, 220, 50)
                     elif crash_b:
                         status_str = "CRASHED! [FAIL]"
@@ -664,8 +688,9 @@ def save_video(frames, output_path, fps=30):
         return str(gif_fallback)
 
 
+@_accept_legacy_practical_id(lab_position=0)
 def run_head_to_head(
-    practical_id=1,
+    lab_id=1,
     agent_a="rafael_flor",
     agent_b="baseline_random",
     episodes=5,
@@ -678,12 +703,12 @@ def run_head_to_head(
     High-level entry point to compare two RL agents over N seeded episodes.
     Returns summary results dictionary.
     """
-    fn_a, name_a, clean_a = resolve_agent(agent_a, practical_id, repo_root)
-    fn_b, name_b, clean_b = resolve_agent(agent_b, practical_id, repo_root)
+    fn_a, name_a, clean_a = resolve_agent(agent_a, lab_id, repo_root)
+    fn_b, name_b, clean_b = resolve_agent(agent_b, lab_id, repo_root)
 
     print(f"\n=======================================================")
     print(f"🥊 RL TOURNAMENT HEAD-TO-HEAD DUEL 🥊")
-    print(f"Practical: {PRACTICAL_CONFIGS[practical_id]['name']}")
+    print(f"Lab: {LAB_CONFIGS[lab_id]['name']}")
     print(f"🔵 Corner A: {name_a}")
     print(f"🟠 Corner B: {name_b}")
     print(f"Episodes:   {episodes} (Base seed: {base_seed})")
@@ -702,7 +727,7 @@ def run_head_to_head(
             capture_this = (video_path is not None) and (ep == 0)
 
             metrics, frames = run_single_duel_episode(
-                practical_id=practical_id,
+                lab_id=lab_id,
                 agent_a_fn=fn_a,
                 agent_b_fn=fn_b,
                 name_a=name_a,
@@ -820,10 +845,11 @@ def display_duel(video_path):
         print(f"You can view the video file directly at: {video_path}")
 
 
-def duel_agents(practical_id, agent_a, agent_b, episodes=5, seed=42, output_video=None):
+@_accept_legacy_practical_id(lab_position=0)
+def duel_agents(lab_id, agent_a, agent_b, episodes=5, seed=42, output_video=None):
     """Convenient alias for notebooks and scripts."""
     return run_head_to_head(
-        practical_id=practical_id,
+        lab_id=lab_id,
         agent_a=agent_a,
         agent_b=agent_b,
         episodes=episodes,
@@ -834,7 +860,7 @@ def duel_agents(practical_id, agent_a, agent_b, episodes=5, seed=42, output_vide
 
 def main():
     parser = argparse.ArgumentParser(description="RL Course Head-to-Head Agent Duel & Comparator")
-    parser.add_argument("--practical", type=int, choices=[1, 2], default=1, help="Practical session (1 or 2)")
+    parser.add_argument("--lab", "--practical", dest="lab", type=int, choices=[1, 2], default=1, help="Lab session (1 or 2)")
     parser.add_argument("--agent-a", type=str, default="rafael_flor", help="Path, baseline, or username for Agent A")
     parser.add_argument("--agent-b", type=str, default="baseline_random", help="Path, baseline, or username for Agent B")
     parser.add_argument("--episodes", type=int, default=5, help="Number of benchmark duel episodes")
@@ -845,14 +871,14 @@ def main():
     args = parser.parse_args()
 
     if args.list_opponents:
-        opponents = list_available_opponents(args.practical)
-        print(f"Available opponents for Practical {args.practical}:")
+        opponents = list_available_opponents(args.lab)
+        print(f"Available opponents for Lab {args.lab}:")
         for op in opponents:
             print(f"  • {op}")
         return
 
     run_head_to_head(
-        practical_id=args.practical,
+        lab_id=args.lab,
         agent_a=args.agent_a,
         agent_b=args.agent_b,
         episodes=args.episodes,
