@@ -3,7 +3,7 @@ name: ⚔️ Run Agent Duel & Visualize
 on:
   workflow_dispatch:
     inputs:
-      practical:
+      lab:
         description: 'Lab Session'
         required: true
         default: '1'
@@ -63,7 +63,7 @@ jobs:
         run: |
           mkdir -p duel_output
           python tournament/compare.py \
-            --practical "${{ inputs.practical }}" \
+            --lab "${{ inputs.lab }}" \
             --agent-a "${{ inputs.agent_a }}" \
             --agent-b "${{ inputs.agent_b }}" \
             --episodes "${{ inputs.episodes }}" \
@@ -74,7 +74,7 @@ jobs:
         if: always()
         run: |
           echo "## 🥊 RL Tournament Duel Results" >> $GITHUB_STEP_SUMMARY
-          echo "**Lab**: ${{ inputs.practical }} | **Seed**: ${{ inputs.seed }} | **Episodes**: ${{ inputs.episodes }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Lab**: ${{ inputs.lab }} | **Seed**: ${{ inputs.seed }} | **Episodes**: ${{ inputs.episodes }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- 🔵 **Corner A**: \`${{ inputs.agent_a }}\`" >> $GITHUB_STEP_SUMMARY
           echo "- 🟠 **Corner B**: \`${{ inputs.agent_b }}\`" >> $GITHUB_STEP_SUMMARY
@@ -98,6 +98,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: duel-replay-p${{ inputs.practical }}-${{ inputs.agent_a }}-vs-${{ inputs.agent_b }}
+          name: duel-replay-p${{ inputs.lab }}-${{ inputs.agent_a }}-vs-${{ inputs.agent_b }}
           path: duel_output/
           retention-days: 14

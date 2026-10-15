@@ -14,7 +14,10 @@ import time
 from pathlib import Path
 
 # Import evaluation logic
-from evaluate import evaluate_single_submission, PRACTICAL_CONFIGS
+from evaluate import evaluate_single_submission, LAB_CONFIGS, _accept_legacy_practical_id
+
+# Backward-compatible module attribute.
+PRACTICAL_CONFIGS = LAB_CONFIGS
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -33,9 +36,10 @@ def get_rank_medal(rank):
         return f"{rank}th"
 
 
-def run_full_evaluation(practical_id, episodes=30, seed=42):
+@_accept_legacy_practical_id(lab_position=0)
+def run_full_evaluation(lab_id, episodes=30, seed=42):
     """Evaluates all submission folders for the given lab."""
-    submissions_dir = Path("submissions") / f"practical{practical_id}"
+    submissions_dir = Path("submissions") / f"practical{lab_id}"
     results = []
 
     if not submissions_dir.exists():
@@ -44,8 +48,8 @@ def run_full_evaluation(practical_id, episodes=30, seed=42):
 
     for item in sorted(submissions_dir.iterdir()):
         if item.is_dir() and (item / "agent.py").exists():
-            print(f"Evaluating Lab {practical_id}: {item.name} ...")
-            r = evaluate_single_submission(item, practical_id, num_episodes=episodes, base_seed=seed)
+            print(f"Evaluating Lab {lab_id}: {item.name} ...")
+            r = evaluate_single_submission(item, lab_id, num_episodes=episodes, base_seed=seed)
             results.append(r)
 
     # Sort descending by mean_reward
@@ -53,7 +57,8 @@ def run_full_evaluation(practical_id, episodes=30, seed=42):
     return results
 
 
-def build_markdown_table(results, practical_id):
+@_accept_legacy_practical_id(lab_position=1)
+def build_markdown_table(results, lab_id):
     """Builds a formatted markdown table from evaluation results."""
     if not results:
         return "_No submissions recorded yet. Be the first to open a Pull Request!_\n"
@@ -66,7 +71,7 @@ def build_markdown_table(results, practical_id):
     for idx, r in enumerate(results, start=1):
         rank_str = get_rank_medal(idx)
         participant = r["participant"]
-        sub_rel_path = f"submissions/practical{practical_id}/{participant}"
+        sub_rel_path = f"submissions/practical{lab_id}/{participant}"
         participant_link = f"[{participant}]({sub_rel_path})"
 
         if not r.get("success", False):
@@ -91,8 +96,8 @@ def build_markdown_table(results, practical_id):
 
 
 def generate_leaderboard_content(p1_results, p2_results, timestamp):
-    p1_cfg = PRACTICAL_CONFIGS[1]
-    p2_cfg = PRACTICAL_CONFIGS[2]
+    p1_cfg = LAB_CONFIGS[1]
+    p2_cfg = LAB_CONFIGS[2]
 
     p1_table = build_markdown_table(p1_results, 1)
     p2_table = build_markdown_table(p2_results, 2)
