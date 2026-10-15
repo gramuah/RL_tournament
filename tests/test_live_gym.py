@@ -49,8 +49,7 @@ class GymSessionTests(unittest.TestCase):
     def test_lander_runs_box2d_and_original_renderer(self):
         session = self.session(1, ('manual', 'heuristic'))
         before = session.snapshot()['states'][0]['frame']
-        for _ in range(4):
-            states = session.step([2, None])['states']
+        states = session.step([2, None], repeat=4)['states']
         self.assertEqual(states[0]['env_id'], 'LunarLander-v3')
         self.assertEqual(states[0]['steps'], 4)
         self.assertNotEqual(states[0]['frame'], before)

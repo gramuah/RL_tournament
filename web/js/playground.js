@@ -292,12 +292,14 @@ export class Playground {
       this.draw();
     }
   }
-  async step() {
+  async step(repeat = 1) {
     if (this.busy || this.loading || this.error) return;
     if (!this.session) {
-      this.simulations.forEach((s) => {
-        if (s.lab === 1 || s.policy !== "manual") s.step(this.keys);
-      });
+      for (let i = 0; i < repeat; i++) {
+        this.simulations.forEach((s) => {
+          if (s.lab === 1 || s.policy !== "manual") s.step(this.keys);
+        });
+      }
       this.finishStep();
       return;
     }
@@ -318,6 +320,7 @@ export class Playground {
     try {
       const response = await api("step", {
         id: this.session,
+        repeat,
         actions: this.selects.map((select) =>
           select.value === "manual" ? action : null,
         ),
@@ -345,9 +348,12 @@ export class Playground {
     if (!this.active) return;
     const interval =
       (this.lab === 2 ? 260 : 1000 / 50) / Number(this.get("speed").value);
-    if (this.running && time - (this.last || 0) >= interval) {
-      this.last = time;
-      this.step();
+    if (this.running && !this.busy && time - (this.last || 0) >= interval) {
+      const elapsed = time - (this.last || time - interval);
+      const repeat =
+        this.lab === 1 ? Math.min(8, Math.floor(elapsed / interval)) : 1;
+      this.last = time - (elapsed % interval);
+      this.step(repeat);
     }
     this.frame = requestAnimationFrame((t) => this.tick(t));
   }

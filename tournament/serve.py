@@ -75,37 +75,40 @@ class Session:
         for env in self.envs:
             env.close()
 
-    def step(self, actions):
+    def step(self, actions, repeat=1):
+        if type(repeat) is not int or not 1 <= repeat <= (8 if self.lab == 1 else 1):
+            raise ValueError("Invalid frame batch")
         if not isinstance(actions, list) or len(actions) != len(self.envs):
             raise ValueError('One action per player is required')
         # Validate the entire request before either environment advances.
         for env, action in zip(self.envs, actions):
             if action is not None and (type(action) is not int or not env.action_space.contains(action)):
                 raise ValueError('Invalid discrete action')
-        for i, (env, policy, state) in enumerate(zip(self.envs, self.policies, self.states)):
-            if state['done']:
-                continue
-            if policy == 'manual':
-                action = actions[i]
-                if action is None:
-                    continue  # Taxi waits for a discrete keypress.
-            elif policy == 'random':
-                action = int(env.action_space.sample())
-            elif policy == 'heuristic':
-                if self.lab == 2:
-                    action = taxi_action(env, self.observations[i])
+        for _ in range(repeat):
+            for i, (env, policy, state) in enumerate(zip(self.envs, self.policies, self.states)):
+                if state['done']:
+                    continue
+                if policy == 'manual':
+                    action = actions[i]
+                    if action is None:
+                        continue  # Taxi waits for a discrete keypress.
+                elif policy == 'random':
+                    action = int(env.action_space.sample())
+                elif policy == 'heuristic':
+                    if self.lab == 2:
+                        action = taxi_action(env, self.observations[i])
+                    else:
+                        from gymnasium.envs.box2d.lunar_lander import heuristic
+                        action = heuristic(env.unwrapped, self.observations[i])
                 else:
-                    from gymnasium.envs.box2d.lunar_lander import heuristic
-                    action = heuristic(env.unwrapped, self.observations[i])
-            else:
-                action = self.agents[i](self.observations[i])
-            obs, reward, terminated, truncated, _ = env.step(action)
-            self.observations[i] = obs
-            state.update(score=state['score'] + float(reward), steps=state['steps'] + 1,
-                         done=bool(terminated or truncated), action=int(action),
-                         message='STEP LIMIT REACHED' if truncated else
-                         ('DESTINATION REACHED' if self.lab == 2 else 'EPISODE COMPLETE')
-                         if terminated else 'RUNNING')
+                    action = self.agents[i](self.observations[i])
+                obs, reward, terminated, truncated, _ = env.step(action)
+                self.observations[i] = obs
+                state.update(score=state['score'] + float(reward), steps=state['steps'] + 1,
+                             done=bool(terminated or truncated), action=int(action),
+                             message='STEP LIMIT REACHED' if truncated else
+                             ('DESTINATION REACHED' if self.lab == 2 else 'EPISODE COMPLETE')
+                             if terminated else 'RUNNING')
         self.updated = time.monotonic()
         return self.snapshot()
 
@@ -244,7 +247,7 @@ class Handler(SimpleHTTPRequestHandler):
                 self.server.sessions.pop(key).close()
                 return self.respond(200, {'closed': True})
             try:
-                snapshot = self.server.sessions[key].step(data.get('actions'))
+                snapshot = self.server.sessions[key].step(data.get('actions'), data.get('repeat', 1))
             except Exception:
                 self.server.sessions.pop(key).close()
                 raise
