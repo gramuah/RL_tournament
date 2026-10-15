@@ -1511,3 +1511,74 @@ pre {
 #duel-selected {
   margin-top: 20px;
 }
+
+.duel-scene {
+  position: relative;
+  overflow: hidden;
+}
+.duel-countdown,
+.duel-confetti {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.duel-countdown {
+  display: grid;
+  place-items: center;
+  background: rgb(0 16 48 / 65%);
+  color: white;
+  font-size: clamp(64px, 10vw, 120px);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.duel-result {
+  position: absolute;
+  top: 10%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: 94%;
+  padding: 12px 18px;
+  text-align: center;
+  background: var(--accent);
+  color: white;
+  border: 1px solid #91b4ff;
+  border-radius: 4px;
+  pointer-events: none;
+}
+.duel-result strong,
+.duel-result span {
+  display: block;
+}
+.duel-result strong {
+  font-size: clamp(20px, 3vw, 34px);
+}
+.duel-result span {
+  margin-top: 3px;
+  font-size: clamp(9px, 1.2vw, 12px);
+}
+.duel-result[data-outcome="draw"] {
+  background: #edf2ff;
+  color: var(--accent);
+  animation: duel-draw 1s ease-out 3;
+}
+.duel-confetti i {
+  position: absolute;
+  top: 0;
+  width: 7px;
+  height: 13px;
+}
+@keyframes duel-draw {
+  0% {
+    box-shadow: 0 0 0 0 rgb(145 180 255 / 80%);
+  }
+  100% {
+    box-shadow: 0 0 0 22px rgb(145 180 255 / 0%);
+  }
+}
+/* The global hidden rule is intentionally repeated after the overlay display rule. */
+.duel-countdown[hidden],
+.duel-result[hidden],
+.duel-confetti[hidden] {
+  display: none;
+}

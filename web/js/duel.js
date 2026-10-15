@@ -1,3 +1,4 @@
+import { DuelEffects, duelOutcome } from "./duel-effects.js";
 import { loadPolicy } from "./policies.js";
 import { Simulation } from "./simulation.js";
 import { spritesReady } from "./renderers.js";
@@ -46,6 +47,7 @@ export class LiveDuel {
     this.get = (suffix) => document.getElementById(`duel-${suffix}`);
     this.canvases = [this.get("a-canvas"), this.get("b-canvas")];
     this.selects = [this.get("a-policy"), this.get("b-policy")];
+    this.effects = new DuelEffects(this.canvases);
     this.lab = 2;
     this.rankings = new Map();
     this.keys = new Set();
@@ -54,14 +56,13 @@ export class LiveDuel {
     this.running = false;
     this.generation = 0;
     this.states = [];
-    this.get("toggle").addEventListener("click", () => {
-      if (this.states.every((s) => s.done)) {
-        this.reset();
-        return;
-      }
-      this.running = !this.running;
-      this.last = performance.now();
-      this.update();
+    this.get("toggle").addEventListener("click", async () => {
+      if (this.states.length === 2 && this.states.every((s) => s.done)) {
+        const generation = this.generation + 1;
+        await this.reset();
+        if (generation === this.generation) this.start();
+      } else if (this.running || this.countdown) this.pause();
+      else this.start();
     });
     this.get("reset").addEventListener("click", () => this.reset());
     this.get("new").addEventListener("click", () => {
@@ -77,14 +78,9 @@ export class LiveDuel {
           this.selects
             .filter((s) => s !== select && s.value === "manual")
             .forEach((s) => (s.value = "heuristic"));
-        this.useRequiredRuntime();
         this.reset();
       });
     this.get("seed").addEventListener("change", () => this.reset());
-    this.get("engine").addEventListener("change", () => {
-      this.populatePolicies();
-      this.reset();
-    });
     this.root.addEventListener("keydown", (event) => {
       if (event.target.matches("input, select, a, button")) return;
       if (event.key.toLowerCase() === "r") {
@@ -96,6 +92,7 @@ export class LiveDuel {
         keyActions[event.key] || keyActions[event.key.toLowerCase()];
       if (!action) return;
       event.preventDefault();
+      if (!this.running) return;
       this.keys.add(action === "space" ? "up" : action);
       if (this.lab === 2 && !event.repeat)
         this.action(action === "space" ? "pickup" : action);
@@ -114,6 +111,7 @@ export class LiveDuel {
     });
     this.root.querySelectorAll("[data-action]").forEach((button) => {
       button.addEventListener("pointerdown", (event) => {
+        if (!this.running) return;
         this.keys.add(button.dataset.action);
         button.setPointerCapture(event.pointerId);
       });
@@ -138,11 +136,6 @@ export class LiveDuel {
     runtime.then((config) => {
       if (!config) return;
       this.config = config;
-      this.get("engine").append(
-        new Option(`Gymnasium ${config.gymnasium} / original renderer`, "gym"),
-      );
-      // Use real Gymnasium by default when served by the local Python runtime.
-      this.get("engine").value = "gym";
       this.populatePolicies();
       this.reset();
     });
@@ -174,15 +167,7 @@ export class LiveDuel {
         ? ["manual", `agent:${names[0]}`]
         : names.map((name) => `agent:${name}`);
     this.selects.forEach((select, index) => (select.value = values[index]));
-    this.useRequiredRuntime();
     this.reset();
-  }
-  useRequiredRuntime() {
-    if (
-      this.config &&
-      this.selects.some((select) => select.value.startsWith("agent:"))
-    )
-      this.get("engine").value = "gym";
   }
   populatePolicies() {
     const ranked = this.rankings.get(this.lab) || [];
@@ -228,8 +213,29 @@ export class LiveDuel {
       this.frame = requestAnimationFrame((time) => this.tick(time));
     }
   }
+  start() {
+    if (
+      !this.active ||
+      this.loading ||
+      this.error ||
+      this.states.length !== 2 ||
+      this.states.every((s) => s.done)
+    )
+      return;
+    if (this.started) {
+      this.running = true;
+      this.last = performance.now();
+    } else {
+      this.countdown = 3;
+      this.countdownEnd = performance.now() + 3000;
+      this.effects.countdown(3);
+    }
+    this.update();
+  }
   pause() {
     this.running = false;
+    this.countdown = null;
+    this.effects.countdown(null);
     this.keys.clear();
     this.pendingActions = [];
     this.update();
@@ -237,6 +243,9 @@ export class LiveDuel {
   async reset() {
     const generation = ++this.generation;
     this.pause();
+    this.started = false;
+    this.celebrated = false;
+    this.effects.clear();
     this.error = null;
     this.loading = true;
     this.busy = false;
@@ -264,7 +273,7 @@ export class LiveDuel {
       const agents = this.selects
         .map((select) => select.value)
         .filter((value) => value.startsWith("agent:"));
-      if (agents.length && this.get("engine").value === "gym") {
+      if (agents.length && Boolean(this.config)) {
         const available = this.config?.agents[String(this.lab)] || [];
         if (
           agents.some(
@@ -272,11 +281,11 @@ export class LiveDuel {
           )
         )
           throw new Error(
-            "Selected policy is unavailable in this optional Gymnasium runtime. Select Browser to use its published export.",
+            "Selected policy is unavailable in this developer runtime. Open the published site to use its browser export.",
           );
       }
       this.get("policy-help").hidden = true;
-      if (this.get("engine").value === "gym") {
+      if (Boolean(this.config)) {
         const response = await api("session", {
           lab: this.lab,
           seed,
@@ -335,6 +344,7 @@ export class LiveDuel {
   action(action) {
     if (
       !this.active ||
+      !this.running ||
       this.loading ||
       this.error ||
       this.lab !== 2 ||
@@ -343,13 +353,11 @@ export class LiveDuel {
       return;
     const i = this.selects.findIndex((s) => s.value === "manual");
     if (this.states[i]?.done) return;
-    this.running = true;
     if (this.session)
       this.pendingActions.length < 32 && this.pendingActions.push(action);
     else {
       this.simulations[i].step(new Set(), action);
-      this.update();
-      this.draw();
+      this.finishStep();
     }
   }
   async step(repeat = 1) {
@@ -400,12 +408,40 @@ export class LiveDuel {
     }
   }
   finishStep() {
-    if (this.states.every((s) => s.done)) this.running = false;
+    const outcome = duelOutcome(this.states);
+    if (outcome) {
+      this.running = false;
+      this.keys.clear();
+      this.pendingActions = [];
+      if (!this.celebrated) {
+        this.celebrated = true;
+        this.effects.celebrate(outcome);
+      }
+    }
     this.update();
     this.draw();
   }
   tick(time) {
     if (!this.active) return;
+    if (this.countdown) {
+      const remaining = Math.max(
+        0,
+        Math.ceil((this.countdownEnd - time) / 1000),
+      );
+      if (remaining !== this.countdown) {
+        this.countdown = remaining || null;
+        this.effects.countdown(remaining);
+        if (!remaining) {
+          this.started = true;
+          this.running = true;
+          this.last = time;
+          this.keys.clear();
+          const human = this.selects.findIndex((s) => s.value === "manual");
+          if (human >= 0) this.canvases[human].focus({ preventScroll: true });
+        }
+        this.update();
+      }
+    }
     const interval =
       (this.lab === 2 ? 260 : 1000 / 50) / Number(this.get("speed").value);
     if (this.running && !this.busy && time - (this.last || 0) >= interval) {
@@ -418,7 +454,7 @@ export class LiveDuel {
     this.frame = requestAnimationFrame((t) => this.tick(t));
   }
   update() {
-    const gym = this.get("engine").value === "gym";
+    const gym = Boolean(this.config);
     this.get("title").textContent =
       `${this.lab === 2 ? "Taxi" : "LunarLander"} / ${gym ? "Gymnasium" : "live browser duel"}`;
     this.get("notice").textContent = gym
@@ -430,9 +466,13 @@ export class LiveDuel {
       ? "Loading environment…"
       : this.states.length && this.states.every((s) => s.done)
         ? "Try again ↻"
-        : this.running
-          ? "Pause Ⅱ"
-          : "Start duel →";
+        : this.countdown
+          ? "Cancel countdown"
+          : this.running
+            ? "Pause Ⅱ"
+            : this.started
+              ? "Resume duel →"
+              : "Start duel →";
     this.get("status").textContent =
       this.error || (this.loading ? "LOADING" : this.result());
     if (!this.states.length) {
@@ -462,10 +502,16 @@ export class LiveDuel {
       .querySelectorAll("[data-action]")
       .forEach(
         (button) =>
-          (button.disabled = manual < 0 || this.loading || Boolean(this.error)),
+          (button.disabled =
+            manual < 0 ||
+            !this.running ||
+            this.states[manual]?.done ||
+            this.loading ||
+            Boolean(this.error)),
       );
   }
   result() {
+    if (this.countdown) return `STARTING IN ${this.countdown}`;
     if (!this.states.length) return "READY";
     if (!this.states.every((s) => s.done))
       return this.running
@@ -473,10 +519,9 @@ export class LiveDuel {
         : this.states.some((s) => s.steps)
           ? "PAUSED"
           : "READY";
-    const [a, b] = this.states;
-    const diff = a.score - b.score || b.steps - a.steps;
-    if (!diff) return "DRAW";
-    const winner = diff > 0 ? 0 : 1;
+    const outcome = duelOutcome(this.states);
+    if (outcome.winner === null) return "DRAW";
+    const winner = outcome.winner;
     const name =
       labels[this.selects[winner].value] ||
       this.selects[winner].selectedOptions[0].textContent;

@@ -223,6 +223,10 @@ test("Live duels finish, tie fairly, reset reproducibly, and expose original Tax
   await p.waitForFunction(
     () => document.querySelector("#duel-status").textContent === "DRAW",
   );
+  assert.equal(
+    await p.locator('.duel-result[data-outcome="draw"]:visible').count(),
+    2,
+  );
   const reward = await p.locator("#duel-a-score").innerText();
   const steps = await p.locator("#duel-a-steps").innerText();
   assert.equal(await p.locator("#duel-b-score").innerText(), reward);
@@ -258,6 +262,18 @@ test("Live duels finish, tie fairly, reset reproducibly, and expose original Tax
     { timeout: 20000 },
   );
   assert.match(await p.locator("#duel-status").innerText(), /Player A wins/);
+  assert.equal(
+    await p
+      .locator(".play-stage")
+      .nth(0)
+      .locator('.duel-result[data-outcome="winner"]')
+      .isVisible(),
+    true,
+  );
+  assert.equal(
+    await p.locator(".play-stage").nth(1).locator(".duel-result").isVisible(),
+    false,
+  );
   await p.locator("#duel-new").click();
   assert.equal(await p.locator("#duel-seed").inputValue(), "43");
   await p.locator("#duel-seed").fill("-1");
@@ -348,6 +364,10 @@ test("Human can play either side using original shortcuts and touch; navigation 
   await p.locator("#duel-b-policy").selectOption("manual");
   assert.equal(await p.locator("#duel-a-policy").inputValue(), "heuristic");
   assert.match(await p.locator("#duel-human").innerText(), /player B/i);
+  await p.locator("#duel-toggle").click();
+  await p.waitForFunction(() =>
+    document.querySelector("#duel-toggle").textContent.includes("Pause"),
+  );
   await p.locator("#duel-b-canvas").focus();
   await p.keyboard.press("w");
   assert.equal(await p.locator("#duel-b-steps").innerText(), "1");
@@ -377,6 +397,9 @@ test("Human can play either side using original shortcuts and touch; navigation 
   );
   await p.locator("#duel-toggle").click();
   await p.locator("#duel-b-canvas").focus();
+  await p.waitForFunction(() =>
+    document.querySelector("#duel-toggle").textContent.includes("Pause"),
+  );
   const thrust = p.locator(
     '#arena [data-controls="lander"] [data-action="up"]',
   );
@@ -463,10 +486,16 @@ test(
       await p.goto(`${address}#arena?lab=2`);
       await p.waitForFunction(
         () =>
-          document.querySelector("#duel-engine").value === "gym" &&
+          document
+            .querySelector("#duel-title")
+            .textContent.includes("Gymnasium") &&
           !document.querySelector("#duel-toggle").disabled,
       );
       assert.match(await p.locator("#duel-a-telemetry").innerText(), /Taxi-v3/);
+      await p.locator("#duel-toggle").click();
+      await p.waitForFunction(() =>
+        document.querySelector("#duel-toggle").textContent.includes("Pause"),
+      );
       await p.locator("#duel-a-canvas").focus();
       await p.keyboard.press("ArrowUp");
       await p.waitForFunction(
@@ -538,22 +567,21 @@ test(
         path: path.resolve(__dirname, "../artifacts/web/gym-lander-duel.png"),
         fullPage: true,
       });
-      // Pending requests must not paint old frames after a reset or runtime switch.
+      // Pending requests must not paint old frames after a reset.
       await p.route("**/api/step", async (route) => {
         await new Promise((resolve) => setTimeout(resolve, 200));
         await route.continue();
       });
       await p.locator("#duel-toggle").click();
       await p.waitForRequest("**/api/step");
-      await p.locator("#duel-engine").selectOption("browser");
+      await p.locator("#duel-reset").click();
       await p.waitForTimeout(300);
       assert.equal(await p.locator("#duel-a-steps").innerText(), "0");
       assert.match(
         await p.locator("#duel-a-telemetry").innerText(),
-        /browser Box2D/,
+        /LunarLander-v3/,
       );
       await p.unroute("**/api/step");
-      await p.locator("#duel-engine").selectOption("gym");
       await p.waitForFunction(
         () => !document.querySelector("#duel-toggle").disabled,
       );
@@ -570,7 +598,7 @@ test(
           .textContent.includes("Runtime disconnected"),
       );
       assert.equal(await p.locator("#duel-toggle").isDisabled(), true);
-      assert.equal(await p.locator("#duel-engine").inputValue(), "gym");
+      assert.equal(await p.locator("#duel-engine").count(), 0);
       assert.deepEqual(p.errors, []);
     } finally {
       await p.context().close();
@@ -712,4 +740,174 @@ test("Actual PPO completes a static browser duel and policy failures never subst
     "agent:rafael_flor",
   );
   await bad.context().close();
+});
+
+test("Countdown freezes both players, ignores early controls and cancels safely", async () => {
+  const p = await page();
+  await p.clock.install();
+  await openArena(p);
+  await p.clock.pauseAt(new Date());
+  assert.equal(await p.locator("#duel-engine").count(), 0);
+  await p.locator("#duel-speed").selectOption("4");
+  await p.locator("#duel-toggle").click();
+  const numbers = p.locator(".duel-countdown");
+  assert.deepEqual(await numbers.allTextContents(), ["3", "3"]);
+  await p.locator("#duel-a-canvas").focus();
+  await p.keyboard.press("ArrowUp");
+  await p.clock.runFor(1016); // Include the next animation frame at the second boundary.
+  assert.deepEqual(await numbers.allTextContents(), ["2", "2"]);
+  await p.clock.runFor(1000);
+  assert.deepEqual(await numbers.allTextContents(), ["1", "1"]);
+  assert.equal(await p.locator("#duel-a-steps").innerText(), "0");
+  assert.equal(await p.locator("#duel-b-steps").innerText(), "0");
+  await p.screenshot({
+    path: path.resolve(__dirname, "../artifacts/web/duel-countdown.png"),
+    fullPage: true,
+  });
+  await p.clock.runFor(1000);
+  assert.equal(await numbers.first().isVisible(), false);
+  assert.equal(
+    await p.evaluate(() => document.activeElement.id),
+    "duel-a-canvas",
+  );
+  assert.equal(await p.locator("#duel-a-steps").innerText(), "0");
+  await p.keyboard.press("ArrowUp");
+  assert.equal(await p.locator("#duel-a-steps").innerText(), "1");
+  await p.locator("#duel-toggle").click();
+  await p.locator("#duel-toggle").click();
+  assert.equal(await numbers.first().isVisible(), false); // Resume has no new countdown.
+  await p.locator("#duel-reset").click();
+  await p.locator("#duel-toggle").click();
+  await p.clock.runFor(1000);
+  await p.locator("#duel-toggle").click(); // Cancel countdown.
+  await p.clock.runFor(4000);
+  assert.equal(await p.locator("#duel-a-steps").innerText(), "0");
+  assert.equal(await p.locator("#duel-b-steps").innerText(), "0");
+  await p.locator("#duel-toggle").click();
+  assert.deepEqual(await numbers.allTextContents(), ["3", "3"]);
+  await p.locator("#duel-b-policy").selectOption("random");
+  await p.clock.runFor(4000);
+  assert.equal(await p.locator("#duel-b-steps").innerText(), "0");
+  await p.locator("#duel-toggle").click();
+  await p.locator('[data-view="standings"]').click();
+  await p.clock.runFor(4000);
+  await p.locator('[data-view="arena"]').click();
+  assert.equal(await numbers.first().isVisible(), false);
+  assert.equal(await p.locator("#duel-b-steps").innerText(), "0");
+  assert.deepEqual(p.errors, []);
+  await p.context().close();
+});
+
+test("Results wait for both agents, compare exact rewards then steps, and animate once", async () => {
+  const p = await page();
+  // Exercise the actual controller with terminal-state fixtures, without exposing a production test API.
+  await p.route("**/js/app.js", (route) =>
+    route.fulfill({
+      contentType: "text/javascript",
+      body: 'import {LiveDuel} from "./duel.js"; window.testDuel=new LiveDuel(); window.testDuel.setView(true,2);',
+    }),
+  );
+  await p.goto(`${base}#arena?lab=2`);
+  await p.evaluate(() => (document.querySelector("#arena").hidden = false));
+  await p.waitForFunction(() => window.testDuel.states.length === 2);
+  async function finish(a, b) {
+    await p.evaluate(
+      ({ a, b }) => {
+        const duel = window.testDuel;
+        duel.states = [
+          { ...duel.states[0], ...a },
+          { ...duel.states[1], ...b },
+        ];
+        duel.finishStep();
+      },
+      { a, b },
+    );
+  }
+  await finish(
+    { score: 20, steps: 10, done: true },
+    { score: 0, steps: 1, done: false },
+  );
+  assert.equal(await p.locator(".duel-result:visible").count(), 0);
+  await finish(
+    { score: 20, steps: 10, done: true },
+    { score: 10, steps: 1, done: true },
+  );
+  assert.match(await p.locator("#duel-status").innerText(), /Player A wins/);
+  assert.equal(await p.locator(".duel-confetti i").count(), 48);
+  await p.evaluate(() => {
+    window.originalPiece = document.querySelector(".duel-confetti i");
+    window.testDuel.finishStep();
+  });
+  assert.equal(
+    await p.evaluate(
+      () => window.originalPiece === document.querySelector(".duel-confetti i"),
+    ),
+    true,
+  );
+  await p.locator("#duel-toggle").click(); // Try again starts a fresh countdown and clears celebrations.
+  await p.waitForFunction(() => window.testDuel.countdown === 3);
+  assert.equal(await p.locator(".duel-result:visible").count(), 0);
+  assert.equal(await p.locator(".duel-confetti i").count(), 0);
+  await p.evaluate(() => window.testDuel.pause());
+  await finish(
+    { score: -5, steps: 20, done: true },
+    { score: -5, steps: 12, done: true },
+  );
+  assert.match(await p.locator("#duel-status").innerText(), /Player B wins/);
+  assert.equal(
+    await p.locator(".duel-result:visible span").innerText(),
+    "Equal reward · fewer steps",
+  );
+  await p.screenshot({
+    path: path.resolve(__dirname, "../artifacts/web/duel-winner.png"),
+    fullPage: true,
+  });
+  await p.evaluate(() => window.testDuel.reset());
+  await finish(
+    { score: 1.0001, steps: 20, done: true },
+    { score: 1, steps: 12, done: true },
+  );
+  assert.match(await p.locator("#duel-status").innerText(), /Player A wins/);
+  await p.evaluate(() => window.testDuel.reset());
+  await finish(
+    { score: 10, steps: 12, done: true },
+    { score: 10, steps: 12, done: true },
+  );
+  assert.equal(await p.locator("#duel-status").innerText(), "DRAW");
+  assert.equal(
+    await p.locator('.duel-result[data-outcome="draw"]:visible').count(),
+    2,
+  );
+  assert.equal(await p.locator(".duel-confetti i").count(), 0);
+  assert.equal(
+    await p
+      .locator(".duel-result")
+      .first()
+      .evaluate((el) => getComputedStyle(el).animationName),
+    "duel-draw",
+  );
+  await p.screenshot({
+    path: path.resolve(__dirname, "../artifacts/web/duel-draw.png"),
+    fullPage: true,
+  });
+  await p.emulateMedia({ reducedMotion: "reduce" });
+  assert.equal(
+    await p
+      .locator(".duel-result")
+      .first()
+      .evaluate((el) => getComputedStyle(el).animationName),
+    "none",
+  );
+  await p.evaluate(() => window.testDuel.reset());
+  await finish(
+    { score: 20, steps: 10, done: true },
+    { score: 10, steps: 12, done: true },
+  );
+  assert.equal(
+    await p.locator('.duel-result[data-outcome="winner"]:visible').count(),
+    1,
+  );
+  assert.equal(await p.locator(".duel-confetti i").count(), 0);
+  assert.deepEqual(p.errors, []);
+  await p.context().close();
 });
