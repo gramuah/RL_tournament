@@ -445,7 +445,7 @@ export class Playground {
     c.stroke();
     c.save();
     c.translate(s.x, s.y);
-    c.rotate(-s.angle);
+    c.rotate(s.angle);
     c.fillStyle = ink;
     c.beginPath();
     c.moveTo(-18, -15);

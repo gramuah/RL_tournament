@@ -254,11 +254,11 @@ main {
   transform: translateY(-1px);
 }
 .primary {
-  background: var(--orange);
+  background: var(--accent);
   color: var(--white);
 }
 .primary:hover {
-  background: var(--accent);
+  background: #ab351c;
 }
 .outline {
   border-color: var(--ink);
