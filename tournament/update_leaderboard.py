@@ -19,7 +19,7 @@ from evaluate import evaluate_single_submission, PRACTICAL_CONFIGS
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 LEADERBOARD_PATH = REPO_ROOT / "LEADERBOARD.md"
-RESULTS_DIR = REPO_ROOT / "tournament" / "results"
+RESULTS_DIR = REPO_ROOT / "docs" / "data"
 
 
 def get_rank_medal(rank):
@@ -122,7 +122,7 @@ All agents uploaded to GitHub are automatically benchmarked under identical cond
 Ambos agentes comienzan con la **misma semilla determinista** (terreno, altitud, objetivo y viento idénticos):
 
 <p align="center">
-  <img src="assets/duels/duel_lunarlander_preview.gif" alt="LunarLander Synchronized Duel Replay" width="100%" style="border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.5);" />
+  <img src="docs/assets/duel_lunarlander_preview.gif" alt="LunarLander Synchronized Duel Replay" width="100%" style="border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.5);" />
 </p>
 
 ---
@@ -213,7 +213,7 @@ def main():
     parser = argparse.ArgumentParser(description="Update Course Leaderboard")
     parser.add_argument("--episodes", type=int, default=30, help="Episodes per agent")
     parser.add_argument("--seed", type=int, default=42, help="Base seed")
-    parser.add_argument("--from-json", action="store_true", help="Build leaderboard from cached JSON files in tournament/results")
+    parser.add_argument("--from-json", action="store_true", help="Build leaderboard from cached JSON files in docs/data")
     args = parser.parse_args()
 
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
@@ -237,14 +237,6 @@ def main():
             json.dump(p1_results, f, indent=2)
         with open(p2_json, "w", encoding="utf-8") as f:
             json.dump(p2_results, f, indent=2)
-
-        # Also sync to GitHub Pages docs/data directory if it exists
-        docs_data_dir = REPO_ROOT / "docs" / "data"
-        if docs_data_dir.exists():
-            with open(docs_data_dir / "leaderboard_p1.json", "w", encoding="utf-8") as f:
-                json.dump(p1_results, f, indent=2)
-            with open(docs_data_dir / "leaderboard_p2.json", "w", encoding="utf-8") as f:
-                json.dump(p2_results, f, indent=2)
 
     markdown_content = generate_leaderboard_content(p1_results, p2_results, timestamp)
 

@@ -8,8 +8,6 @@ Each participant or team must place their submission inside their own subfolder 
 
 ```text
 submissions/practical1/
-├── baseline_heuristic/
-│   └── agent.py
 ├── baseline_random/
 │   └── agent.py
 └── <your_github_username>/

@@ -12,14 +12,14 @@ on:
           - '1'
           - '2'
       agent_a:
-        description: 'Corner A: Path, baseline (baseline_heuristic, baseline_random, demo_student), or GitHub username'
+        description: 'Corner A: Path, baseline (baseline_random), or GitHub username'
         required: true
-        default: 'demo_student'
+        default: 'rafael_flor'
         type: string
       agent_b:
         description: 'Corner B: Path, baseline, or GitHub username'
         required: true
-        default: 'baseline_heuristic'
+        default: 'baseline_random'
         type: string
       episodes:
         description: 'Number of duel episodes'
