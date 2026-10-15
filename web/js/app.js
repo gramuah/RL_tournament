@@ -43,9 +43,10 @@ let lab = 2,
   request = 0,
   loadState = "loading";
 const playground = new Playground();
+const arena = new Playground("duel", true);
 function route() {
   const [name, query = ""] = location.hash.slice(1).split("?");
-  view = ["standings", "playground", "submit", "rules"].includes(name)
+  view = ["standings", "arena", "playground", "submit", "rules"].includes(name)
     ? name
     : "standings";
   const nextLab = new URLSearchParams(query).get("lab") === "1" ? 1 : 2;
@@ -95,6 +96,10 @@ function route() {
   $("submission-guide").href = `${repo}/tree/main/submissions/lab${lab}`;
   document.title = `${view[0].toUpperCase() + view.slice(1)} · Lab ${lab} — RL Tournament`;
   playground.setView(view === "playground", lab);
+  arena.setView(view === "arena", lab);
+  document
+    .querySelectorAll("[data-arena-link]")
+    .forEach((el) => (el.href = `#arena?lab=${lab}`));
   if (changed) {
     selected.clear();
     $("search").value = "";

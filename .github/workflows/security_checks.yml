@@ -61,7 +61,10 @@ jobs:
         run: |
           npm ci
           npx playwright install --with-deps chromium
-      - name: Test GitHub Pages subpath and responsive UI
+      - name: Test Pages UI and real Gymnasium live controls
+        env:
+          GYM_PYTHON: python
+          GYM_ISOLATED_AGENTS: "1"
         run: npm run test:web
       - name: Upload browser screenshots
         if: always()

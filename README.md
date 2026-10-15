@@ -47,7 +47,27 @@ The tournament workflow evaluates the merged revision and uploads JSON results p
 
 The published manifest records the source SHA, evaluation time, episode count, and base seed. Infrastructure failures stop publication and leave the previous deployment intact. Failed agents appear as unranked errors. Repository snapshots are labelled historical when previewed locally; the browser never substitutes fabricated scores.
 
-The **Playground** is a simplified educational JavaScript simulation with manual, random, and built-in heuristic policies. It does not execute student models or contribute to official results. The archived LunarLander video is a fixed example, not a selected-agent replay.
+The **Live Duel** arena supports human versus policy and policy versus policy for both labs, with synchronized seeded starts, live reward/step counters, winner/tie detection, pause/reset, new scenarios, and speed controls. The **Playground** uses the same environment controls for solo practice. Keyboard shortcuts from the original site (arrows/WASD, Space/P, Enter/O, R) and touch controls are preserved.
+
+On GitHub Pages, browser practice uses the original bundled Taxi sprites and the original LunarLander-style canvas rendering, with labelled built-in heuristic/random policies and illustrative physics. The old `main` site also used JavaScript physics and substituted heuristics for named student agents; this UI does not misrepresent those as model inference.
+
+For **original Gymnasium physics, rewards and rendered frames**, serve this same UI locally with Python:
+
+```bash
+# Python 3.11; activate your environment first. Box2D needs SWIG and a compiler.
+python -m pip install -r tournament/requirements-ci.txt
+python -m tournament.serve
+# Open the printed http://127.0.0.1:8000/ URL. Gymnasium is selected automatically.
+
+# Optional: expose existing repository submissions in the policy selectors.
+# Docker must be running; agents execute only in the existing isolated image.
+docker build -f tournament/Dockerfile.agent -t rl-tournament-agent:local tournament
+python -m tournament.serve --isolated-agents
+```
+
+Both players use separate Gymnasium environments reset to the same seed. Taxi uses discrete keypresses; LunarLander advances while running and accepts held engine controls. Runtime errors stop play with an explicit error; they never switch to a substitute simulation or import student code on the host. The local runtime binds loopback, serves only `web/`, and rejects cross-origin API calls. Practice results never update official standings.
+
+The archived LunarLander recording is a fixed example, not a selected-agent replay. For an exportable real-agent video, use the [duel workflow](https://github.com/gramuah/RL_tournament/actions/workflows/duel.yml) or the comparator below.
 
 ## Local development and verification
 
@@ -60,6 +80,9 @@ python3 -m http.server 8000 --directory ..
 npm ci
 npx playwright install chromium
 npm run test:web
+# Include end-to-end original Gymnasium rendering/control tests:
+GYM_PYTHON=python npm run test:web
+# CI also sets GYM_ISOLATED_AGENTS=1 to test saved-agent play in Docker.
 ```
 
 For evaluator development, use Python 3.11. The fully hashed CI lock targets Linux; local platform packages can be installed from its input file:

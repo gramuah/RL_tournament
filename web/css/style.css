@@ -1357,3 +1357,160 @@ pre {
     object-fit: contain;
   }
 }
+
+/* The arena keeps the environment viewport and controls ahead of decoration. */
+.arena-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 240px;
+  gap: 24px;
+}
+.duel-stages {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  align-content: start;
+}
+.play-stage {
+  min-width: 0;
+}
+.play-stage canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: #000;
+}
+.play-stage select {
+  width: calc(100% - 24px);
+  margin: 0 12px 12px;
+  padding: 10px;
+  background: var(--white);
+  color: var(--ink);
+  border: 1px solid var(--line);
+}
+.player-heading {
+  display: block;
+  padding: 14px 12px 8px;
+  font-weight: 600;
+}
+.telemetry {
+  margin: 0;
+  padding: 12px;
+  font-family: var(--mono);
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+.session-settings {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.session-settings input {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--line);
+  padding: 12px 9px;
+  background: var(--white);
+  color: var(--ink);
+}
+.runtime-help {
+  margin-top: 24px;
+  border-top: 1px solid var(--line);
+  padding-top: 20px;
+}
+.runtime-help summary {
+  cursor: pointer;
+}
+.runtime-help pre {
+  overflow-x: auto;
+  padding: 16px;
+  background: var(--soft);
+  font-size: 12px;
+}
+.runtime-help p {
+  max-width: 80ch;
+}
+[data-action] {
+  touch-action: none;
+  min-height: 44px;
+}
+#duel-status {
+  font-size: 12px;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 1100px) {
+  .arena-layout {
+    grid-template-columns: 1fr;
+  }
+  .arena-layout .play-sidebar {
+    max-width: 540px;
+    width: 100%;
+    justify-self: center;
+  }
+}
+@media (max-width: 600px) {
+  .duel-stages {
+    gap: 8px;
+  }
+  .duel-stages .demo-hud {
+    gap: 16px;
+    padding: 10px;
+  }
+  .duel-stages .demo-hud strong {
+    font-size: 18px;
+  }
+  .duel-stages .eyebrow {
+    font-size: 8px;
+  }
+  .duel-stages select {
+    width: calc(100% - 12px);
+    margin: 0 6px 8px;
+    padding: 8px 2px;
+    font-size: 11px;
+  }
+  .duel-stages .telemetry {
+    padding: 8px;
+    font-size: 9px;
+  }
+  .duel-stages .player-heading {
+    padding: 10px 8px 6px;
+    font-size: 12px;
+  }
+  .main-nav {
+    gap: 16px;
+    overflow-x: auto;
+  }
+  .main-nav a {
+    white-space: nowrap;
+  }
+}
+@media (max-width: 600px) {
+  .arena-layout {
+    gap: 12px;
+  }
+  .play-sidebar {
+    display: flex;
+    flex-direction: column;
+  }
+  .play-sidebar > .eyebrow {
+    order: -1;
+  }
+  .play-sidebar > [data-controls] {
+    order: 0;
+  }
+  .play-sidebar > [data-controls] h3,
+  .play-sidebar > [data-controls] > p:not(.keyboard-note) {
+    display: none;
+  }
+  .play-sidebar > .button {
+    order: 1;
+  }
+  .play-sidebar > .action-pair {
+    order: 2;
+  }
+  .play-sidebar > label,
+  .play-sidebar > select,
+  .play-sidebar > .session-settings {
+    order: 3;
+  }
+}

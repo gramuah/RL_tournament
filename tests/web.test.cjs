@@ -236,3 +236,302 @@ test("Empty results, literal hostile names, provenance and reduced motion", asyn
   assert.deepEqual(p.errors, []);
   await p.context().close();
 });
+
+async function openArena(p) {
+  await loaded(p);
+  await p.locator('[data-view="arena"]').click();
+  await p.locator("#duel-a-canvas").waitFor({ state: "visible" });
+}
+test("Live duels finish, tie fairly, reset reproducibly, and expose original Taxi sprites", async () => {
+  const p = await page({ viewport: { width: 1440, height: 1000 } });
+  await openArena(p);
+  await p.locator("#duel-a-policy").selectOption("heuristic");
+  await p.locator("#duel-speed").selectOption("4");
+  await p.locator("#duel-toggle").click();
+  await p.waitForFunction(
+    () => document.querySelector("#duel-status").textContent === "DRAW",
+  );
+  const reward = await p.locator("#duel-a-score").innerText();
+  const steps = await p.locator("#duel-a-steps").innerText();
+  assert.equal(await p.locator("#duel-b-score").innerText(), reward);
+  assert.equal(await p.locator("#duel-b-steps").innerText(), steps);
+  assert.match(
+    await p.locator("#duel-a-telemetry").innerText(),
+    /DESTINATION REACHED/,
+  );
+  await p.locator("#duel-reset").click();
+  assert.equal(await p.locator("#duel-a-steps").innerText(), "0");
+  await p.locator("#duel-toggle").click();
+  await p.waitForFunction(
+    () => document.querySelector("#duel-status").textContent === "DRAW",
+  );
+  assert.equal(await p.locator("#duel-a-score").innerText(), reward);
+  assert.equal(await p.locator("#duel-a-steps").innerText(), steps);
+  assert.equal(
+    await p.evaluate(
+      () =>
+        performance
+          .getEntriesByType("resource")
+          .filter(
+            (e) => e.name.includes("/assets/taxi/") && e.responseStatus === 200,
+          ).length,
+    ),
+    11,
+  );
+  await p.locator("#duel-b-policy").selectOption("random");
+  await p.locator("#duel-toggle").click();
+  await p.waitForFunction(
+    () => document.querySelector("#duel-status").textContent.includes("wins"),
+    null,
+    { timeout: 20000 },
+  );
+  assert.match(await p.locator("#duel-status").innerText(), /Player A wins/);
+  await p.locator("#duel-new").click();
+  assert.equal(await p.locator("#duel-seed").inputValue(), "43");
+  await p.locator("#duel-seed").fill("-1");
+  await p.locator("#duel-seed").press("Tab");
+  assert.equal(await p.locator("#duel-toggle").isDisabled(), true);
+  assert.match(
+    await p.locator("#duel-status").innerText(),
+    /whole-number seed/,
+  );
+  await p.locator("#duel-seed").fill("42");
+  await p.locator("#duel-seed").press("Tab");
+  assert.equal(await p.locator("#duel-toggle").isDisabled(), false);
+  await p.screenshot({
+    path: path.resolve(__dirname, "../artifacts/web/duel-desktop.png"),
+    fullPage: true,
+  });
+  assert.deepEqual(p.errors, []);
+  await p.context().close();
+});
+test("Human can play either side using original shortcuts and touch; navigation pauses both labs", async () => {
+  const p = await page({
+    viewport: { width: 390, height: 844 },
+    isMobile: true,
+    hasTouch: true,
+  });
+  await openArena(p);
+  await p.locator("#duel-b-policy").selectOption("manual");
+  assert.equal(await p.locator("#duel-a-policy").inputValue(), "heuristic");
+  assert.match(await p.locator("#duel-human").innerText(), /player B/i);
+  await p.locator("#duel-b-canvas").focus();
+  await p.keyboard.press("w");
+  assert.equal(await p.locator("#duel-b-steps").innerText(), "1");
+  await p.locator('#arena [data-action="pickup"]').tap();
+  assert.equal(await p.locator("#duel-b-steps").innerText(), "2");
+  await p.locator("#duel-b-canvas").focus();
+  await p.keyboard.press("Space");
+  await p.keyboard.press("Enter");
+  assert.equal(await p.locator("#duel-b-steps").innerText(), "4");
+  await p.keyboard.press("r");
+  assert.equal(await p.locator("#duel-b-steps").innerText(), "0");
+  assert.equal(
+    await p.evaluate(
+      () =>
+        document.documentElement.scrollWidth <=
+        document.documentElement.clientWidth,
+    ),
+    true,
+  );
+  await p.screenshot({
+    path: path.resolve(__dirname, "../artifacts/web/duel-mobile.png"),
+    fullPage: true,
+  });
+  await p.locator('[data-lab="1"]').click();
+  await p.waitForFunction(() =>
+    document.querySelector("#duel-title").textContent.startsWith("LunarLander"),
+  );
+  await p.locator("#duel-toggle").click();
+  await p.locator("#duel-b-canvas").focus();
+  const thrust = p.locator(
+    '#arena [data-controls="lander"] [data-action="up"]',
+  );
+  await thrust.scrollIntoViewIfNeeded();
+  const box = await thrust.boundingBox();
+  await p.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await p.mouse.down();
+  await p.waitForFunction(
+    () => Number(document.querySelector("#duel-b-score").textContent) < 0,
+  );
+  await p.mouse.up();
+  await p.locator("#duel-b-canvas").focus();
+  await p.keyboard.down("w");
+  await p.waitForFunction(
+    () => Number(document.querySelector("#duel-b-steps").textContent) > 3,
+  );
+  await p.keyboard.up("w");
+  await p.locator("#duel-toggle").click();
+  const count = await p.locator("#duel-b-steps").innerText();
+  await p.waitForTimeout(120);
+  assert.equal(await p.locator("#duel-b-steps").innerText(), count);
+  await p.screenshot({
+    path: path.resolve(__dirname, "../artifacts/web/duel-lander-mobile.png"),
+    fullPage: true,
+  });
+  await p.locator("#duel-toggle").click();
+  await p.locator('[data-view="standings"]').click();
+  await p.locator("#arena").waitFor({ state: "hidden" });
+  const stopped = await p.locator("#duel-b-steps").innerText();
+  await p.waitForTimeout(120);
+  assert.equal(await p.locator("#duel-b-steps").innerText(), stopped);
+  assert.deepEqual(p.errors, []);
+  await p.context().close();
+});
+
+test(
+  "Real Gymnasium browser controls, frames, duels and connection failures",
+  { skip: !process.env.GYM_PYTHON },
+  async () => {
+    const { spawn } = require("node:child_process");
+    const { once } = require("node:events");
+    const child = spawn(
+      process.env.GYM_PYTHON,
+      [
+        "-m",
+        "tournament.serve",
+        "--port",
+        "0",
+        ...(process.env.GYM_ISOLATED_AGENTS === "1"
+          ? ["--isolated-agents"]
+          : []),
+      ],
+      { cwd: path.resolve(__dirname, "..") },
+    );
+    let output = "";
+    const address = await new Promise((resolve, reject) => {
+      const timer = setTimeout(
+        () => reject(new Error(`Gym server startup timed out: ${output}`)),
+        30000,
+      );
+      child.on("error", (error) => {
+        clearTimeout(timer);
+        reject(error);
+      });
+      child.on("exit", (code) => {
+        clearTimeout(timer);
+        reject(new Error(`Gym server exited ${code}: ${output}`));
+      });
+      child.stderr.on("data", (data) => (output += data));
+      child.stdout.on("data", (data) => {
+        output += data;
+        const match = output.match(/http:\/\/127\.0\.0\.1:\d+\//);
+        if (match) {
+          clearTimeout(timer);
+          resolve(match[0]);
+        }
+      });
+    }).catch((error) => {
+      child.kill();
+      throw error;
+    });
+    const p = await page({ viewport: { width: 1440, height: 1000 } });
+    try {
+      await p.goto(`${address}#arena?lab=2`);
+      await p.waitForFunction(
+        () =>
+          document.querySelector("#duel-engine").value === "gym" &&
+          !document.querySelector("#duel-toggle").disabled,
+      );
+      assert.match(await p.locator("#duel-a-telemetry").innerText(), /Taxi-v3/);
+      await p.locator("#duel-a-canvas").focus();
+      await p.keyboard.press("ArrowUp");
+      await p.waitForFunction(
+        () => document.querySelector("#duel-a-steps").textContent === "1",
+      );
+      await p.locator("#duel-toggle").click();
+      await p.locator("#duel-a-policy").selectOption("heuristic");
+      await p.waitForFunction(
+        () => !document.querySelector("#duel-toggle").disabled,
+      );
+      await p.locator("#duel-speed").selectOption("4");
+      await p.locator("#duel-toggle").click();
+      await p.waitForFunction(
+        () => document.querySelector("#duel-status").textContent === "DRAW",
+      );
+      assert.match(
+        await p.locator("#duel-a-telemetry").innerText(),
+        /DESTINATION REACHED/,
+      );
+      await p.screenshot({
+        path: path.resolve(__dirname, "../artifacts/web/gym-taxi-duel.png"),
+        fullPage: true,
+      });
+      if (process.env.GYM_ISOLATED_AGENTS === "1") {
+        await p.locator("#duel-a-policy").selectOption("agent:rafael_flor");
+        await p.waitForFunction(
+          () => !document.querySelector("#duel-toggle").disabled,
+        );
+        await p.locator("#duel-toggle").click();
+        await p.waitForFunction(() =>
+          document
+            .querySelector("#duel-a-telemetry")
+            .textContent.includes("DESTINATION REACHED"),
+        );
+      }
+      await p.locator('[data-lab="1"]').click();
+      await p.waitForFunction(
+        () =>
+          document
+            .querySelector("#duel-a-telemetry")
+            .textContent.includes("LunarLander-v3") &&
+          !document.querySelector("#duel-toggle").disabled,
+      );
+      await p.locator("#duel-a-policy").selectOption("manual");
+      await p.waitForFunction(
+        () => !document.querySelector("#duel-toggle").disabled,
+      );
+      await p.locator("#duel-toggle").click();
+      await p.locator("#duel-a-canvas").focus();
+      await p.keyboard.down("Space");
+      await p.waitForFunction(
+        () => Number(document.querySelector("#duel-a-steps").textContent) >= 4,
+      );
+      await p.keyboard.up("Space");
+      await p.locator("#duel-toggle").click();
+      await p.screenshot({
+        path: path.resolve(__dirname, "../artifacts/web/gym-lander-duel.png"),
+        fullPage: true,
+      });
+      // Pending requests must not paint old frames after a reset or runtime switch.
+      await p.route("**/api/step", async (route) => {
+        await new Promise((resolve) => setTimeout(resolve, 200));
+        await route.continue();
+      });
+      await p.locator("#duel-toggle").click();
+      await p.waitForRequest("**/api/step");
+      await p.locator("#duel-engine").selectOption("browser");
+      await p.waitForTimeout(300);
+      assert.equal(await p.locator("#duel-a-steps").innerText(), "0");
+      assert.match(
+        await p.locator("#duel-a-telemetry").innerText(),
+        /Browser model/,
+      );
+      await p.unroute("**/api/step");
+      await p.locator("#duel-engine").selectOption("gym");
+      await p.waitForFunction(
+        () => !document.querySelector("#duel-toggle").disabled,
+      );
+      await p.route("**/api/step", (route) =>
+        route.fulfill({
+          status: 503,
+          json: { error: "Runtime disconnected. Reset to reconnect." },
+        }),
+      );
+      await p.locator("#duel-toggle").click();
+      await p.waitForFunction(() =>
+        document
+          .querySelector("#duel-status")
+          .textContent.includes("Runtime disconnected"),
+      );
+      assert.equal(await p.locator("#duel-toggle").isDisabled(), true);
+      assert.equal(await p.locator("#duel-engine").inputValue(), "gym");
+      assert.deepEqual(p.errors, []);
+    } finally {
+      await p.context().close();
+      const exit = once(child, "exit");
+      child.kill("SIGINT");
+      await exit;
+    }
+  },
+);

@@ -35,3 +35,9 @@ The static site renders participant names as text, loads same-origin assets, and
 Run the unit suite, real Docker integration tests, and browser tests documented in README. The security workflow exercises malicious filesystem/network/process access, timeouts, invalid protocol messages, artifact forgery, ownership violations, and existing model compatibility.
 
 Repository protections are external state: committing workflow YAML or CODEOWNERS does not activate them. Use the staged, reviewable [rollout procedure](tournament/OPERATIONS.md), verify the settings readback, and verify the first hosted deployment separately from local tests.
+
+## Local interactive Gymnasium server
+
+`python -m tournament.serve` binds only `127.0.0.1` and serves the `web/` directory. The JSON API requires a loopback Host and same-origin Origin/Fetch Metadata when present, accepts only bounded JSON bodies, and never enables CORS. It accepts a fixed set of labs, policies, integer seeds and discrete actions. Sessions are capped at eight, expire after five minutes idle, and close environments/containers on expiry, reset or shutdown. HTTP reads have a five-second timeout. This is a local teaching/development server, not an internet-facing multi-user service.
+
+Saved submissions are disabled by default. `--isolated-agents` validates existing repository submission directories and requires the trusted Docker image before serving; inference always uses `IsolatedAgent`. Arbitrary paths, uploads and remote model URLs are not accepted. Errors close the failed session and never fall back to host execution. Environments, rewards and original Gymnasium frames remain owned by the trusted server. Practice never writes results, repository files or leaderboard data.
