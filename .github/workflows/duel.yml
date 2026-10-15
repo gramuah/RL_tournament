@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       practical:
-        description: 'Practical Session'
+        description: 'Lab Session'
         required: true
         default: '1'
         type: choice
@@ -74,7 +74,7 @@ jobs:
         if: always()
         run: |
           echo "## 🥊 RL Tournament Duel Results" >> $GITHUB_STEP_SUMMARY
-          echo "**Practical**: ${{ inputs.practical }} | **Seed**: ${{ inputs.seed }} | **Episodes**: ${{ inputs.episodes }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Lab**: ${{ inputs.practical }} | **Seed**: ${{ inputs.seed }} | **Episodes**: ${{ inputs.episodes }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- 🔵 **Corner A**: \`${{ inputs.agent_a }}\`" >> $GITHUB_STEP_SUMMARY
           echo "- 🟠 **Corner B**: \`${{ inputs.agent_b }}\`" >> $GITHUB_STEP_SUMMARY

@@ -1,6 +1,6 @@
-# 🚀 Submissions: Practical 1 (LunarLander-v3)
+# 🚀 Submissions: Lab 1 (LunarLander-v3)
 
-This folder contains all participant models submitted for the **Practical 1 Tournament** (Master in AI Applications, Universidad de Alcalá).
+This folder contains all participant models submitted for the **Lab 1 Tournament** (Master in AI Applications, University of Alcalá).
 
 ## 📂 Directory Structure
 

@@ -58,13 +58,13 @@ jobs:
           SUB_DIR="${{ steps.detect.outputs.submission_dir }}"
           echo "Evaluating: $SUB_DIR"
 
-          # Determine practical number (1 or 2)
+          # Determine lab number (1 or 2)
           if [[ "$SUB_DIR" == *"practical1"* ]]; then
             PRACTICAL_ID=1
           elif [[ "$SUB_DIR" == *"practical2"* ]]; then
             PRACTICAL_ID=2
           else
-            echo "Cannot determine practical ID from $SUB_DIR"
+            echo "Cannot determine lab ID from $SUB_DIR"
             exit 1
           fi
 

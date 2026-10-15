@@ -41,7 +41,7 @@ except ImportError:
 
 PRACTICAL_CONFIGS = {
     1: {
-        "name": "Practical 1 - LunarLander-v3",
+        "name": "Lab 1 - LunarLander-v3",
         "env_candidates": ["LunarLander-v3", "LunarLander-v2"],
         "max_steps": 1000,
         "default_episodes": 5,
@@ -50,7 +50,7 @@ PRACTICAL_CONFIGS = {
         "action_names": {0: "No-op", 1: "Left Eng", 2: "Main Eng", 3: "Right Eng"},
     },
     2: {
-        "name": "Practical 2 - Taxi-v3 / Taxi-v4",
+        "name": "Lab 2 - Taxi-v3 / Taxi-v4",
         "env_candidates": ["Taxi-v4", "Taxi-v3"],
         "max_steps": 200,
         "default_episodes": 10,
@@ -158,7 +158,7 @@ def download_github_submission(practical_id, github_username, target_dir):
     except urllib.error.HTTPError as e:
         if e.code == 404:
             raise ValueError(
-                f"Opponent '{github_username}' was not found in practical {practical_id} of repository {GITHUB_OWNER}/{GITHUB_REPO}."
+                f"Opponent '{github_username}' was not found in lab {practical_id} of repository {GITHUB_OWNER}/{GITHUB_REPO}."
             )
         raise RuntimeError(f"GitHub API Error ({e.code}): {e.reason}")
 
@@ -683,7 +683,7 @@ def run_head_to_head(
 
     print(f"\n=======================================================")
     print(f"🥊 RL TOURNAMENT HEAD-TO-HEAD DUEL 🥊")
-    print(f"Practical: {PRACTICAL_CONFIGS[practical_id]['name']}")
+    print(f"Lab: {PRACTICAL_CONFIGS[practical_id]['name']}")
     print(f"🔵 Corner A: {name_a}")
     print(f"🟠 Corner B: {name_b}")
     print(f"Episodes:   {episodes} (Base seed: {base_seed})")
@@ -834,7 +834,7 @@ def duel_agents(practical_id, agent_a, agent_b, episodes=5, seed=42, output_vide
 
 def main():
     parser = argparse.ArgumentParser(description="RL Course Head-to-Head Agent Duel & Comparator")
-    parser.add_argument("--practical", type=int, choices=[1, 2], default=1, help="Practical session (1 or 2)")
+    parser.add_argument("--practical", type=int, choices=[1, 2], default=1, help="Lab session (1 or 2)")
     parser.add_argument("--agent-a", type=str, default="rafael_flor", help="Path, baseline, or username for Agent A")
     parser.add_argument("--agent-b", type=str, default="baseline_random", help="Path, baseline, or username for Agent B")
     parser.add_argument("--episodes", type=int, default=5, help="Number of benchmark duel episodes")
@@ -846,7 +846,7 @@ def main():
 
     if args.list_opponents:
         opponents = list_available_opponents(args.practical)
-        print(f"Available opponents for Practical {args.practical}:")
+        print(f"Available opponents for Lab {args.practical}:")
         for op in opponents:
             print(f"  • {op}")
         return

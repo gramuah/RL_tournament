@@ -6,15 +6,17 @@ Public student materials and agent tournament for the University of Alcalá Rein
 
 | Assignment | Student notebook | Submission guide |
 | --- | --- | --- |
-| Practical 1: PPO / LunarLander | [Open notebook](Lab_sessions/Practical1/unit1_uah_student.ipynb) | [Submit an agent](submissions/practical1/) |
-| Practical 2: Q-learning / Taxi | [Open notebook](Lab_sessions/Practical2/unit2_uah_student.ipynb) | [Submit an agent](submissions/practical2/) |
-| Final project: Deep Q-learning / Atari | [Open notebook](Lab_sessions/Practical_final/unit3_uah_student.ipynb) | Presentation and oral defense |
+| Lab 1: PPO / LunarLander | [Open notebook](Lab_sessions/Lab1/unit1_uah_student.ipynb) | [Submit an agent](submissions/practical1/) |
+| Lab 2: Q-learning / Taxi | [Open notebook](Lab_sessions/Lab2/unit2_uah_student.ipynb) | [Submit an agent](submissions/practical2/) |
+| Final project: Deep Q-learning / Atari | [Open notebook](Lab_sessions/FinalProject/unit3_uah_student.ipynb) | Presentation and oral defense |
 
-Read the [practical sessions guide](Lab_sessions/Guide_Practical_Sessions.pdf) for notebook setup, deliverables, and assessment. Its editable [LaTeX source](Lab_sessions/Guide_Practical_Sessions.tex) is maintained here alongside the PDF.
+Read the [lab guide](Lab_sessions/Lab_Guide.pdf) for notebook setup, deliverables, and assessment. Its editable [LaTeX source](Lab_sessions/Lab_Guide.tex) is maintained here alongside the PDF.
+
+The existing `submissions/practical1/` and `submissions/practical2/` paths, `--practical` CLI option, workflow `practical` input, and Python names such as `practical_id` and `submit_practical` remain supported for compatibility with existing submissions and notebooks. Student-facing materials use **Lab 1** and **Lab 2**.
 
 ## Repository ownership
 
-- `Lab_sessions/`: canonical student notebooks and practical guide. Notebook illustrations are embedded so downloaded notebooks work independently.
+- `Lab_sessions/`: canonical student notebooks and lab guide. Notebook illustrations are embedded so downloaded notebooks work independently.
 - `tournament/`: canonical submission helper, evaluator, comparator, and leaderboard generator.
 - `submissions/`: submitted agents and their model artifacts, plus the random baselines.
 - `docs/`: GitHub Pages arena, shared media, and canonical leaderboard JSON in `docs/data/`.
@@ -38,8 +40,8 @@ Students can submit their trained models directly to GitHub! An automated **GitH
 
 👉 **[View the Live Class Leaderboard (LEADERBOARD.md)](LEADERBOARD.md)** 👈
 
-- 🚀 **Practical 1:** `LunarLander-v3` — [Folder & Submission Guide](submissions/practical1/)
-- 🚕 **Practical 2:** `Taxi-v3 / Taxi-v4` — [Folder & Submission Guide](submissions/practical2/)
+- 🚀 **Lab 1:** `LunarLander-v3` — [Folder & Submission Guide](submissions/practical1/)
+- 🚕 **Lab 2:** `Taxi-v3 / Taxi-v4` — [Folder & Submission Guide](submissions/practical2/)
 
 When you submit via Pull Request, a bot evaluates your agent and leaves a score report on your PR when the evaluation workflow completes.
 

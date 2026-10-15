@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>🏆 RL Tournament Arena & Visual Comparator | UAH</title>
-  <meta name="description" content="Visualizador interactivo y arena de enfrentamientos para el Torneo de Aprendizaje por Refuerzo (Máster en IA, Universidad de Alcalá). Compara agentes cara a cara con vídeo sincronizado y métricas de velocidad.">
+  <meta name="description" content="Interactive viewer and duel arena for the Reinforcement Learning Tournament (Master in AI, University of Alcalá). Compare agents head-to-head with synchronized video and speed metrics.">
   
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -25,23 +25,23 @@
       <a href="#" class="brand">
         <span class="brand-icon">🏛️</span>
         <div class="brand-text">
-          <h1>Arena de Evaluación RL</h1>
-          <p>Universidad de Alcalá · Máster en IA</p>
+          <h1>RL Evaluation Arena</h1>
+          <p>University of Alcalá · Master in AI</p>
         </div>
       </a>
 
       <nav class="nav-links">
         <button class="tab-btn active" data-tab="arena" id="tab-arena-btn">
-          Arena de Duelos
+          Duel Arena
         </button>
         <button class="tab-btn" data-tab="leaderboard" id="tab-leaderboard-btn">
-          Clasificación Oficial
+          Official Leaderboard
         </button>
         <button class="tab-btn" data-tab="sandbox" id="tab-sandbox-btn">
-          Simulador Interactivo
+          Interactive Simulator
         </button>
               <button class="tab-btn" data-tab="rules" id="tab-rules-btn">
-          🎯 Criterios y Puntuación
+          🎯 Rules and Scoring
         </button>
       </nav>
 
@@ -50,7 +50,7 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
             <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
           </svg>
-          <span>Repositorio GitHub</span>
+          <span>GitHub Repository</span>
         </a>
       </div>
     </div>
@@ -59,21 +59,21 @@
   <!-- Main Content -->
   <main>
 
-    <!-- Practical Session Switcher -->
+    <!-- Lab Session Switcher -->
     <div class="practical-selector">
       <button class="p-pill active" data-practical="1" id="pill-p1">
-        <span>Práctica 1: LunarLander-v3</span>
+        <span>Lab 1: LunarLander-v3</span>
       </button>
       <button class="p-pill" data-practical="2" id="pill-p2">
-        <span>Práctica 2: Taxi-v4</span>
+        <span>Lab 2: Taxi-v4</span>
       </button>
     </div>
 
     <!-- VIEW 1: HEAD-TO-HEAD ARENA -->
     <section id="arena-view" class="view-section">
       <div class="arena-header">
-        <h2>Arena de Comparación Cara a Cara</h2>
-        <p>Compara dos agentes en el <strong>mismo entorno y semilla determinista</strong>. Evalúa estabilidad, velocidad de resolución y comportamiento en tiempo real.</p>
+        <h2>Head-to-Head Comparison Arena</h2>
+        <p>Compare two agents using the <strong>same environment and deterministic seed</strong>. Evaluate stability, completion speed, and behavior in real time.</p>
       </div>
 
       <!-- Matchup Selector Grid -->
@@ -81,24 +81,24 @@
         
         <!-- Corner A (Blue) -->
         <div class="corner-card corner-a">
-          <div class="corner-badge">Esquina A (Agente A)</div>
+          <div class="corner-badge">Corner A (Agent A)</div>
           <select id="select-agent-a" class="agent-select"></select>
 
           <div class="stats-grid">
             <div class="stat-item">
-              <div class="stat-label">Puntuación Media</div>
+              <div class="stat-label">Mean Score</div>
               <div class="stat-val" id="stat-reward-a">+0.0</div>
             </div>
             <div class="stat-item">
-              <div class="stat-label">Velocidad (Pasos)</div>
+              <div class="stat-label">Speed (Steps)</div>
               <div class="stat-val" id="stat-steps-a">-- st</div>
             </div>
             <div class="stat-item">
-              <div class="stat-label">Tasa Éxito</div>
+              <div class="stat-label">Success Rate</div>
               <div class="stat-val" id="stat-success-a">--%</div>
             </div>
             <div class="stat-item">
-              <div class="stat-label">Varianza (±σ)</div>
+              <div class="stat-label">Variance (±σ)</div>
               <div class="stat-val" id="stat-std-a">±0.0</div>
             </div>
           </div>
@@ -108,30 +108,30 @@
         <div class="vs-divider">
           <div class="vs-orb">VS</div>
           <button class="btn-duel" id="btn-start-duel">
-            <span>Iniciar Duelo</span>
+            <span>Start Duel</span>
           </button>
         </div>
 
         <!-- Corner B (Orange) -->
         <div class="corner-card corner-b">
-          <div class="corner-badge">Esquina B (Agente B)</div>
+          <div class="corner-badge">Corner B (Agent B)</div>
           <select id="select-agent-b" class="agent-select"></select>
 
           <div class="stats-grid">
             <div class="stat-item">
-              <div class="stat-label">Puntuación Media</div>
+              <div class="stat-label">Mean Score</div>
               <div class="stat-val" id="stat-reward-b">+0.0</div>
             </div>
             <div class="stat-item">
-              <div class="stat-label">Velocidad (Pasos)</div>
+              <div class="stat-label">Speed (Steps)</div>
               <div class="stat-val" id="stat-steps-b">-- st</div>
             </div>
             <div class="stat-item">
-              <div class="stat-label">Tasa Éxito</div>
+              <div class="stat-label">Success Rate</div>
               <div class="stat-val" id="stat-success-b">--%</div>
             </div>
             <div class="stat-item">
-              <div class="stat-label">Varianza (±σ)</div>
+              <div class="stat-label">Variance (±σ)</div>
               <div class="stat-val" id="stat-std-b">±0.0</div>
             </div>
           </div>
@@ -144,47 +144,47 @@
         <div class="display-header">
           <div class="display-title">
             <span class="live-indicator"></span>
-            <span id="duel-live-status">ENFRENTAMIENTO EN DIRECTO: SPLIT-SCREEN</span>
+            <span id="duel-live-status">LIVE DUEL: SPLIT-SCREEN</span>
           </div>
           <div class="duel-mode-toggle" id="duel-mode-toggle-group">
-            <button class="duel-mode-btn active" id="btn-mode-live">⚡ Simulación en Directo</button>
-            <button class="duel-mode-btn" id="btn-mode-video">🎬 Vídeo Renderizado</button>
+            <button class="duel-mode-btn active" id="btn-mode-live">⚡ Live Simulation</button>
+            <button class="duel-mode-btn" id="btn-mode-video">🎬 Rendered Video</button>
           </div>
         </div>
 
         <!-- Live Interactive Dual Canvas -->
         <div id="duel-live-wrapper" class="duel-canvas-container">
           <div class="duel-side-labels">
-            <div class="duel-label-box label-a"><span id="lbl-agent-a-badge">🔵 JUGADOR A</span></div>
-            <div class="duel-label-box label-b"><span id="lbl-agent-b-badge">🟠 AGENTE B</span></div>
+            <div class="duel-label-box label-a"><span id="lbl-agent-a-badge">🔵 PLAYER A</span></div>
+            <div class="duel-label-box label-b"><span id="lbl-agent-b-badge">🟠 AGENT B</span></div>
           </div>
           <canvas id="duel-canvas" width="800" height="380"></canvas>
 
           <!-- Floating Arena Countdown / Result Banner -->
           <div id="duel-overlay" class="duel-overlay" style="display: none;">
-            <div id="duel-overlay-text">¡PREPARADOS!</div>
+            <div id="duel-overlay-text">GET READY!</div>
           </div>
         </div>
 
         <!-- Human Arena Controls (visible when Player A or B is Human) -->
         <div id="arena-human-controls" class="human-controls-panel" style="display: none;">
           <div class="controls-guide-bar">
-            <span>🎮 <strong>CONTROL MANUAL (TÚ)</strong></span>
-            <span class="keyboard-hints" id="arena-keyboard-hints">Teclado: [A / ⬅️] Girar Izq | [D / ➡️] Girar Der | [Espacio / W / ⬆️] Propulsor</span>
+            <span>🎮 <strong>MANUAL CONTROL (YOU)</strong></span>
+            <span class="keyboard-hints" id="arena-keyboard-hints">Keyboard: [A / ⬅️] Rotate Left | [D / ➡️] Rotate Right | [Space / W / ⬆️] Thruster</span>
           </div>
           <div class="touch-controls-row" id="arena-touch-buttons">
             <!-- Dynamically populated or switchable -->
-            <button class="game-btn touch-btn" id="btn-arena-touch-left">⬅️ Girar Izq [A]</button>
-            <button class="game-btn touch-btn btn-main-thrust" id="btn-arena-touch-thrust">🚀 PROPULSOR [Espacio]</button>
-            <button class="game-btn touch-btn" id="btn-arena-touch-right">Girar Der ➡️ [D]</button>
+            <button class="game-btn touch-btn" id="btn-arena-touch-left">⬅️ Rotate Left [A]</button>
+            <button class="game-btn touch-btn btn-main-thrust" id="btn-arena-touch-thrust">🚀 THRUSTER [Space]</button>
+            <button class="game-btn touch-btn" id="btn-arena-touch-right">Rotate Right ➡️ [D]</button>
           </div>
           <div class="touch-controls-row" id="arena-touch-taxi-buttons" style="display: none;">
             <button class="dpad-btn" id="btn-arena-taxi-up">⬆️</button>
             <button class="dpad-btn" id="btn-arena-taxi-left">⬅️</button>
             <button class="dpad-btn" id="btn-arena-taxi-down">⬇️</button>
             <button class="dpad-btn" id="btn-arena-taxi-right">➡️</button>
-            <button class="game-btn action-pickup" id="btn-arena-taxi-pickup">🙋‍♂️ Recoger [P]</button>
-            <button class="game-btn action-dropoff" id="btn-arena-taxi-dropoff">🏁 Dejar [O]</button>
+            <button class="game-btn action-pickup" id="btn-arena-taxi-pickup">🙋‍♂️ Pick Up [P]</button>
+            <button class="game-btn action-dropoff" id="btn-arena-taxi-dropoff">🏁 Drop Off [O]</button>
           </div>
         </div>
 
@@ -192,7 +192,7 @@
         <div id="duel-video-wrapper" class="video-wrapper" style="display: none;">
           <video id="duel-video" class="duel-video-elem" autoplay loop muted playsinline>
             <source src="assets/duel_lunarlander_preview.mp4" type="video/mp4">
-            Tu navegador no soporta reproducción de vídeo HTML5.
+            Your browser does not support HTML5 video playback.
           </video>
         </div>
 
@@ -201,16 +201,16 @@
           
           <div class="telem-card">
             <div class="telem-title">
-              <span>⚡ Velocidad / Pasos</span>
+              <span>⚡ Speed / Steps</span>
             </div>
             <div class="bar-comparison">
               <div class="bar-row">
-                <span class="bar-name agent-name-a">Agente A</span>
+                <span class="bar-name agent-name-a">Agent A</span>
                 <div class="bar-track"><div class="bar-fill-a" id="bar-fill-steps-a" style="width: 50%;"></div></div>
                 <span class="bar-val" id="bar-val-steps-a">-- st</span>
               </div>
               <div class="bar-row">
-                <span class="bar-name agent-name-b">Agente B</span>
+                <span class="bar-name agent-name-b">Agent B</span>
                 <div class="bar-track"><div class="bar-fill-b" id="bar-fill-steps-b" style="width: 80%;"></div></div>
                 <span class="bar-val" id="bar-val-steps-b">-- st</span>
               </div>
@@ -219,16 +219,16 @@
 
           <div class="telem-card">
             <div class="telem-title">
-              <span>⭐ Recompensa Obtenida</span>
+              <span>⭐ Reward Earned</span>
             </div>
             <div class="bar-comparison">
               <div class="bar-row">
-                <span class="bar-name agent-name-a">Agente A</span>
+                <span class="bar-name agent-name-a">Agent A</span>
                 <div class="bar-track"><div class="bar-fill-a" id="bar-fill-reward-a" style="width: 85%;"></div></div>
                 <span class="bar-val" id="bar-val-reward-a">+0.0</span>
               </div>
               <div class="bar-row">
-                <span class="bar-name agent-name-b">Agente B</span>
+                <span class="bar-name agent-name-b">Agent B</span>
                 <div class="bar-track"><div class="bar-fill-b" id="bar-fill-reward-b" style="width: 30%;"></div></div>
                 <span class="bar-val" id="bar-val-reward-b">+0.0</span>
               </div>
@@ -237,10 +237,10 @@
 
           <div class="telem-card" style="display: flex; flex-direction: column; justify-content: center;">
             <div class="telem-title">
-              <span>🏆 Resultado del Enfrentamiento</span>
+              <span>🏆 Duel Result</span>
             </div>
             <div id="duel-winner-badge" style="font-size: 0.92rem; color: #fff; line-height: 1.4;">
-              ¡Pulsa '⚔️ Iniciar Duelo' para comenzar la competición!
+              Press '⚔️ Start Duel' to start the competition!
             </div>
           </div>
 
@@ -253,15 +253,15 @@
     <!-- VIEW 2: LEADERBOARD -->
     <section id="leaderboard-view" class="view-section" style="display: none;">
       <div class="arena-header">
-        <h2>🏅 Clasificación General del Torneo</h2>
-        <p>Ranking oficial calculado automáticamente por GitHub Actions sobre 30 semillas deterministas.</p>
+        <h2>🏅 Overall Tournament Leaderboard</h2>
+        <p>Official rankings calculated automatically by GitHub Actions using 30 deterministic seeds.</p>
       </div>
 
       <div class="table-card">
         <div class="table-toolbar">
-          <input type="text" id="search-input" class="search-input" placeholder="🔍 Buscar por nombre o usuario...">
+          <input type="text" id="search-input" class="search-input" placeholder="🔍 Search by name or username...">
           <div style="font-size: 0.85rem; color: var(--text-dim);">
-            Sincronizado con <code>LEADERBOARD.md</code>
+            Synchronized with <code>LEADERBOARD.md</code>
           </div>
         </div>
 
@@ -269,13 +269,13 @@
           <table class="styled-table">
             <thead>
               <tr>
-                <th style="width: 60px;">Puesto</th>
-                <th>Alumno / Modelo</th>
-                <th>Puntuación (μ)</th>
-                <th>Estabilidad (±σ)</th>
-                <th>Tasa Éxito</th>
-                <th>Velocidad Media</th>
-                <th>Acciones</th>
+                <th style="width: 60px;">Rank</th>
+                <th>Student / Model</th>
+                <th>Score (μ)</th>
+                <th>Stability (±σ)</th>
+                <th>Success Rate</th>
+                <th>Mean Speed</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody id="leaderboard-tbody">
@@ -289,30 +289,30 @@
     <!-- VIEW 3: SIMULATOR & INTERACTIVE LAB -->
     <section id="sandbox-view" class="view-section" style="display: none;">
       <div class="arena-header">
-        <h2>Simulador Interactivo y Control Manual</h2>
-        <p>Explora el comportamiento de los entornos en <strong>LunarLander</strong> (Práctica 1) y <strong>Taxi</strong> (Práctica 2), toma el control manual o activa el agente entrenado.</p>
+        <h2>Interactive Simulator and Manual Control</h2>
+        <p>Explore the environments in <strong>LunarLander</strong> (Lab 1) and <strong>Taxi</strong> (Lab 2), take manual control, or enable the trained agent.</p>
       </div>
 
       <!-- Sandbox Selector and Mode Bar -->
       <div class="sandbox-toolbar">
         <div class="sandbox-env-selector">
           <button class="sandbox-env-btn active" data-sandbox-env="1" id="sandbox-btn-p1">
-            Práctica 1: LunarLander
+            Lab 1: LunarLander
           </button>
           <button class="sandbox-env-btn" data-sandbox-env="2" id="sandbox-btn-p2">
-            Práctica 2: Taxi
+            Lab 2: Taxi
           </button>
         </div>
 
         <div class="sandbox-mode-selector">
           <button class="sandbox-mode-btn active" id="btn-sandbox-manual">
-            Control Manual
+            Manual Control
           </button>
           <button class="sandbox-mode-btn" id="btn-sandbox-autopilot">
-            Agente Entrenado (IA)
+            Trained Agent (AI)
           </button>
-          <button class="sandbox-reset-btn" id="btn-sandbox-reset" title="Reiniciar Entorno">
-            Reiniciar (R)
+          <button class="sandbox-reset-btn" id="btn-sandbox-reset" title="Reset Environment">
+            Reset (R)
           </button>
         </div>
       </div>
@@ -320,24 +320,24 @@
       <!-- Sandbox HUD metrics bar -->
       <div class="sandbox-hud-bar">
         <div class="hud-item">
-          <span class="hud-label">PUNTUACIÓN / RECOMPENSA</span>
+          <span class="hud-label">SCORE / REWARD</span>
           <span class="hud-value" id="sb-hud-score">+0.0 pts</span>
         </div>
         <div class="hud-item">
-          <span class="hud-label">PASOS REALIZADOS</span>
+          <span class="hud-label">STEPS TAKEN</span>
           <span class="hud-value" id="sb-hud-steps">0 st</span>
         </div>
         <div class="hud-item">
-          <span class="hud-label" id="sb-hud-label-3">VELOCIDAD VERTICAL</span>
+          <span class="hud-label" id="sb-hud-label-3">VERTICAL SPEED</span>
           <span class="hud-value" id="sb-hud-val-3">0.00 m/s</span>
         </div>
         <div class="hud-item">
-          <span class="hud-label" id="sb-hud-label-4">ALTITUD</span>
+          <span class="hud-label" id="sb-hud-label-4">ALTITUDE</span>
           <span class="hud-value" id="sb-hud-val-4">350 m</span>
         </div>
         <div class="hud-item">
-          <span class="hud-label">ESTADO DE MISIÓN</span>
-          <span class="hud-value" id="sb-hud-status" style="color: var(--accent-cyan);">EN CURSO 🚀</span>
+          <span class="hud-label">MISSION STATUS</span>
+          <span class="hud-value" id="sb-hud-status" style="color: var(--accent-cyan);">IN PROGRESS 🚀</span>
         </div>
       </div>
 
@@ -352,17 +352,17 @@
         <!-- LunarLander Controls -->
         <div id="sb-controls-lander" class="controls-container">
           <div class="control-hints">
-            <span>⌨️ Teclado: <strong>[Espacio / W / ↑]</strong> Propulsor Principal | <strong>[A / ⬅️]</strong> Girar Izquierda | <strong>[D / ➡️]</strong> Girar Derecha | <strong>[R]</strong> Reiniciar</span>
+            <span>⌨️ Keyboard: <strong>[Space / W / ↑]</strong> Main Thruster | <strong>[A / ⬅️]</strong> Rotate Left | <strong>[D / ➡️]</strong> Rotate Right | <strong>[R]</strong> Reset</span>
           </div>
           <div class="touch-btn-cluster">
             <button class="game-btn touch-btn" id="btn-touch-left">
-              <span>⬅️ Girar Izq [A]</span>
+              <span>⬅️ Rotate Left [A]</span>
             </button>
             <button class="game-btn touch-btn btn-main-thrust" id="btn-touch-thrust">
-              <span>🚀 PROPULSOR PRINCIPAL [Espacio]</span>
+              <span>🚀 MAIN THRUSTER [Space]</span>
             </button>
             <button class="game-btn touch-btn" id="btn-touch-right">
-              <span>Girar Der ➡️ [D]</span>
+              <span>Rotate Right ➡️ [D]</span>
             </button>
           </div>
         </div>
@@ -370,7 +370,7 @@
         <!-- Taxi Controls -->
         <div id="sb-controls-taxi" class="controls-container" style="display: none;">
           <div class="control-hints">
-            <span>⌨️ Teclado: <strong>Flechas / WASD</strong> para conducir | <strong>[P / Espacio]</strong> Recoger Pasajero | <strong>[O / Enter]</strong> Dejar Pasajero | <strong>[R]</strong> Reiniciar</span>
+            <span>⌨️ Keyboard: <strong>Arrow Keys / WASD</strong> to drive | <strong>[P / Space]</strong> Pick Up Passenger | <strong>[O / Enter]</strong> Drop Off Passenger | <strong>[R]</strong> Reset</span>
           </div>
           <div class="taxi-touch-grid">
             <div class="dpad-box">
@@ -384,10 +384,10 @@
             </div>
             <div class="taxi-action-box">
               <button class="game-btn action-pickup" id="btn-taxi-pickup">
-                <span>🙋‍♂️ Recoger Pasajero [P]</span>
+                <span>🙋‍♂️ Pick Up Passenger [P]</span>
               </button>
               <button class="game-btn action-dropoff" id="btn-taxi-dropoff">
-                <span>🏁 Dejar en Destino [O]</span>
+                <span>🏁 Drop Off at Destination [O]</span>
               </button>
             </div>
           </div>
@@ -399,8 +399,8 @@
     <!-- VIEW 4: TOURNAMENT SCORING FORMULAS -->
     <section id="rules-view" class="view-section" style="display: none;">
       <div class="arena-header">
-        <h2>🎯 Fórmulas de Puntuación del Torneo</h2>
-        <p>Cálculo exacto de la recompensa acumulada por episodio en cada entorno:</p>
+        <h2>🎯 Tournament Scoring Formulas</h2>
+        <p>Exact calculation of the cumulative reward per episode in each environment:</p>
       </div>
 
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
@@ -411,23 +411,23 @@
             <span>🌕</span> LunarLander-v2 / v3
           </h3>
           <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 1rem; margin-bottom: 1rem; text-align: center; font-family: monospace; font-size: 1.05rem; color: #58a6ff;">
-            R = R<sub>trayectoria</sub> + 10 · N<sub>patas</sub> - 0.3 · N<sub>principal</sub> - 0.03 · N<sub>lateral</sub> + R<sub>final</sub>
+            R = R<sub>trajectory</sub> + 10 · N<sub>legs</sub> - 0.3 · N<sub>main</sub> - 0.03 · N<sub>side</sub> + R<sub>terminal</sub>
           </div>
           <ul style="color: var(--text-main); font-size: 0.9rem; line-height: 1.6; padding-left: 1.2rem; margin: 0;">
             <li style="margin-bottom: 0.4rem;">
-              <strong>R<sub>trayectoria</sub> (+100 a +140):</strong> Puntos por volar desde la parte superior hasta el helipad reduciendo distancia, velocidad y ángulo.
+              <strong>R<sub>trajectory</sub> (+100 to +140):</strong> Points for flying from the top to the landing pad while reducing distance, speed, and tilt.
             </li>
             <li style="margin-bottom: 0.4rem;">
-              <strong>+10 por pata:</strong> Cada pata que haga contacto con el suelo suma 10 puntos (hasta +20).
+              <strong>+10 per leg:</strong> Each leg touching the ground adds 10 points (up to +20).
             </li>
             <li style="margin-bottom: 0.4rem;">
-              <strong>-0.3 / frame:</strong> Consumo de combustible del motor principal.
+              <strong>-0.3 / frame:</strong> Main engine fuel consumption.
             </li>
             <li style="margin-bottom: 0.4rem;">
-              <strong>-0.03 / frame:</strong> Consumo de combustible de cada motor lateral.
+              <strong>-0.03 / frame:</strong> Fuel consumption for each side thruster.
             </li>
             <li>
-              <strong>R<sub>final</sub>:</strong> <strong>+100</strong> por aterrizaje exitoso en reposo entre banderas, o <strong>-100</strong> por choque / colisión.
+              <strong>R<sub>terminal</sub>:</strong> <strong>+100</strong> for landing successfully at rest between the flags, or <strong>-100</strong> for a crash / collision.
             </li>
           </ul>
         </div>
@@ -438,17 +438,17 @@
             <span>🚕</span> Taxi-v3 / v4
           </h3>
           <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 1rem; margin-bottom: 1rem; text-align: center; font-family: monospace; font-size: 1.05rem; color: #58a6ff;">
-            R = 20 · 1<sub>{entrega}</sub> - 1 · (pasos) - 10 · (acciones ilegales)
+            R = 20 · 1<sub>{delivered}</sub> - 1 · (steps) - 10 · (illegal actions)
           </div>
           <ul style="color: var(--text-main); font-size: 0.9rem; line-height: 1.6; padding-left: 1.2rem; margin: 0;">
             <li style="margin-bottom: 0.5rem;">
-              <strong>+20 puntos:</strong> Por entregar con éxito al pasajero en su destino asignado.
+              <strong>+20 points:</strong> For successfully delivering the passenger to the assigned destination.
             </li>
             <li style="margin-bottom: 0.5rem;">
-              <strong>-1 punto por paso:</strong> Coste por cada movimiento realizado (premia la ruta óptima más corta).
+              <strong>-1 point per step:</strong> Cost for each move (rewards the shortest optimal route).
             </li>
             <li style="margin-bottom: 0.5rem;">
-              <strong>-10 puntos:</strong> Penalización por cada intento ilegal de recoger o bajar al pasajero en una casilla equivocada.
+              <strong>-10 points:</strong> Penalty for each illegal attempt to pick up or drop off the passenger in the wrong cell.
             </li>
           </ul>
         </div>
@@ -460,8 +460,8 @@
 
   <!-- Footer -->
   <footer>
-    <p><strong>Universidad de Alcalá (UAH)</strong> · Máster en Aplicaciones de Inteligencia Artificial · Aprendizaje por Refuerzo</p>
-    <p style="margin-top: 0.4rem;">Repositorio oficial y torneo: <a href="https://github.com/gramuah/RL_tournament" target="_blank">github.com/gramuah/RL_tournament</a></p>
+    <p><strong>University of Alcalá (UAH)</strong> · Master in Artificial Intelligence Applications · Reinforcement Learning</p>
+    <p style="margin-top: 0.4rem;">Official repository and tournament: <a href="https://github.com/gramuah/RL_tournament" target="_blank">github.com/gramuah/RL_tournament</a></p>
   </footer>
 
   <script src="js/app.js?v=clean_uah_v6"></script>

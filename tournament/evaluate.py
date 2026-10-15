@@ -2,8 +2,8 @@
 """
 RL Course Tournament Evaluator
 Author: Course Teaching Staff
-Description: Evaluates RL agent submissions for Practical 1 (LunarLander-v3)
-and Practical 2 (Taxi-v3/v4), generating score reports and rankings.
+Description: Evaluates RL agent submissions for Lab 1 (LunarLander-v3)
+and Lab 2 (Taxi-v3/v4), generating score reports and rankings.
 """
 
 import argparse
@@ -24,7 +24,7 @@ except ImportError:
 
 PRACTICAL_CONFIGS = {
     1: {
-        "name": "Practical 1 - LunarLander-v3",
+        "name": "Lab 1 - LunarLander-v3",
         "env_candidates": ["LunarLander-v3", "LunarLander-v2"],
         "max_steps": 1000,
         "default_episodes": 30,
@@ -34,7 +34,7 @@ PRACTICAL_CONFIGS = {
         "expected_action_space": 4,
     },
     2: {
-        "name": "Practical 2 - Taxi-v3 / Taxi-v4",
+        "name": "Lab 2 - Taxi-v3 / Taxi-v4",
         "env_candidates": ["Taxi-v4", "Taxi-v3"],
         "max_steps": 200,
         "default_episodes": 50,
@@ -267,9 +267,9 @@ Please verify that:
 
 def main():
     parser = argparse.ArgumentParser(description="Evaluate RL Course Submissions")
-    parser.add_argument("--practical", type=int, choices=[1, 2], required=True, help="Practical ID (1 or 2)")
+    parser.add_argument("--practical", type=int, choices=[1, 2], required=True, help="Lab ID (1 or 2)")
     parser.add_argument("--submission", type=str, help="Path to single submission folder")
-    parser.add_argument("--all", action="store_true", help="Evaluate all submissions in practical folder")
+    parser.add_argument("--all", action="store_true", help="Evaluate all submissions in lab folder")
     parser.add_argument("--episodes", type=int, default=None, help="Number of evaluation episodes")
     parser.add_argument("--seed", type=int, default=42, help="Base random seed for evaluation")
     parser.add_argument("--output-json", type=str, help="Path to write JSON results file")

@@ -48,7 +48,7 @@ def _github_request(url, method="GET", data=None, token=None):
 
 def submit_practical(practical_id, files_to_submit, github_token, github_username=None):
     """
-    Submits a practical directly to GitHub by:
+    Submits a lab assignment directly to GitHub by:
     1. Authenticating the token.
     2. Forking the repository (if not already forked).
     3. Creating or updating a submission branch.
@@ -149,7 +149,7 @@ def submit_practical(practical_id, files_to_submit, github_token, github_usernam
         # Check if file exists to get its SHA for update
         status, existing_file = _github_request(f"{contents_url}?ref={branch_name}", token=token)
         payload = {
-            "message": f"Upload {target_name} for Practical {practical_id} (@{username})",
+            "message": f"Upload {target_name} for Lab {practical_id} (@{username})",
             "content": content_b64,
             "branch": branch_name,
         }
@@ -165,13 +165,13 @@ def submit_practical(practical_id, files_to_submit, github_token, github_usernam
     print("🚀 5. Opening Pull Request to course repository...")
     pr_url = f"https://api.github.com/repos/{COURSE_OWNER}/{COURSE_REPO}/pulls"
     pr_payload = {
-        "title": f"Submission Practical {practical_id}: @{username}",
+        "title": f"Lab {practical_id} Submission: @{username}",
         "head": f"{username}:{branch_name}",
         "base": BASE_BRANCH,
-        "body": f"""### 🏆 Automated Submission: Practical {practical_id}
+        "body": f"""### 🏆 Automated Submission: Lab {practical_id}
 
 - **Participant:** @{username}
-- **Assignment:** Practical {practical_id}
+- **Assignment:** Lab {practical_id}
 - **Submitted Files:** `{', '.join(files_to_submit.keys())}`
 
 *This pull request was automatically generated and submitted from Jupyter Notebook.*
