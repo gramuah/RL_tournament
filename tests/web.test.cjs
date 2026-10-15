@@ -165,6 +165,7 @@ test("Mobile layout, keyboard navigation and deterministic demo controls", async
     () => Number(document.querySelector("#demo-steps").textContent) > 2,
   );
   await p.locator('[data-view="standings"]').click();
+  await p.locator("#demo-canvas").waitFor({ state: "hidden" });
   const steps = await p.locator("#demo-steps").innerText();
   await p.waitForTimeout(100);
   assert.equal(await p.locator("#demo-steps").innerText(), steps);
