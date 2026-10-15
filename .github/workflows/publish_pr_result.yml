@@ -1,0 +1,34 @@
+name: Publish verified evaluation
+
+on:
+  workflow_run:
+    workflows: [Evaluate submission]
+    types: [completed]
+
+permissions: {}
+
+concurrency:
+  group: evaluation-comment-${{ github.event.workflow_run.head_repository.id }}-${{ github.event.workflow_run.head_branch }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: write
+    steps:
+      - name: Checkout publisher from default branch only
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify source run, PR identity, complete diff, and JSON before commenting
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_RUN_ID: ${{ github.event.workflow_run.id }}
+        run: python3 -m tournament.publish_pr_result

@@ -10,7 +10,8 @@ from functools import wraps
 
 import base64
 import json
-import os
+import re
+from pathlib import Path, PurePosixPath
 import time
 import urllib.error
 import urllib.request
@@ -50,7 +51,7 @@ def _github_request(url, method="GET", data=None, token=None):
 
     req = urllib.request.Request(url, data=body, headers=headers, method=method)
     try:
-        with urllib.request.urlopen(req) as response:
+        with urllib.request.urlopen(req, timeout=30) as response:
             res_body = response.read().decode("utf-8")
             return response.status, json.loads(res_body) if res_body else {}
     except urllib.error.HTTPError as e:
@@ -62,166 +63,148 @@ def _github_request(url, method="GET", data=None, token=None):
         return e.code, err_json
 
 
+# Kept self-contained: course notebooks execute this file directly from main.
+# tests/test_submit.py checks these admission constants against policy.json.
+_ALLOWED_EXTENSIONS = {".py", ".npy", ".npz", ".pkl", ".pickle", ".zip"}
+_MAX_FILES = 100
+_MAX_FILE_BYTES = 50 * 1024 * 1024
+_MAX_TOTAL_BYTES = 100 * 1024 * 1024
+_OWNER_ALIASES = {"rflor01": "rafael_flor"}
+_LOGIN_RE = re.compile(r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?\Z")
+_PART_RE = re.compile(r"[A-Za-z0-9_][A-Za-z0-9_.-]*\Z")
+
+
+def _validate_uploads(lab_id, files_to_submit):
+    if type(lab_id) is not int or lab_id not in (1, 2):
+        raise ValueError("lab_id must be the integer 1 or 2")
+    if not isinstance(files_to_submit, dict) or "agent.py" not in files_to_submit:
+        raise ValueError("files_to_submit must include agent.py")
+    if len(files_to_submit) > _MAX_FILES:
+        raise ValueError("At most 100 files may be submitted")
+    contents = {}
+    total = 0
+    for filename, local_path in files_to_submit.items():
+        if not isinstance(filename, str) or "\\" in filename or any(
+            part in (".", "..") or not _PART_RE.fullmatch(part)
+            for part in filename.split("/")
+        ) or PurePosixPath(filename).suffix not in _ALLOWED_EXTENSIONS:
+            raise ValueError(f"Invalid submission filename: {filename!r}")
+        path = Path(local_path)
+        if path.is_symlink() or not path.is_file():
+            raise ValueError(f"Local submission must be a regular file: {local_path}")
+        if path.stat().st_size > _MAX_FILE_BYTES:
+            raise ValueError(f"File exceeds 50 MiB: {filename}")
+        with path.open("rb") as stream:
+            contents[filename] = stream.read(_MAX_FILE_BYTES + 1)
+        size = len(contents[filename])
+        total += size
+        if size > _MAX_FILE_BYTES or total > _MAX_TOTAL_BYTES:
+            raise ValueError("Submission exceeds the 50 MiB/file or 100 MiB total limit")
+    return contents
+
+
 @_accept_legacy_practical_id(lab_position=0)
 def submit_lab(lab_id, files_to_submit, github_token, github_username=None):
-    """
-    Submits a lab assignment directly to GitHub by:
-    1. Authenticating the token.
-    2. Forking the repository (if not already forked).
-    3. Creating or updating a submission branch.
-    4. Uploading agent.py and model weight files.
-    5. Opening a Pull Request against gramuah/RL_tournament:main.
+    """Upload an agent to the authenticated user's fork and create/update its PR.
 
-    :param lab_id: 1 or 2
-    :param files_to_submit: dict of {target_filename: local_path}
-    :param github_token: GitHub Personal Access Token (classic 'repo' or fine-grained)
-    :param github_username: (Optional) GitHub username; detected from token if omitted
-    :return: Pull Request URL
+    ``files_to_submit`` maps safe relative filenames to local regular files and
+    must include agent.py. lab_id is 1 or 2. The legacy practical_id keyword and
+    submit_practical name remain supported. The optional github_username must
+    match the token's authenticated account; it cannot select another owner.
+
+    Every upload creates one commit based on current upstream main and replaces
+    this helper's submission branch. Unrelated old branch changes are discarded;
+    files already merged into the participant directory remain unless overwritten.
+    Model files are data here and are never imported or deserialized.
     """
+    contents = _validate_uploads(lab_id, files_to_submit)
+    if not isinstance(github_token, str) or not github_token.strip():
+        raise ValueError("GitHub token cannot be empty")
     token = github_token.strip()
-    if not token:
-        raise ValueError("GitHub token cannot be empty.")
 
-    print("🔐 1. Authenticating with GitHub...")
+    def request(url, method="GET", data=None, expected=(200,)):
+        status, result = _github_request(url, method=method, data=data, token=token)
+        if status not in expected:
+            message = result.get("message", "Unexpected GitHub response") if isinstance(result, dict) else "Unexpected response"
+            raise RuntimeError(f"GitHub {method} failed (HTTP {status}): {message}")
+        return result
+
     status, user_info = _github_request("https://api.github.com/user", token=token)
     if status != 200:
-        raise PermissionError(f"GitHub authentication failed (HTTP {status}): {user_info.get('message', 'Invalid token')}")
-
-    username = github_username or user_info.get("login")
-    print(f"   Authenticated as: @{username}")
-
-    # 2. Fork repository if needed
-    print(f"🍴 2. Ensuring fork exists at @{username}/{COURSE_REPO}...")
+        raise PermissionError(f"GitHub authentication failed (HTTP {status})")
+    username = user_info.get("login", "")
+    if not isinstance(username, str) or not _LOGIN_RE.fullmatch(username):
+        raise ValueError("GitHub returned an invalid account login")
+    if github_username is not None and (
+        not isinstance(github_username, str) or github_username.lower() != username.lower()
+    ):
+        raise ValueError("github_username must match the token's authenticated account")
+    username = username.lower()
+    participant = _OWNER_ALIASES.get(username, username)
+    target_dir = f"submissions/lab{lab_id}/{participant}"
     fork_url = f"https://api.github.com/repos/{username}/{COURSE_REPO}"
+    upstream_url = f"https://api.github.com/repos/{COURSE_OWNER}/{COURSE_REPO}"
+    print(f"Authenticated as @{username}; preparing {target_dir}")
+
     status, repo_info = _github_request(fork_url, token=token)
-
     if status == 404:
-        print(f"   Fork not found. Creating fork of {COURSE_OWNER}/{COURSE_REPO}...")
-        create_fork_url = f"https://api.github.com/repos/{COURSE_OWNER}/{COURSE_REPO}/forks"
-        status, fork_res = _github_request(create_fork_url, method="POST", token=token)
-        if status not in (200, 202):
-            raise RuntimeError(f"Failed to create fork: {fork_res.get('message')}")
-
-        # Wait for fork to become ready
-        print("   Waiting for GitHub to initialize fork...")
+        request(upstream_url + "/forks", "POST", expected=(200, 202))
         for _ in range(15):
             time.sleep(2)
-            status, _ = _github_request(fork_url, token=token)
+            status, repo_info = _github_request(fork_url, token=token)
             if status == 200:
                 break
         if status != 200:
-            raise TimeoutError("Fork creation timed out. Please try running this cell again in a few seconds.")
-    print("   Fork is ready.")
+            raise TimeoutError("Fork initialization timed out; try again shortly")
+    elif status != 200:
+        raise RuntimeError(f"Cannot inspect your fork (HTTP {status})")
+    if not repo_info.get("fork") or repo_info.get("parent", {}).get("full_name", "").lower() != f"{COURSE_OWNER}/{COURSE_REPO}".lower():
+        raise ValueError(f"{username}/{COURSE_REPO} is not a fork of the course repository")
 
-    # 3. Create or sync submission branch
-    branch_name = f"submission-lab{lab_id}-{username.lower()}"
-    print(f"🌿 3. Setting up branch '{branch_name}'...")
-
-    # Get SHA of upstream main
-    status, main_ref = _github_request(
-        f"https://api.github.com/repos/{COURSE_OWNER}/{COURSE_REPO}/git/ref/heads/{BASE_BRANCH}",
-        token=token
-    )
-    if status != 200:
-        # Fallback to fork main if upstream ref check is restricted
-        status, main_ref = _github_request(
-            f"https://api.github.com/repos/{username}/{COURSE_REPO}/git/ref/heads/{BASE_BRANCH}",
-            token=token
-        )
-    latest_sha = main_ref["object"]["sha"]
-
-    # Check if submission branch already exists
-    branch_ref_url = f"https://api.github.com/repos/{username}/{COURSE_REPO}/git/refs/heads/{branch_name}"
-    status, branch_ref = _github_request(branch_ref_url, token=token)
-
+    latest_sha = request(upstream_url + f"/git/ref/heads/{BASE_BRANCH}")["object"]["sha"]
+    base_tree = request(upstream_url + f"/git/commits/{latest_sha}")["tree"]["sha"]
+    entries = []
+    for filename, data in contents.items():
+        blob = request(fork_url + "/git/blobs", "POST", {
+            "content": base64.b64encode(data).decode("ascii"), "encoding": "base64",
+        }, expected=(201,))
+        entries.append({"path": f"{target_dir}/{filename}", "mode": "100644", "type": "blob", "sha": blob["sha"]})
+    tree = request(fork_url + "/git/trees", "POST", {"base_tree": base_tree, "tree": entries}, expected=(201,))
+    commit = request(fork_url + "/git/commits", "POST", {
+        "message": f"Submit Lab {lab_id} agent for @{username}",
+        "tree": tree["sha"], "parents": [latest_sha],
+    }, expected=(201,))
+    branch_name = f"submission-lab{lab_id}-{username}"
+    branch_url = fork_url + f"/git/refs/heads/{branch_name}"
+    status, _ = _github_request(branch_url, token=token)
     if status == 404:
-        # Create branch
-        create_ref_url = f"https://api.github.com/repos/{username}/{COURSE_REPO}/git/refs"
-        status, create_res = _github_request(
-            create_ref_url,
-            method="POST",
-            data={"ref": f"refs/heads/{branch_name}", "sha": latest_sha},
-            token=token
-        )
-        if status != 201:
-            raise RuntimeError(f"Failed to create branch '{branch_name}': {create_res.get('message')}")
-        print(f"   Created branch '{branch_name}'.")
+        request(fork_url + "/git/refs", "POST", {
+            "ref": f"refs/heads/{branch_name}", "sha": commit["sha"],
+        }, expected=(201,))
+    elif status == 200:
+        request(branch_url, "PATCH", {"sha": commit["sha"], "force": True})
     else:
-        print(f"   Branch '{branch_name}' already exists. Updating files...")
+        raise RuntimeError(f"Cannot inspect submission branch (HTTP {status})")
 
-    # 4. Upload files
-    print(f"📤 4. Uploading submission files to 'submissions/lab{lab_id}/{username}/'...")
-    target_dir = f"submissions/lab{lab_id}/{username}"
-
-    for target_name, local_path in files_to_submit.items():
-        if not os.path.exists(local_path):
-            raise FileNotFoundError(f"Local file '{local_path}' does not exist.")
-
-        with open(local_path, "rb") as f:
-            content_b64 = base64.b64encode(f.read()).decode("utf-8")
-
-        remote_file_path = f"{target_dir}/{target_name}"
-        contents_url = f"https://api.github.com/repos/{username}/{COURSE_REPO}/contents/{remote_file_path}"
-
-        # Check if file exists to get its SHA for update
-        status, existing_file = _github_request(f"{contents_url}?ref={branch_name}", token=token)
-        payload = {
-            "message": f"Upload {target_name} for Lab {lab_id} (@{username})",
-            "content": content_b64,
-            "branch": branch_name,
-        }
-        if status == 200 and "sha" in existing_file:
-            payload["sha"] = existing_file["sha"]
-
-        status, put_res = _github_request(contents_url, method="PUT", data=payload, token=token)
-        if status not in (200, 201):
-            raise RuntimeError(f"Failed to upload '{target_name}': {put_res.get('message')}")
-        print(f"   ✅ Uploaded: {remote_file_path}")
-
-    # 5. Open Pull Request
-    print("🚀 5. Opening Pull Request to course repository...")
-    pr_url = f"https://api.github.com/repos/{COURSE_OWNER}/{COURSE_REPO}/pulls"
-    pr_payload = {
+    pr_url = upstream_url + "/pulls"
+    payload = {
         "title": f"Lab {lab_id} Submission: @{username}",
-        "head": f"{username}:{branch_name}",
-        "base": BASE_BRANCH,
-        "body": f"""### 🏆 Automated Submission: Lab {lab_id}
-
-- **Participant:** @{username}
-- **Assignment:** Lab {lab_id}
-- **Submitted Files:** `{', '.join(files_to_submit.keys())}`
-
-*This pull request was automatically generated and submitted from Jupyter Notebook.*
-"""
+        "head": f"{username}:{branch_name}", "base": BASE_BRANCH,
+        "body": f"Agent submission for **Lab {lab_id}** by @{username}.\n\nFiles: " + ", ".join(f"`{name}`" for name in contents),
     }
-
-    status, pr_res = _github_request(pr_url, method="POST", data=pr_payload, token=token)
-
+    status, result = _github_request(pr_url, method="POST", data=payload, token=token)
     if status == 201:
-        html_url = pr_res["html_url"]
-        print("\n" + "=" * 65)
-        print(f"🎉 PULL REQUEST CREATED SUCCESSFULLY!")
-        print(f"🔗 URL: {html_url}")
-        print("🤖 The GitHub Actions bot will now evaluate your agent and comment with your score card.")
-        print("=" * 65)
-        return html_url
-    elif status == 422 and "A pull request already exists" in str(pr_res):
-        # Retrieve existing PR
-        status, prs = _github_request(
-            f"https://api.github.com/repos/{COURSE_OWNER}/{COURSE_REPO}/pulls?head={username}:{branch_name}&state=open",
-            token=token
-        )
-        if status == 200 and prs:
-            html_url = prs[0]["html_url"]
-            print("\n" + "=" * 65)
-            print(f"🔄 EXISTING PULL REQUEST UPDATED!")
-            print(f"🔗 URL: {html_url}")
-            print("🤖 New commits pushed to branch. The bot will re-evaluate your updated agent.")
-            print("=" * 65)
-            return html_url
-
-    raise RuntimeError(f"Failed to create Pull Request (HTTP {status}): {pr_res.get('message', pr_res)}")
+        url = result["html_url"]
+    elif status == 422:
+        prs = request(pr_url + f"?head={username}:{branch_name}&base={BASE_BRANCH}&state=open")
+        if not prs:
+            raise RuntimeError("GitHub rejected the PR and no existing open submission PR was found")
+        url = prs[0]["html_url"]
+    else:
+        raise RuntimeError(f"Could not open pull request (HTTP {status})")
+    print(f"Submission ready: {url}")
+    print("Admission checks and isolated evaluation will report on your pull request.")
+    return url
 
 
-# Existing notebooks may keep importing or calling this name.
 submit_practical = submit_lab

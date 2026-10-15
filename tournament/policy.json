@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "maintainers": ["CarlosGual", "rflor01", "rlopezsastre"],
+  "owners": {
+    "submissions/lab1/rafael_flor": "rflor01",
+    "submissions/lab2/rafael_flor": "rflor01"
+  },
+  "allowed_extensions": [".py", ".npy", ".npz", ".pkl", ".pickle", ".zip"],
+  "max_files": 100,
+  "max_file_bytes": 52428800,
+  "max_total_bytes": 104857600
+}

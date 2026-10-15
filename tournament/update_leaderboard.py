@@ -22,7 +22,7 @@ PRACTICAL_CONFIGS = LAB_CONFIGS
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 LEADERBOARD_PATH = REPO_ROOT / "LEADERBOARD.md"
-RESULTS_DIR = REPO_ROOT / "docs" / "data"
+RESULTS_DIR = REPO_ROOT / "web" / "data"
 
 
 def get_rank_medal(rank):
@@ -36,11 +36,24 @@ def get_rank_medal(rank):
         return f"{rank}th"
 
 
+def assert_evaluator_ready(lab_id, sandbox_image):
+    """A trusted baseline distinguishes infrastructure outages from bad agents."""
+    baseline = REPO_ROOT / "submissions" / f"lab{lab_id}" / "baseline_random"
+    result = evaluate_single_submission(baseline, lab_id, num_episodes=1,
+                                       base_seed=42, isolated=True,
+                                       sandbox_image=sandbox_image)
+    if not result.get("success"):
+        raise RuntimeError(f"Lab {lab_id} evaluator readiness check failed; preserving the previous publication")
+
+
 @_accept_legacy_practical_id(lab_position=0)
-def run_full_evaluation(lab_id, episodes=30, seed=42):
+def run_full_evaluation(lab_id, episodes=30, seed=42, isolated=False, sandbox_image="rl-tournament-agent:local"):
     """Evaluates all submission folders for the given lab."""
     submissions_dir = Path("submissions") / f"lab{lab_id}"
     results = []
+
+    if isolated:
+        assert_evaluator_ready(lab_id, sandbox_image)
 
     if not submissions_dir.exists():
         print(f"Warning: {submissions_dir} does not exist.")
@@ -49,7 +62,9 @@ def run_full_evaluation(lab_id, episodes=30, seed=42):
     for item in sorted(submissions_dir.iterdir()):
         if item.is_dir() and (item / "agent.py").exists():
             print(f"Evaluating Lab {lab_id}: {item.name} ...")
-            r = evaluate_single_submission(item, lab_id, num_episodes=episodes, base_seed=seed)
+            r = evaluate_single_submission(item, lab_id, num_episodes=episodes, base_seed=seed, isolated=isolated, sandbox_image=sandbox_image)
+            if isolated and not r.get("success"):
+                assert_evaluator_ready(lab_id, sandbox_image)
             results.append(r)
 
     # Sort descending by mean_reward
@@ -127,7 +142,7 @@ All agents uploaded to GitHub are automatically benchmarked under identical cond
 Both agents start with the **same deterministic seed** (identical terrain, altitude, target, and wind):
 
 <p align="center">
-  <img src="docs/assets/duel_lunarlander_preview.gif" alt="LunarLander Synchronized Duel Replay" width="100%" style="border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.5);" />
+  <img src="web/assets/duel_lunarlander_preview.gif" alt="LunarLander Synchronized Duel Replay" width="100%" style="border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.5);" />
 </p>
 
 ---
@@ -218,8 +233,14 @@ def main():
     parser = argparse.ArgumentParser(description="Update Course Leaderboard")
     parser.add_argument("--episodes", type=int, default=30, help="Episodes per agent")
     parser.add_argument("--seed", type=int, default=42, help="Base seed")
-    parser.add_argument("--from-json", action="store_true", help="Build leaderboard from cached JSON files in docs/data")
+    parser.add_argument("--from-json", action="store_true", help="Build leaderboard from cached JSON files in web/data")
+    parser.add_argument("--isolated", action="store_true", help="Run submitted agents inside constrained Docker containers")
+    parser.add_argument("--sandbox-image", default="rl-tournament-agent:local")
     args = parser.parse_args()
+
+    if args.isolated and not args.from_json:
+        from sandbox import preflight_sandbox
+        preflight_sandbox(args.sandbox_image)
 
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
     timestamp = time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime())
@@ -235,13 +256,24 @@ def main():
             p2_results = json.load(f)
     else:
         print("Running full tournament evaluation...")
-        p1_results = run_full_evaluation(1, episodes=args.episodes, seed=args.seed)
-        p2_results = run_full_evaluation(2, episodes=args.episodes, seed=args.seed)
+        p1_results = run_full_evaluation(1, episodes=args.episodes, seed=args.seed, isolated=args.isolated, sandbox_image=args.sandbox_image)
+        p2_results = run_full_evaluation(2, episodes=args.episodes, seed=args.seed, isolated=args.isolated, sandbox_image=args.sandbox_image)
 
         with open(p1_json, "w", encoding="utf-8") as f:
             json.dump(p1_results, f, indent=2)
         with open(p2_json, "w", encoding="utf-8") as f:
             json.dump(p2_results, f, indent=2)
+
+    if not args.from_json:
+        from datetime import datetime, timezone
+        manifest = {
+            "schema_version": 1,
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "source_sha": os.environ.get("GITHUB_SHA", "local"),
+            "episodes": args.episodes,
+            "base_seed": args.seed,
+        }
+        (RESULTS_DIR / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
 
     markdown_content = generate_leaderboard_content(p1_results, p2_results, timestamp)
 

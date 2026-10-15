@@ -1,103 +1,78 @@
-name: ⚔️ Run Agent Duel & Visualize
+name: Agent duel replay
 
 on:
   workflow_dispatch:
     inputs:
       lab:
-        description: 'Lab Session'
-        required: true
-        default: '1'
+        description: Lab
         type: choice
-        options:
-          - '1'
-          - '2'
+        options: ['2', '1']
+        default: '2'
       agent_a:
-        description: 'Corner A: Path, baseline (baseline_random), or GitHub username'
+        description: Existing participant directory name
         required: true
-        default: 'rafael_flor'
-        type: string
+        default: rafael_flor
       agent_b:
-        description: 'Corner B: Path, baseline, or GitHub username'
+        description: Existing opponent directory name
         required: true
-        default: 'baseline_random'
-        type: string
+        default: baseline_random
       episodes:
-        description: 'Number of duel episodes'
-        required: false
+        description: Episodes (1-10)
         default: '3'
-        type: string
       seed:
-        description: 'Base random seed'
-        required: false
+        description: Base seed (0-1000000)
         default: '42'
-        type: string
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   duel:
-    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      LAB_ID: ${{ inputs.lab }}
+      AGENT_A: ${{ inputs.agent_a }}
+      AGENT_B: ${{ inputs.agent_b }}
+      EPISODES: ${{ inputs.episodes }}
+      BASE_SEED: ${{ inputs.seed }}
     steps:
-      - name: 📥 Checkout repository
-        uses: actions/checkout@v4
-
-      - name: 🐍 Set up Python 3.10
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
-          python-version: '3.10'
-          cache: 'pip'
-
-      - name: 📦 Install system packages
+          persist-credentials: false
+      - name: Validate inputs before invoking tools
+        run: |
+          python3 - <<'PY'
+          import os, re
+          from pathlib import Path
+          assert os.environ['LAB_ID'] in ('1', '2')
+          assert 1 <= int(os.environ['EPISODES']) <= 10
+          assert 0 <= int(os.environ['BASE_SEED']) <= 1000000
+          for key in ('AGENT_A', 'AGENT_B'):
+              name = os.environ[key]
+              assert re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_-]{0,63}', name)
+              folder = Path('submissions') / ('lab' + os.environ['LAB_ID']) / name
+              assert folder.is_dir() and not folder.is_symlink()
+              assert (folder / 'agent.py').is_file()
+          PY
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.11'
+      - name: Install trusted host and sandbox
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq swig cmake ffmpeg xvfb
-
-      - name: 📦 Install Python dependencies
+          sudo apt-get install -y --no-install-recommends swig ffmpeg
+          python -m pip install --require-hashes -r tournament/requirements-ci.lock
+          docker build -f tournament/Dockerfile.agent -t rl-tournament-agent:local tournament
+      - name: Generate isolated agent duel
         run: |
-          pip install --upgrade pip
-          pip install -r tournament/requirements.txt
-
-      - name: 🥊 Execute Head-to-Head Duel
-        id: run_duel
-        run: |
-          mkdir -p duel_output
-          python tournament/compare.py \
-            --lab "${{ inputs.lab }}" \
-            --agent-a "${{ inputs.agent_a }}" \
-            --agent-b "${{ inputs.agent_b }}" \
-            --episodes "${{ inputs.episodes }}" \
-            --seed "${{ inputs.seed }}" \
-            --video "duel_output/duel_replay.gif" | tee duel_stdout.txt
-
-      - name: 📊 Publish Duel Report to GitHub Actions Summary
-        if: always()
-        run: |
-          echo "## 🥊 RL Tournament Duel Results" >> $GITHUB_STEP_SUMMARY
-          echo "**Lab**: ${{ inputs.lab }} | **Seed**: ${{ inputs.seed }} | **Episodes**: ${{ inputs.episodes }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- 🔵 **Corner A**: \`${{ inputs.agent_a }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- 🟠 **Corner B**: \`${{ inputs.agent_b }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 📋 Match Log & Scoreboard" >> $GITHUB_STEP_SUMMARY
-          echo '```text' >> $GITHUB_STEP_SUMMARY
-          cat duel_stdout.txt >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-
-          if [ -f "duel_output/duel_replay.gif" ]; then
-            GIF_SIZE_KB=$(du -k "duel_output/duel_replay.gif" | cut -f1)
-            # If GIF is reasonably sized (<2MB), embed directly via base64 for instant in-browser viewing
-            if [ "$GIF_SIZE_KB" -lt 2500 ]; then
-              B64_GIF=$(base64 -w 0 "duel_output/duel_replay.gif")
-              echo "### 🎬 Synchronized Split-Screen Replay" >> $GITHUB_STEP_SUMMARY
-              echo "<p align=\"center\"><img src=\"data:image/gif;base64,$B64_GIF\" alt=\"Duel Replay\" style=\"max-width: 100%; border-radius: 8px;\" /></p>" >> $GITHUB_STEP_SUMMARY
-            fi
-          fi
-
-      - name: 💾 Upload Duel Video Replay Artifact
-        if: always()
-        uses: actions/upload-artifact@v4
+          mkdir -p "$RUNNER_TEMP/duel"
+          python tournament/compare.py --lab "$LAB_ID" --agent-a "submissions/lab$LAB_ID/$AGENT_A" --agent-b "submissions/lab$LAB_ID/$AGENT_B" --episodes "$EPISODES" --seed "$BASE_SEED" --isolated --video "$RUNNER_TEMP/duel/replay.mp4"
+      - name: Upload replay for download
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: duel-replay-p${{ inputs.lab }}-${{ inputs.agent_a }}-vs-${{ inputs.agent_b }}
-          path: duel_output/
+          name: duel-replay
+          path: ${{ runner.temp }}/duel/
+          if-no-files-found: error
           retention-days: 14
