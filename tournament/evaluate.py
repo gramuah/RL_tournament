@@ -225,7 +225,8 @@ def evaluate_agent(agent_fn, lab_id, num_episodes=30, base_seed=42):
 
 
 @_accept_legacy_practical_id(lab_position=1)
-def evaluate_single_submission(submission_path, lab_id, num_episodes=30, base_seed=42):
+def evaluate_single_submission(submission_path, lab_id, num_episodes=30, base_seed=42,
+                               isolated=False, sandbox_image="rl-tournament-agent:local"):
     """Evaluates a single submission directory and returns report dict."""
     sub_path = Path(submission_path).resolve()
     participant_name = sub_path.name
@@ -238,8 +239,14 @@ def evaluate_single_submission(submission_path, lab_id, num_episodes=30, base_se
         "error": None,
     }
 
+    agent_fn = None
     try:
-        agent_fn = load_agent_function(sub_path)
+        if isolated:
+            from sandbox import IsolatedAgent
+            agent_fn = IsolatedAgent(submission_path, LAB_CONFIGS[lab_id]["expected_action_space"],
+                                     image=sandbox_image)
+        else:
+            agent_fn = load_agent_function(sub_path)
         metrics = evaluate_agent(agent_fn, lab_id, num_episodes, base_seed)
         result.update(metrics)
         result["success"] = True
@@ -249,6 +256,9 @@ def evaluate_single_submission(submission_path, lab_id, num_episodes=30, base_se
         result["status_code"] = "error"
         result["mean_reward"] = -9999.0
         result["std_reward"] = 0.0
+    finally:
+        if isolated and agent_fn is not None:
+            agent_fn.close()
 
     return result
 
@@ -296,13 +306,18 @@ def main():
     parser.add_argument("--seed", type=int, default=42, help="Base random seed for evaluation")
     parser.add_argument("--output-json", type=str, help="Path to write JSON results file")
     parser.add_argument("--output-pr-comment", type=str, help="Path to write markdown comment for PR")
+    parser.add_argument("--isolated", action="store_true", help="Require Docker-isolated agent inference (fails closed)")
+    parser.add_argument("--sandbox-image", default="rl-tournament-agent:local")
     args = parser.parse_args()
+    if args.episodes is not None and not 1 <= args.episodes <= 100:
+        parser.error("episodes must be between 1 and 100")
 
     lab_id = args.lab
     episodes = args.episodes or LAB_CONFIGS[lab_id]["default_episodes"]
 
     if args.submission:
-        res = evaluate_single_submission(args.submission, lab_id, episodes, args.seed)
+        res = evaluate_single_submission(args.submission, lab_id, episodes, args.seed,
+                                         isolated=args.isolated, sandbox_image=args.sandbox_image)
         print(format_markdown_report(res))
 
         if args.output_json:
@@ -328,7 +343,8 @@ def main():
         for item in sorted(submissions_dir.iterdir()):
             if item.is_dir() and (item / "agent.py").exists():
                 print(f"--- Evaluating {item.name} ---")
-                r = evaluate_single_submission(item, lab_id, episodes, args.seed)
+                r = evaluate_single_submission(item, lab_id, episodes, args.seed,
+                                               isolated=args.isolated, sandbox_image=args.sandbox_image)
                 results.append(r)
                 print(f"Result: {r.get('mean_reward', 'ERR')} ± {r.get('std_reward', 0)} ({r.get('status')})\n")
 

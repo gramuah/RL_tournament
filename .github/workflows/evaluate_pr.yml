@@ -1,113 +1,82 @@
-name: 🤖 Evaluate Submission (PR)
+name: Evaluate submission
 
 on:
   pull_request:
-    paths:
-      - 'submissions/**'
-  workflow_dispatch:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
 
 permissions:
   contents: read
-  pull-requests: write
-  issues: write
+
+concurrency:
+  group: submission-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 jobs:
-  evaluate-pr:
-    runs-on: ubuntu-latest
+  submission:
+    name: Submission policy and evaluation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
     steps:
-      - name: 📥 Checkout repository
-        uses: actions/checkout@v4
+      - name: Checkout trusted base controller
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 0
-
-      - name: 🐍 Set up Python 3.10
-        uses: actions/setup-python@v5
+          ref: ${{ github.event.pull_request.base.sha }}
+          persist-credentials: false
+      - name: Fetch submission objects without checking out PR code
+        run: git fetch --no-tags origin "$HEAD_SHA"
+      - name: Validate complete diff and extract approved regular files
+        id: policy
+        shell: bash
+        run: |
+          if [ ! -f tournament/submission_policy.py ]; then
+            # One-time deployment PR: instructor review is required to bootstrap
+            # the trusted base. No PR code is run by this workflow in that case.
+            case "$PR_AUTHOR" in
+              CarlosGual|rflor01|rlopezsastre)
+                echo 'route=infrastructure' >> "$GITHUB_OUTPUT"
+                echo '::notice::Trusted submission policy is not on main yet; bootstrap infrastructure PR requires instructor review.'
+                exit 0 ;;
+              *) echo '::error::Submission policy is not installed on main'; exit 1 ;;
+            esac
+          fi
+          python3 -m tournament.submission_policy --repo . --base "$BASE_SHA" --head "$HEAD_SHA" --author "$PR_AUTHOR" --report "$RUNNER_TEMP/policy.json" --extract "$RUNNER_TEMP/submission"
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json, os
+          report = json.load(open(os.environ['RUNNER_TEMP'] + '/policy.json'))
+          print('route=' + report['route'])
+          if report['route'] == 'submission':
+              print('lab=' + str(report['lab_id']))
+          PY
+      - name: Set up trusted Python
+        if: steps.policy.outputs.route == 'submission'
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
-          python-version: '3.10'
-          cache: 'pip'
-
-      - name: 📦 Install system packages
+          python-version: '3.11'
+      - name: Install host evaluator and isolated agent image
+        if: steps.policy.outputs.route == 'submission'
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq swig cmake ffmpeg xvfb
-
-      - name: 📦 Install Python dependencies
+          sudo apt-get install -y --no-install-recommends swig
+          python -m pip install --require-hashes -r tournament/requirements-ci.lock
+          docker build -f tournament/Dockerfile.agent -t rl-tournament-agent:local tournament
+      - name: Evaluate using host-owned environments and sandboxed inference
+        if: steps.policy.outputs.route == 'submission'
+        env:
+          LAB_ID: ${{ steps.policy.outputs.lab }}
         run: |
-          pip install --upgrade pip
-          pip install -r tournament/requirements.txt
-
-      - name: 🔍 Detect modified submission
-        id: detect
-        run: |
-          # Compare PR against base branch to find modified directories under submissions/
-          CHANGED_DIRS=$(git diff --name-only origin/${{ github.base_ref }} HEAD -- 'submissions/**' | \
-            grep -E '^submissions/lab[12]/[^/]+/' | \
-            cut -d'/' -f1-3 | sort -u || true)
-
-          echo "Found modified submission dirs:"
-          echo "$CHANGED_DIRS"
-
-          # Export as output
-          FIRST_DIR=$(echo "$CHANGED_DIRS" | head -n 1)
-          echo "submission_dir=$FIRST_DIR" >> $GITHUB_OUTPUT
-
-      - name: 🚀 Run Evaluation
-        id: eval
-        if: steps.detect.outputs.submission_dir != ''
-        run: |
-          SUB_DIR="${{ steps.detect.outputs.submission_dir }}"
-          echo "Evaluating: $SUB_DIR"
-
-          # Determine lab number (1 or 2)
-          if [[ "$SUB_DIR" == *"lab1"* ]]; then
-            LAB_ID=1
-          elif [[ "$SUB_DIR" == *"lab2"* ]]; then
-            LAB_ID=2
-          else
-            echo "Cannot determine lab ID from $SUB_DIR"
-            exit 1
-          fi
-
-          python tournament/evaluate.py \
-            --lab "$LAB_ID" \
-            --submission "$SUB_DIR" \
-            --episodes 30 \
-            --output-json "pr_eval_result.json" \
-            --output-pr-comment "pr_comment.md"
-
-      - name: 💬 Post Score to Pull Request
-        if: always() && steps.detect.outputs.submission_dir != '' && hashFiles('pr_comment.md') != ''
-        uses: actions/github-script@v7
+          python tournament/evaluate.py --lab "$LAB_ID" --submission "$RUNNER_TEMP/submission" --episodes 30 --seed 42 --isolated --output-json "$RUNNER_TEMP/result.json" || test -s "$RUNNER_TEMP/result.json"
+          python -m tournament.result_artifacts pack --policy "$RUNNER_TEMP/policy.json" --result "$RUNNER_TEMP/result.json" --output "$RUNNER_TEMP/report.json"
+      - name: Upload bounded JSON report
+        if: steps.policy.outputs.route == 'submission'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          script: |
-            const fs = require('fs');
-            const commentBody = fs.readFileSync('pr_comment.md', 'utf8');
-
-            // Find existing bot comment if any
-            const { data: comments } = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-            });
-
-            const botComment = comments.find(comment => 
-              comment.user.type === 'Bot' && comment.body.includes('RL Tournament Evaluation Report')
-            );
-
-            if (botComment) {
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: botComment.id,
-                body: commentBody
-              });
-              console.log('Updated existing PR evaluation comment.');
-            } else {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.issue.number,
-                body: commentBody
-              });
-              console.log('Created new PR evaluation comment.');
-            }
+          name: evaluation-report
+          path: ${{ runner.temp }}/report.json
+          if-no-files-found: error
+          retention-days: 7

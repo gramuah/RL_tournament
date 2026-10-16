@@ -201,11 +201,24 @@ def download_github_submission(lab_id, github_username, target_dir):
 
 
 @_accept_legacy_practical_id(lab_position=1)
-def resolve_agent(agent_spec, lab_id, repo_root=None):
+def resolve_agent(agent_spec, lab_id, repo_root=None, isolated=False,
+                  sandbox_image="rl-tournament-agent:local"):
     """
     Resolves agent_spec into:
     (callable_agent_fn, display_name, cleanup_callback_or_none)
     """
+    if isolated:
+        from sandbox import IsolatedAgent
+        # CI accepts local submission directories only, never remote downloads or callables.
+        if callable(agent_spec):
+            raise ValueError("Isolated duels require a submission directory")
+        root = Path(repo_root) if repo_root is not None else get_default_repo_root()
+        candidate = Path(str(agent_spec))
+        if not candidate.is_dir():
+            candidate = root / "submissions" / f"lab{lab_id}" / str(agent_spec)
+        adapter = IsolatedAgent(candidate, 4 if lab_id == 1 else 6, image=sandbox_image)
+        return adapter, candidate.name, adapter.close
+
     if callable(agent_spec):
         name = getattr(agent_spec, "__name__", "CustomAgent")
         return agent_spec, name, None
@@ -698,13 +711,22 @@ def run_head_to_head(
     video_path=None,
     video_fps=30,
     repo_root=None,
+    isolated=False,
+    sandbox_image="rl-tournament-agent:local",
 ):
     """
     High-level entry point to compare two RL agents over N seeded episodes.
     Returns summary results dictionary.
     """
-    fn_a, name_a, clean_a = resolve_agent(agent_a, lab_id, repo_root)
-    fn_b, name_b, clean_b = resolve_agent(agent_b, lab_id, repo_root)
+    if not 1 <= episodes <= 100:
+        raise ValueError("episodes must be between 1 and 100")
+    fn_a, name_a, clean_a = resolve_agent(agent_a, lab_id, repo_root, isolated, sandbox_image)
+    try:
+        fn_b, name_b, clean_b = resolve_agent(agent_b, lab_id, repo_root, isolated, sandbox_image)
+    except Exception:
+        if clean_a:
+            clean_a()
+        raise
 
     print(f"\n=======================================================")
     print(f"🥊 RL TOURNAMENT HEAD-TO-HEAD DUEL 🥊")
@@ -868,6 +890,8 @@ def main():
     parser.add_argument("--video", type=str, default=None, help="Output path for duel video (e.g. duel.mp4)")
     parser.add_argument("--list-opponents", action="store_true", help="List all available local opponents")
 
+    parser.add_argument("--isolated", action="store_true", help="Require Docker-isolated agent inference")
+    parser.add_argument("--sandbox-image", default="rl-tournament-agent:local")
     args = parser.parse_args()
 
     if args.list_opponents:
@@ -884,6 +908,8 @@ def main():
         episodes=args.episodes,
         base_seed=args.seed,
         video_path=args.video,
+        isolated=args.isolated,
+        sandbox_image=args.sandbox_image,
     )
 
 

@@ -1,43 +1,65 @@
-# 🚀 Submissions: Lab 1 (LunarLander-v3)
+# Lab 1 submissions · LunarLander
 
-This folder contains all participant models submitted for the **Lab 1 Tournament** (Master in AI Applications, University of Alcalá).
-
-## 📂 Directory Structure
-
-Each participant or team must place their submission inside their own subfolder named after their GitHub username (or student ID):
+Submit a Python policy for `LunarLander-v3` through a pull request from your fork.
+Your PR may change **one folder in one lab**: `submissions/lab1/<your-github-login>/`.
+Use your GitHub login in lowercase. The existing `rafael_flor` folder belongs to
+`rflor01`; other ownership exceptions require an instructor policy change.
 
 ```text
-submissions/lab1/
-├── baseline_random/
-│   └── agent.py
-└── <your_github_username>/
-    ├── agent.py
-    └── ppo-LunarLander-v3.zip  (or your trained model file)
+submissions/lab1/your-github-login/
+├── agent.py
+└── ppo-LunarLander-v3.zip
 ```
 
-## 🛠️ Required Files
+`agent.py` must expose `agent(observation)`. The observation is an eight-element
+vector; return a Python integer action from 0 through 3. Load files relative to
+`__file__`, and use deterministic inference:
 
-1. **`agent.py`**: Must define a function `agent(observation)` that receives the 8-dimensional observation vector and returns an integer action (`0`, `1`, `2`, or `3`).
-2. **Model weights**: e.g. `ppo-LunarLander-v3.zip` (loaded by your `agent.py`).
-
-### Minimal `agent.py` Example:
 ```python
-import os
+from pathlib import Path
 from stable_baselines3 import PPO
 
-# Load your model relative to this file
-model_path = os.path.join(os.path.dirname(__file__), "ppo-LunarLander-v3.zip")
-model = PPO.load(model_path)
+model = PPO.load(Path(__file__).with_name("ppo-LunarLander-v3.zip"))
+
 
 def agent(observation):
     action, _ = model.predict(observation, deterministic=True)
     return int(action)
 ```
 
-## 🤖 Automated Evaluation via GitHub Actions
+The submission can include Python helpers and model files ending in `.npy`,
+`.npz`, `.pkl`, `.pickle`, or `.zip`. `agent.py` is required. Use simple relative
+filenames with letters, numbers, underscores, hyphens, and dots; helper
+subdirectories are supported. Limits apply to the complete resulting folder:
+100 files, 50 MiB per file, 100 MiB total. Symlinks, submodules, notebooks,
+dependency lists, and changes to another participant, the baseline, workflows,
+or website are rejected.
 
-1. Fork this repository.
-2. Add your folder `submissions/lab1/<your_github_username>/`.
-3. Open a **Pull Request** targeting `main`.
-4. Our automated CI bot will test your agent across 30 evaluation episodes and comment your score directly on the PR!
-5. Once merged, your rank appears on [LEADERBOARD.md](../../LEADERBOARD.md).
+The evaluator provides the pinned libraries in
+[`tournament/requirements-agent.txt`](../../tournament/requirements-agent.txt).
+Students cannot install dependencies. Your Python code and model loading run
+inside an isolated container with no network, credentials, repository access,
+or writable submission files. Model archives are not unpacked by the trusted
+controller. The container has 2 CPUs, 2 GiB RAM, 128 processes, and 128 MiB
+of temporary storage. Startup may take at most 60 seconds, each action at most
+2 seconds, and the complete evaluation at most 10 minutes. Print sparingly.
+
+## Submit and evaluate
+
+1. Fork the repository and add or update your own submission folder.
+2. Open a PR against `main`. Keep infrastructure edits out of the PR.
+3. Admission checks inspect the complete diff, then evaluate **30 episodes with
+   seed 42**. A trusted publisher posts the evaluation report on the PR.
+4. An instructor reviews and merges accepted submissions. The official tournament
+   publishes standings on [GitHub Pages](https://gramuah.github.io/RL_tournament/).
+
+The notebook helper remains available as
+`submit_lab(lab_id=1, files_to_submit={"agent.py": "agent.py", ...}, github_token=token)`.
+Use a token belonging to your own account. The helper authenticates that account,
+uses its course fork, and creates an atomic commit based on upstream `main`.
+Rerunning it replaces its own `submission-lab1-<login>` branch; unrelated edits
+on that branch are discarded. Files already merged in your folder remain unless
+overwritten. Legacy `submit_practical` and `practical_id` calls still work.
+
+The website's Playground runs built-in educational policies in your browser.
+It does not execute your submitted Python agent or determine official scores.

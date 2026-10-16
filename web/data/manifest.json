@@ -1,0 +1,6 @@
+{
+  "schema_version": 1,
+  "status": "historical_snapshot",
+  "generated_at": "2026-10-15T13:25:49Z",
+  "note": "Retained evaluation snapshot. A successful isolated tournament run publishes a manifest with its verified source revision."
+}

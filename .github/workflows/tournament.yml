@@ -1,59 +1,103 @@
-name: 🏆 Update Tournament Leaderboard
+name: Tournament and Pages
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
     paths:
       - 'submissions/**'
       - 'tournament/**'
+      - 'web/**'
+      - '.github/workflows/tournament.yml'
   schedule:
-    - cron: '0 0 * * *' # Every night at 00:00 UTC
+    - cron: '0 0 * * *'
   workflow_dispatch:
 
-permissions:
-  contents: write
+permissions: {}
 
 concurrency:
-  group: tournament-leaderboard
+  group: tournament-pages
   cancel-in-progress: false
 
 jobs:
-  tournament:
-    runs-on: ubuntu-latest
+  evaluate:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
     steps:
-      - name: 📥 Checkout repository
-        uses: actions/checkout@v4
-
-      - name: 🐍 Set up Python 3.10
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          python-version: '3.10'
-          cache: 'pip'
-
-      - name: 📦 Install system packages
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.11'
+      - name: Install trusted controller dependencies and agent image
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq swig cmake ffmpeg xvfb
-
-      - name: 📦 Install Python dependencies
+          sudo apt-get install -y --no-install-recommends swig
+          python -m pip install --require-hashes -r tournament/requirements-ci.lock
+          docker build -f tournament/Dockerfile.agent -t rl-tournament-agent:local tournament
+      - name: Evaluate all agents in isolated containers
         run: |
-          pip install --upgrade pip
-          pip install -r tournament/requirements.txt
+          python tournament/update_leaderboard.py --episodes 30 --seed 42 --isolated
+          python -m tournament.result_artifacts site --data-dir web/data --sha "$GITHUB_SHA"
+          python -m tournament.browser_artifacts build --sha "$GITHUB_SHA"
+      - name: Upload JSON results only
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: tournament-results
+          path: |
+            web/data/leaderboard_p1.json
+            web/data/leaderboard_p2.json
+            web/data/manifest.json
+            web/data/policies.json
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload Markdown snapshot
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: leaderboard-markdown
+          path: LEADERBOARD.md
+          retention-days: 14
 
-      - name: 🏅 Run Tournament & Update Leaderboard
+  build:
+    needs: evaluate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Fresh trusted site checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Download JSON from this run only
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: tournament-results
+          path: ${{ runner.temp }}/results
+      - name: Validate provenance and copy bounded results
         run: |
-          python tournament/update_leaderboard.py --episodes 30
+          python3 -m tournament.result_artifacts site --data-dir "$RUNNER_TEMP/results" --sha "$GITHUB_SHA"
+          python3 -m tournament.browser_artifacts validate --path "$RUNNER_TEMP/results/policies.json" --sha "$GITHUB_SHA"
+          cp "$RUNNER_TEMP/results/policies.json" web/data/
+          cp "$RUNNER_TEMP/results/leaderboard_p1.json" "$RUNNER_TEMP/results/leaderboard_p2.json" "$RUNNER_TEMP/results/manifest.json" web/data/
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: web
 
-      - name: 💾 Commit and push updated leaderboard
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add LEADERBOARD.md docs/data/
-          if git diff --staged --quiet; then
-            echo "Leaderboard is already up to date, nothing to commit."
-          else
-            git commit -m "chore(tournament): update official leaderboard [skip ci]"
-            git pull --rebase origin main
-            git push origin main
-          fi
+  deploy:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy static Pages artifact
+        id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
