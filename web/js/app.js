@@ -91,7 +91,7 @@ function route() {
   $("submission-tree").textContent =
     `submissions/lab${lab}/your-github-login/\n├── agent.py\n└── ${config.model}`;
   $("notebook-link").href =
-    `${repo}/blob/main/Lab_sessions/Lab${lab}/unit${lab}_uah_student.ipynb`;
+    `${repo}/blob/main/Lab_sessions/Lab${lab}/Lab${lab}.ipynb`;
   $("submission-guide").href = `${repo}/tree/main/submissions/lab${lab}`;
   document.title = `${view[0].toUpperCase() + view.slice(1)} · Lab ${lab} — RL Tournament`;
   arena.setView(view === "arena", lab);

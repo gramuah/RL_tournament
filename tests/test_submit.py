@@ -113,10 +113,57 @@ class SubmitTests(unittest.TestCase):
         self.assertEqual(submit._MAX_FILE_BYTES, policy["max_file_bytes"])
         self.assertEqual(submit._MAX_TOTAL_BYTES, policy["max_total_bytes"])
         self.assertEqual(submit._MAX_FILES, policy["max_files"])
+        self.assertEqual(submit._MAINTAINERS, {login.lower() for login in policy["maintainers"]})
         for owner, alias in submit._OWNER_ALIASES.items():
             for lab in (1, 2):
                 self.assertEqual(policy["owners"][f"submissions/lab{lab}/{alias}"], owner)
 
+    def test_maintainer_direct_submission_when_upstream_is_returned(self):
+        self.login = "rflor01"
+
+        def fake_maintainer_github(url, method="GET", data=None, token=None):
+            self.calls.append((url, method, data))
+            if url.endswith("/user"):
+                return 200, {"login": self.login}
+            if url.endswith("/rflor01/RL_tournament"):
+                # GitHub redirected rflor01/RL_tournament to gramuah/RL_tournament
+                return 200, {"full_name": "gramuah/RL_tournament", "fork": False, "permissions": {"push": True}}
+            if url.endswith("/git/ref/heads/main"):
+                return 200, {"object": {"sha": "upstream-sha"}}
+            if url.endswith("/git/commits/upstream-sha"):
+                return 200, {"tree": {"sha": "upstream-tree"}}
+            if url.endswith("/git/blobs"):
+                return 201, {"sha": "new-blob"}
+            if url.endswith("/git/trees"):
+                return 201, {"sha": "new-tree"}
+            if url.endswith("/git/commits"):
+                return 201, {"sha": "new-commit"}
+            if "/git/refs/heads/submission-" in url:
+                return (200 if self.existing_branch or method == "PATCH" else 404), {}
+            if url.endswith("/git/refs"):
+                return 201, {}
+            if url.endswith("/pulls"):
+                return 201, {"html_url": "https://github.com/gramuah/RL_tournament/pull/123"}
+            raise AssertionError((url, method, data))
+
+        with patch.object(submit, "_github_request", fake_maintainer_github):
+            url = submit.submit_lab(1, self.files, "private-token")
+        self.assertTrue(url.endswith("/123"))
+
+        # Verify blobs and branch were created directly on upstream
+        blob_url = next(u for u, m, _ in self.calls if u.endswith("/git/blobs"))
+        self.assertEqual(blob_url, "https://api.github.com/repos/gramuah/RL_tournament/git/blobs")
+
+        tree_data = next(d for u, m, d in self.calls if u.endswith("/git/trees"))
+        self.assertEqual(tree_data["tree"][0]["path"], "submissions/lab1/rafael_flor/agent.py")
+
+        ref_url = next(u for u, m, _ in self.calls if m == "POST" and u.endswith("/git/refs"))
+        self.assertEqual(ref_url, "https://api.github.com/repos/gramuah/RL_tournament/git/refs")
+
+        pr_payload = next(d for u, m, d in self.calls if u.endswith("/pulls"))
+        self.assertEqual(pr_payload["head"], "submission-lab1-rflor01")
+
 
 if __name__ == "__main__":
     unittest.main()
+
