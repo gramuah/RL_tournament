@@ -69,6 +69,7 @@ _ALLOWED_EXTENSIONS = {".py", ".npy", ".npz", ".pkl", ".pickle", ".zip", ".json"
 _MAX_FILES = 100
 _MAX_FILE_BYTES = 50 * 1024 * 1024
 _MAX_TOTAL_BYTES = 100 * 1024 * 1024
+_MAINTAINERS = {"carlosgual", "rflor01", "rlopezsastre"}
 _OWNER_ALIASES = {"rflor01": "rafael_flor"}
 _LOGIN_RE = re.compile(r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?\Z")
 _PART_RE = re.compile(r"[A-Za-z0-9_][A-Za-z0-9_.-]*\Z")
@@ -147,6 +148,7 @@ def submit_lab(lab_id, files_to_submit, github_token, github_username=None):
     print(f"Authenticated as @{username}; preparing {target_dir}")
 
     status, repo_info = _github_request(fork_url, token=token)
+    is_upstream = False
     if status == 404:
         request(upstream_url + "/forks", "POST", expected=(200, 202))
         for _ in range(15):
@@ -158,27 +160,52 @@ def submit_lab(lab_id, files_to_submit, github_token, github_username=None):
             raise TimeoutError("Fork initialization timed out; try again shortly")
     elif status != 200:
         raise RuntimeError(f"Cannot inspect your fork (HTTP {status})")
-    if not repo_info.get("fork") or repo_info.get("parent", {}).get("full_name", "").lower() != f"{COURSE_OWNER}/{COURSE_REPO}".lower():
+
+    # If GitHub returned the course upstream repository (which occurs when the user is the
+    # course organization or when a maintainer previously transferred the repo to the org,
+    # causing GitHub's API to transparently follow the 301 redirect to upstream):
+    if repo_info.get("full_name", "").lower() == f"{COURSE_OWNER}/{COURSE_REPO}".lower():
+        can_push = bool(repo_info.get("permissions", {}).get("push", False)) or (username in _MAINTAINERS)
+        if can_push:
+            target_repo = upstream_url
+            is_upstream = True
+        else:
+            request(upstream_url + "/forks", "POST", expected=(200, 202))
+            for _ in range(15):
+                time.sleep(2)
+                status, repo_info = _github_request(fork_url, token=token)
+                if (
+                    status == 200
+                    and repo_info.get("fork")
+                    and repo_info.get("parent", {}).get("full_name", "").lower() == f"{COURSE_OWNER}/{COURSE_REPO}".lower()
+                ):
+                    break
+            if not repo_info.get("fork") or repo_info.get("parent", {}).get("full_name", "").lower() != f"{COURSE_OWNER}/{COURSE_REPO}".lower():
+                raise ValueError(f"{username}/{COURSE_REPO} is not a fork of the course repository")
+            target_repo = fork_url
+    elif repo_info.get("fork") and repo_info.get("parent", {}).get("full_name", "").lower() == f"{COURSE_OWNER}/{COURSE_REPO}".lower():
+        target_repo = fork_url
+    else:
         raise ValueError(f"{username}/{COURSE_REPO} is not a fork of the course repository")
 
     latest_sha = request(upstream_url + f"/git/ref/heads/{BASE_BRANCH}")["object"]["sha"]
     base_tree = request(upstream_url + f"/git/commits/{latest_sha}")["tree"]["sha"]
     entries = []
     for filename, data in contents.items():
-        blob = request(fork_url + "/git/blobs", "POST", {
+        blob = request(target_repo + "/git/blobs", "POST", {
             "content": base64.b64encode(data).decode("ascii"), "encoding": "base64",
         }, expected=(201,))
         entries.append({"path": f"{target_dir}/{filename}", "mode": "100644", "type": "blob", "sha": blob["sha"]})
-    tree = request(fork_url + "/git/trees", "POST", {"base_tree": base_tree, "tree": entries}, expected=(201,))
-    commit = request(fork_url + "/git/commits", "POST", {
+    tree = request(target_repo + "/git/trees", "POST", {"base_tree": base_tree, "tree": entries}, expected=(201,))
+    commit = request(target_repo + "/git/commits", "POST", {
         "message": f"Submit Lab {lab_id} agent for @{username}",
         "tree": tree["sha"], "parents": [latest_sha],
     }, expected=(201,))
     branch_name = f"submission-lab{lab_id}-{username}"
-    branch_url = fork_url + f"/git/refs/heads/{branch_name}"
+    branch_url = target_repo + f"/git/refs/heads/{branch_name}"
     status, _ = _github_request(branch_url, token=token)
     if status == 404:
-        request(fork_url + "/git/refs", "POST", {
+        request(target_repo + "/git/refs", "POST", {
             "ref": f"refs/heads/{branch_name}", "sha": commit["sha"],
         }, expected=(201,))
     elif status == 200:
@@ -187,16 +214,20 @@ def submit_lab(lab_id, files_to_submit, github_token, github_username=None):
         raise RuntimeError(f"Cannot inspect submission branch (HTTP {status})")
 
     pr_url = upstream_url + "/pulls"
+    head_ref = branch_name if is_upstream else f"{username}:{branch_name}"
     payload = {
         "title": f"Lab {lab_id} Submission: @{username}",
-        "head": f"{username}:{branch_name}", "base": BASE_BRANCH,
+        "head": head_ref, "base": BASE_BRANCH,
         "body": f"Agent submission for **Lab {lab_id}** by @{username}.\n\nFiles: " + ", ".join(f"`{name}`" for name in contents),
     }
     status, result = _github_request(pr_url, method="POST", data=payload, token=token)
     if status == 201:
         url = result["html_url"]
     elif status == 422:
-        prs = request(pr_url + f"?head={username}:{branch_name}&base={BASE_BRANCH}&state=open")
+        head_query = f"{COURSE_OWNER}:{branch_name}" if is_upstream else f"{username}:{branch_name}"
+        prs = request(pr_url + f"?head={head_query}&base={BASE_BRANCH}&state=open")
+        if not prs and is_upstream:
+            prs = request(pr_url + f"?head={branch_name}&base={BASE_BRANCH}&state=open")
         if not prs:
             raise RuntimeError("GitHub rejected the PR and no existing open submission PR was found")
         url = prs[0]["html_url"]
