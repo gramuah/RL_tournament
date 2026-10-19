@@ -746,7 +746,8 @@ test("Countdown freezes both players, ignores early controls and cancels safely"
   const p = await page();
   await p.clock.install();
   await openArena(p);
-  await p.clock.pauseAt(new Date());
+  const browserNow = await p.evaluate(() => Date.now());
+  await p.clock.pauseAt(browserNow + 100);
   assert.equal(await p.locator("#duel-engine").count(), 0);
   await p.locator("#duel-speed").selectOption("4");
   await p.locator("#duel-toggle").click();
