@@ -10,7 +10,7 @@ Public student materials and the agent tournament for the University of Alcalá 
 | --- | --- | --- |
 | Lab 1: PPO / LunarLander | [Notebook](Lab_sessions/Lab1/Lab1.ipynb) | [Agent guide](submissions/lab1/) |
 | Lab 2: Q-learning / Taxi | [Notebook](Lab_sessions/Lab2/Lab2.ipynb) | [Agent guide](submissions/lab2/) |
-| Final project: Deep Q-learning / Atari | [Notebook](Lab_sessions/FinalProject/unit3_uah_student.ipynb) | Presentation and oral defense |
+| Final Lab: Deep Q-learning / Atari | [Notebook](Lab_sessions/FinalProject/Final_Lab.ipynb) | Presentation and oral defense |
 
 Read the [lab guide](Lab_sessions/Lab_Guide.pdf) for notebook setup, deliverables, and assessment. Its [LaTeX source](Lab_sessions/Lab_Guide.tex) is maintained here. The private `RL_course` repository holds instructor master notebooks and solutions; never copy those into this public repository.
 
