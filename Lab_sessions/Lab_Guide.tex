@@ -133,6 +133,10 @@ If you prefer to run the notebook on your own machine, you will need to install 
 When working locally, your computer's hardware (CPU/GPU) will be used for training, which may be significantly slower than Colab's free GPUs if your machine does not have a dedicated graphics card. It is also your responsibility to manage library versions and dependencies correctly. If you encounter installation issues, Option A (Google Colab) remains available as a fallback.
 \end{warnbox}
 
+\begin{infobox}[Note for Windows and macOS users regarding virtual displays]
+The lab notebooks automatically detect your platform. Linux tools like \texttt{apt-get} and virtual displays (\texttt{Xvfb}) are only executed in headless cloud environments like Google Colab. On Windows and macOS, the notebook automatically skips \texttt{apt-get} and \texttt{Xvfb}, using your operating system's native graphics subsystem directly.
+\end{infobox}
+
 \section{Working on the Notebook}
 
 Once the notebook is open, either in Colab or in your local IDE, keep the following in mind:
